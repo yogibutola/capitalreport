@@ -245,22 +245,6 @@ class PdfAgent:
 
         combined["documents"].extend(found_texts)
         combined["metadatas"].extend(found_metadatas)
-        # The following code works for Chroma DB
-        # results = collection.query(
-        #     query_embeddings=[query_embedding],
-        #     n_results=k,
-        #     include=['documents', 'metadatas']
-        # )
-        # Check if results are empty
-        # if not results['documents'] or not results['documents'][0]:
-        #     return "Could not find any relevant information in the document."
-
-        # Each is wrapped in a list: res["documents"][0]
-        # combined["documents"].extend(results.get("documents", [[]])[0])
-        # combined["metadatas"].extend(results.get("metadatas", [[]])[0])
-        # combined["ids"].extend(results.get("ids", [[]])[0])
-        # combined["distances"].extend(results.get("distances", [[]])[0])
-
         documents = combined['documents']
         metadatas = combined['metadatas']
 
@@ -269,7 +253,8 @@ class PdfAgent:
         for doc, meta in zip(documents, metadatas):
             page = meta.get("page")
             filename = meta.get("filename")
-            context_blocks.append(f"Filename: {filename} = {page}\n{doc}")
+            gcs_url = meta.get("gcs_url")
+            context_blocks.append(f"Filename: {filename} = {page}\n{doc}\n{gcs_url}")
 
         # Format the retrieved context for the prompt
         context = "\n---\n".join(context_blocks)
@@ -282,7 +267,9 @@ class PdfAgent:
         If the answer is not found in the context, state clearly that you 
         cannot answer based on the provided document.
 
-        Also provide the source information at the end, like the filename and page number.
+        Also provide the source information at the end, like the filename and 
+        page number. Display the filename as a hyperlink that points to the 
+        file’s gcs_url.
 
         ---
         CONTEXT:

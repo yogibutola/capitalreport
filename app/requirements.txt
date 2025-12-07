@@ -9,3 +9,5 @@ pytesseract
 pdf2image
 PIL
 pymongo
+google-cloud-storage
+openpyxl

@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "stable-smithy-270416",
+  "private_key_id": "42ec379dd1b9c3f3fbe3af510af31606090baf1e",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCU71uUHPFqGwyf\nsE2EqFwJQFFQTysi6abVBuYbIffiIIomgHWn5hoMmcBRqA5wMbFTzbW00506eBaV\nDgU/nUywRApoC6DE9lOa6mWSJijseJqNNKXBhpqn4bLUMfxApCIe+IM/MNTl439l\nRJG513OKo0zk7q+SOcCSz+oy28bF5aRpSQT7sj7x0O8P79sd2/9b56gouTfR8SGn\nQDdChavvw9/Kwfs7RcYMrg81UdgO85DM0uRfiw3i6bXaRSS+oR2MemysrsG+81mV\nZLc9Udu3/IlQZVB50258Kpipoql08JqMhKSe6zyb5G9oS0NoG6lwZS4GPdig7QV/\n32a7F5z5AgMBAAECggEAPJNUFJxnBmiFDGg5RzTw5iReTkM9AMC2xds9+RgqSbNB\nbWJ/ODBrNOfOJIgtgy16+eJnvun4/6B7Utm2gca5O9IYx3O/So0DuTUP5c8WgwOU\nnM0mg917BsBSK2M/PY1kgWNDgo6acPxEQwyOFt/OEzvTGSQJjfhmXnApSdFA+hkL\nnM5zdb2A1KB/w4+w6P+BDBUk4K0T6gqssJciL5PNTgCPBPg6UmG1131P1s5zpF1K\nw9PKWf+hJSSaWs3pzCTjIFbKmfxAKDjwSSLNMFQbJpeKo7giG61Ixuq0UWen+ff/\nY3aLYr6tUZCm8tV8d3SRMIPuF+FO6i2CXgXQac9QzwKBgQDDjHdrYBmZdkniuzow\nen0QxNlCYh9og0R+XGuEiKfja5QSCivYIaQRRHEVOFy1nlrR3JUPR8c0Ya4pt6FP\nShcbkrNzVDxD26REiiXfdJR5LrpJXNojTuz4VQQKNzTSkKjMapaZz0fq16V1oS1r\n2ou3CSHlAFZ/P0oIdOmXfIayCwKBgQDC+e2My1BwGiT2nZmL109pVVusAcWJOcLA\n8m1yjMkBj7LOorX2SCrqrFi9FAm8U6uEAwbGjyXkEkjZV8p10CK7qtLIYHGqGHJx\nsrDVsHBTxdu6vbXjHhqaKoRaE0DiVqjq6ooPnrM33y+A5GFyVjWNbQdl+K4O7l/u\nx9EVmi5ziwKBgBLpSLtHpfIjcG3O8YeysNmoT+KNnr/6wer+gR9mH+ZshvtfpHHY\nfwd0eQM2WjDuSZY2IOxDYs58C93Y9m62mZl/DH/Ay7s8SJygR51epuU5Uaa6phX4\nEg7KGgPq5t7eQpTSUhI565iYllXT6pKdphljdrWw3KydsEk1FUojLtuVAoGACPR1\nppvH6/4naHRAkx2mdg4HkdTa/7x5Z2c7A6HXsYyqB7eNZ+xUnEaiJL0A3XdyTzPc\nYc49TUZRtjnEALk4fyoPWEilr8xDpVkxqf7aid5ygxcnfXDqg94kCgcMWdjlFTUE\ndkcxsAU+J0tV9mxjNUWmq1ZKmED2gv8GaVmVfJUCgYEAjg8rCkM6ikpF4Ox655pU\nqBOdZg6u3CZQRaSzJDYMjC59LQRx6YV+Uhk2gifFbxl7Nln2cZ3D1CETyxNzMaHM\nA8W8Ea4c4MZ8yLnGK0Ee/8Tn7Ae7DX7VvI1ZUuNWEXAyMMvaQ2Csudn7VBw0swlk\n+7u0uT9Pi5OCGgU9C9Ooir8=\n-----END PRIVATE KEY-----\n",
+  "client_email": "storage-service-account@stable-smithy-270416.iam.gserviceaccount.com",
+  "client_id": "116817901353271057599",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/storage-service-account%40stable-smithy-270416.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

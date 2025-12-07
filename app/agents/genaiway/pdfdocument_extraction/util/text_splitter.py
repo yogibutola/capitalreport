@@ -3,7 +3,8 @@ from datetime import datetime
 
 
 class TextSplitter:
-    def split_text_into_chunks(self, pages: list[str], filename: str = "", chunk_size: int = 2000) -> list[dict[str, object]]:
+    def split_text_into_chunks(self, pages: list[str], filename: str = "", gcs_url: str = "", chunk_size: int = 2000) -> \
+            list[dict[str, object]]:
         """Splits the raw text pages into smaller, indexed chunks."""
         chunks = []
         doc_id_counter = 0
@@ -19,7 +20,7 @@ class TextSplitter:
                             chunks.append({
                                 "id": f"doc-{doc_id_counter}",
                                 "text": chunk_text.strip(),
-                                "metadata": {"page": i + 1, "section": "fdfd", "filename": filename,
+                                "metadata": {"page": i + 1, "section": "fdfd", "filename": filename, "gcs_url": gcs_url,
                                              "extracted_on": datetime.today().strftime("%m-%d-%Y")}
                             })
                             doc_id_counter += 1

@@ -22,10 +22,6 @@ class MongoDBStore:
     def store_pdf_embeddings_to_mongo_db(self, filename: str, embeddings: list, texts: list, metadatas: list[dict]):
         collection = self.get_collection()
 
-        # if collection.find_one({"filename": filename}):
-        #     print(f"File '{filename}' already exists in MongoDB. Skipping storage.")
-        #     return
-
         docs_to_insert = []
         for i, (text, meta, emb) in enumerate(zip(texts, metadatas, embeddings)):
             doc = {
@@ -41,11 +37,11 @@ class MongoDBStore:
         if docs_to_insert:
             # insert_many automatically overwrites duplicates only if ordered=False
             collection.insert_many(docs_to_insert, ordered=False)
-            print(f"Stored {len(docs_to_insert)} chunks in MongoDB collection '{collection.name}'.")
+            # print(f"Stored {len(docs_to_insert)} chunks in MongoDB collection '{collection.name}'.")
         else:
             print("No chunks to store.")
 
-    def find(self, collection: Collection, query_embedding, documents: str):
+    def find(self, collection: Collection, query_embedding, documents: list[str]):
         query_vector = query_embedding
 
         # The MongoDB Aggregation Pipeline

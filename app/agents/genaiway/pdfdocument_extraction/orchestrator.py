@@ -1,9 +1,11 @@
 # from chromadb.types import Collection
+from fastapi import UploadFile
 from pymongo.synchronous.collection import Collection
 from app.agents.genaiway.pdfdocument_extraction.document_reader.document_reader import DocumentReader
 from app.agents.genaiway.pdfdocument_extraction.pdf_agent import PdfAgent
 from app.agents.genaiway.pdfdocument_extraction.util.embed_data import EmbedData
 from app.agents.genaiway.pdfdocument_extraction.util.text_splitter import TextSplitter
+from app.services.data_extractor import DataExtractor
 from app.store.chroma_db_store import ChromaDBStore
 from app.store.mongo_db_store import MongoDBStore
 
@@ -26,7 +28,9 @@ class Orchestrator:
         self._interact_with_user(pdf_agent, embedding_function)
 
     def store_the_document(self, filename: str, content_type: str):
-        extracted_text = self.document_reader.read_data(filename, content_type)
+        data_extractor = DataExtractor()
+        # extracted_text = self.document_reader.read_data(filename, content_type)
+        extracted_text = data_extractor.extract_data(file)
         chunks: list[str] = self.text_splitter.split_text_into_chunks(extracted_text, filename)
         embeddings = self.embed_data.embed_texts(chunks)
         self.embed_data.store_pdf_embeddings(filename, embeddings, chunks)
@@ -40,10 +44,33 @@ class Orchestrator:
         # chromadb_store: ChromaDBStore = ChromaDBStore()
         # chromadb_store.store_pdf_embeddings(filename, embeddings, texts, metadatas)
         mongodb_store: MongoDBStore = MongoDBStore()
-        mongodb_store.store_pdf_embeddings_to_mongo_db(filename,embeddings, texts, metadatas)
+        mongodb_store.store_pdf_embeddings_to_mongo_db(filename, embeddings, texts, metadatas)
+
+    def store_the_documents_(self, filename: str, content_type: str):
+        extracted_text = self.document_reader.read_data(filename, content_type)
+        chunks: list[dict[str, object]] = self.text_splitter.split_text_into_chunks(extracted_text, filename)
+        texts = [chunk["text"] for chunk in chunks]
+        metadatas = [chunk["metadata"] for chunk in chunks]
+        embeddings = self.embed_data.embed_texts(texts)
+        # chromadb_store: ChromaDBStore = ChromaDBStore()
+        # chromadb_store.store_pdf_embeddings(filename, embeddings, texts, metadatas)
+        mongodb_store: MongoDBStore = MongoDBStore()
+        mongodb_store.store_pdf_embeddings_to_mongo_db(filename, embeddings, texts, metadatas)
+
+    def store_the_docs(self, file: UploadFile, gcs_url: str):
+        file.file.seek(0)
+        filename: str = file.filename
+        data_extractor = DataExtractor()
+        extracted_text: list[str] = data_extractor.extract_data(file)
+        chunks: list[dict[str, object]] = self.text_splitter.split_text_into_chunks(extracted_text, filename, gcs_url)
+        text_chunks = [chunk["text"] for chunk in chunks]  # extract only text
+        metadatas = [chunk["metadata"] for chunk in chunks]
+        embeddings = self.embed_data.embed_texts(text_chunks)
+        mongodb_store = MongoDBStore()
+        mongodb_store.store_pdf_embeddings_to_mongo_db(filename, embeddings, text_chunks, metadatas)
+
 
     def ask_question(self, query: str, document_name: str):
-
         try:
             if query.lower() == 'quit':
                 print("Exiting RAG assistant. Goodbye!")
@@ -76,13 +103,11 @@ class Orchestrator:
                 return 'clearing'
 
             if query.strip():
-
                 documents: list[str] = document_names.split(',')
+                documents = list({d.strip() for d in documents})
 
                 mongodb_store = MongoDBStore()
                 collection: Collection = mongodb_store.get_collection()
-                # collections.append(collection)
-
                 embedding_model = self.embed_data.get_embedding_model()
                 answer = self.pdf_agent.prashn_kijiye(query, embedding_model, collection, documents)
                 print(f"\n🤖 **Assistant Answer:**\n{'-' * 50}")
