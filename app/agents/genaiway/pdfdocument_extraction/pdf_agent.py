@@ -4,14 +4,21 @@ import re
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from google.cloud import aiplatform
+from vertexai.generative_models import (
+    GenerationConfig,
+    GenerativeModel,
+    Part,
+    # Schema,
+    # Type,
+    Tool
+)
+from typing import List, Optional
 from pymongo.synchronous.collection import Collection
 
 from app.agents.genaiway.pdfdocument_extraction.embedding_function import EmbeddData
 from app.agents.genaiway.pdfdocument_extraction.investment import Investment
 from app.store.mongo_db_store import MongoDBStore
-
-# from embedding_function import EmbeddData
-# from investment import Investment
 
 load_dotenv()
 GENERATION_MODEL = "gemini-2.5-flash"
@@ -21,7 +28,6 @@ class PdfAgent:
 
     def find_values(self, text: str):
         client = genai.Client()
-        # instructions = "You are stock analyst agent, who understands the investment report for an individual account"
         instructions = """
             Format the json response properly so that it can be easily understandable.
         """
@@ -281,17 +287,43 @@ class PdfAgent:
 
         # 3. Call the Gemini API
         print("Generating answer with Gemini...")
-        client = genai.Client()
-        response = client.models.generate_content(
-            model=GENERATION_MODEL,
-            contents=prompt
+        # client = genai.Client()
+        # response = client.models.generate_content(
+        #     model="gemini-2.5-flash",
+        #     contents=prompt
+        #
+        #     # config=types.GenerateContentConfig(
+        #     #     temperature=0,
+        #     #     # tools=[grounding_tool],
+        #     #     system_instruction=instructions,
+        #     #     response_schema=list[Investment]
+        #     # ),
+        # )
 
-            # config=types.GenerateContentConfig(
-            #     temperature=0,
-            #     # tools=[grounding_tool],
-            #     system_instruction=instructions,
-            #     response_schema=list[Investment]
-            # ),
+        PROJECT_ID = "stable-smithy-270416"  # e.g., "my-project-12345"
+        REGION = "us-central1"  # e.g., "us-central1"
+        MODEL_NAME = "gemini-2.5-flash"
+        # MODEL_NAME = "gemini-3-pro-preview"
+
+        aiplatform.init(project=PROJECT_ID, location=REGION)
+        client = GenerativeModel(MODEL_NAME)
+        config = GenerationConfig(
+            temperature=0,  # Equivalent to temperature=0
+            # system_instruction=INSTRUCTIONS,
+            # tools=[GROUNDING_TOOL],         # Equivalent to tools=[grounding_tool]
+            # response_mime_type="application/json", # Use this with response_schema
+            # response_schema=RESPONSE_SCHEMA,      # Equivalent to response_schema=list[Investment]
         )
+        response_text: str = ''
+        try:
+            response = client.generate_content(
+                contents=prompt,
+                config=config,
+            )
+            response_text = response.text
 
-        return response.text
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+
+        return response_text

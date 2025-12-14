@@ -1,21 +1,33 @@
 import vertexai
 from vertexai.language_models import TextEmbeddingModel
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,  # Only output messages at INFO level and above
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
 
 class EmbedData:
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
 
     def get_embedding_model(self):
+        self.logger.info("Initializing embedding model.")
         vertexai.init(project="stable-smithy-270416", location="us-central1")
         model = TextEmbeddingModel.from_pretrained("text-embedding-004")
+        self.logger.info(f"Initialized embedding model: {model}")
         return model
 
     def embed_texts(self, texts: list):
-        # vertexai.init(project="stable-smithy-270416", location="us-central1")
+        self.logger.info("Embedding text.")
         model = self.get_embedding_model()
         embeddings = model.get_embeddings(texts)
         vectors = [e.values for e in embeddings]
-        print(vectors[0][:5])  # show first 5 embedding values
+        self.logger.info("Embedding complete.")
         return vectors
+
     #
     # def store_pdf_embeddings(self, filename: str, embeddings: list, texts: list, metadatas: list[str:str]):
     #     collection = self.get_collection(filename)
@@ -37,7 +49,6 @@ class EmbedData:
     #     collection = chroma_client.get_or_create_collection(name=COLLECTION_NAME)
     #     return collection
 
-
     def clear_index(self, collection_name: str):
         """Utility to clear the ChromaDB collection."""
         self.chroma_client.delete_collection(name=collection_name)
@@ -45,4 +56,4 @@ class EmbedData:
             name=collection_name,
             embedding_function=self.gemini_ef
         )
-        print("Index cleared and ready for new document.")
+        self.logger.info("Index cleared and ready for new document.")

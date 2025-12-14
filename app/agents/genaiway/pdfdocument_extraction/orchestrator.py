@@ -9,6 +9,12 @@ from app.services.data_extractor import DataExtractor
 from app.store.chroma_db_store import ChromaDBStore
 from app.store.mongo_db_store import MongoDBStore
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,  # Only output messages at INFO level and above
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 class Orchestrator:
     def __init__(self, pdf_agent: PdfAgent, document_reader: DocumentReader, text_splitter: TextSplitter,
@@ -17,6 +23,7 @@ class Orchestrator:
         self.document_reader = document_reader
         self.text_splitter = text_splitter
         self.embed_data = embed_data
+        self.logger = logging.getLogger(__name__)
 
     def start(self, pdf_path: str, pdf_agent: PdfAgent):
         # extracted_text: list[str] = read_text_from_pdf(pdf_path)
@@ -58,6 +65,7 @@ class Orchestrator:
         mongodb_store.store_pdf_embeddings_to_mongo_db(filename, embeddings, texts, metadatas)
 
     def store_the_docs(self, file: UploadFile, gcs_url: str):
+        self.logger.info("Starting the process of reading, chunking, embedding and storing data.")
         file.file.seek(0)
         filename: str = file.filename
         data_extractor = DataExtractor()
@@ -67,8 +75,8 @@ class Orchestrator:
         metadatas = [chunk["metadata"] for chunk in chunks]
         embeddings = self.embed_data.embed_texts(text_chunks)
         mongodb_store = MongoDBStore()
+        self.logger.info("Storing embeddings to vector database")
         mongodb_store.store_pdf_embeddings_to_mongo_db(filename, embeddings, text_chunks, metadatas)
-
 
     def ask_question(self, query: str, document_name: str):
         try:

@@ -13,6 +13,14 @@ from app.agents.genaiway.pdfdocument_extraction.util.embed_data import EmbedData
 from app.agents.genaiway.pdfdocument_extraction.util.text_splitter import TextSplitter
 from app.store.gcp_file_store import GCPStore
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO, # Only output messages at INFO level and above
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 router = APIRouter(tags=["UploadDocuments"])
 
 
@@ -35,19 +43,20 @@ async def upload_files(orchestrator: Annotated[Orchestrator, Depends(get_orchest
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded.")
 
+    logger.info("Uploading files.")
     saved_files = []
     gcp_store = GCPStore()
     for file in files:
         try:
             gcs_url: str = gcp_store.upload_stream_to_gcs(file)
             orchestrator.store_the_docs(file, gcs_url)
-            print(f"GCP Storage URL: {gcs_url}")
+            logger.info(f"GCP Storage URL: {gcs_url}")
         except Exception as e:
-            print(f"Error during file save: {e}")
+            logger.error(f"Error during file save: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Could not save the file.",
-            )
+            ) from None
         finally:
             await file.close()
 

@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  capitalreport:
+    image: capitalreport:v1.0.0
+    ports:
+      - "8000:8080"
+      - "5678:5678"
+    volumes:
+      # Mount the JSON file into the container
+      - ./credentials.json:/app/credentials.json
+    environment:
+      # Point Google SDK to the file inside the container
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
+      - GOOGLE_CLOUD_PROJECT=stable-smithy-270416
+      - GOOGLE_CLOUD_LOCATION=us-central1

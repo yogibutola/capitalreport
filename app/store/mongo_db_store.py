@@ -2,6 +2,12 @@ from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 from pymongo.synchronous.collection import Collection
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,  # Only output messages at INFO level and above
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 class MongoDBStore:
     def __init__(self, mongo_uri="mongodb://localhost:27017/?directConnection=true", db_name="document_embeddings"):
@@ -9,6 +15,7 @@ class MongoDBStore:
         # self.client = MongoClient(mongo_uri)
         self.client = MongoClient(uri, server_api=ServerApi('1'))
         self.db = self.client[db_name]
+        self.logger = logging.getLogger(__name__)
 
     def get_collection_by_name(self, name: str) -> Collection:
         normalized = name.strip().replace(" ", "_")
@@ -20,6 +27,7 @@ class MongoDBStore:
         return self.db[collection_name]
 
     def store_pdf_embeddings_to_mongo_db(self, filename: str, embeddings: list, texts: list, metadatas: list[dict]):
+        self.logger.info("Fetching a collection.")
         collection = self.get_collection()
 
         docs_to_insert = []
@@ -36,10 +44,11 @@ class MongoDBStore:
 
         if docs_to_insert:
             # insert_many automatically overwrites duplicates only if ordered=False
+            self.logger.info("Inserting documents to the collection.")
             collection.insert_many(docs_to_insert, ordered=False)
             # print(f"Stored {len(docs_to_insert)} chunks in MongoDB collection '{collection.name}'.")
         else:
-            print("No chunks to store.")
+            self.logger.info("No chunks to store.")
 
     def find(self, collection: Collection, query_embedding, documents: list[str]):
         query_vector = query_embedding

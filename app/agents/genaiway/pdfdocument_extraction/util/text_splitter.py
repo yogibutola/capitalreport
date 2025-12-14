@@ -2,7 +2,17 @@ import textwrap
 from datetime import datetime
 
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,  # Only output messages at INFO level and above
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
 class TextSplitter:
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
     def split_text_into_chunks(self, pages: list[str], filename: str = "", gcs_url: str = "", chunk_size: int = 2000) -> \
             list[dict[str, object]]:
         """Splits the raw text pages into smaller, indexed chunks."""
@@ -24,5 +34,5 @@ class TextSplitter:
                                              "extracted_on": datetime.today().strftime("%m-%d-%Y")}
                             })
                             doc_id_counter += 1
-        print(f"Total chunks created: {len(chunks)}")
+        self.logger.info(f"Total chunks created: {len(chunks)}")
         return chunks
