@@ -8,6 +8,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
+
 class GCPStore:
     def __init__(self):
         self.BUCKET_NAME = "capitalreport_file_storage"
