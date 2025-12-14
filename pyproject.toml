@@ -1,0 +1,35 @@
+[project]
+name = "capitalreport"
+version = "0.1.0"
+description = "Reporting and Q&A"
+authors = [
+    {name = "ybutola",email = "yogibutola@icloud.com"}
+]
+license = {text = "butolaorg"}
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "google-generativeai (>=0.8.5,<0.9.0)",
+    "chromadb (>=1.3.6)",
+    "google-genai (>=1.55.0)",
+    "fastapi (>=0.111.0,<0.112.0)",
+    "pypdf (>=3.16.0,<4.0.0)",
+    "python-docx (>=0.8.11,<1.0.0)",
+    "openpyxl (>=3.1.5,<4.0.0)",
+    "pymongo (>=4.15.5,<5.0.0)",
+    "pytesseract (>=0.3.13,<0.4.0)",
+    "pdf2image (>=1.17.0,<2.0.0)",
+    "python-dotenv (>=1.2.1,<2.0.0)",
+    "gunicorn (>=23.0.0,<24.0.0)",
+    "uvicorn (>=0.38.0,<0.39.0)",
+    "vertexai (>=1.71.1,<2.0.0)",
+    "pandas (>=2.3.3,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+package-mode = false
