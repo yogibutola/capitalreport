@@ -50,4 +50,4 @@ USER app
 
 EXPOSE 8080
 
-CMD ["gunicorn", "app.main:app", "--bind", "0.0.0.0:8080", "-k", "uvicorn.workers.UvicornWorker", "--workers", "3"]
+CMD ["gunicorn", "app.main:app", "--bind", "0.0.0.0:8080", "-k", "uvicorn.workers.UvicornWorker", "--workers", "1"]
