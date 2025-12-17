@@ -37,4 +37,4 @@ def query_document(documents: str,
                                       description="The name to include in the greeting response.")):
     orchestrator = get_orchestrator()
     response: str = orchestrator.prashn_kijiye(query, documents)
-    return {"answer": f"You answer: {response}"}
+    return {"answer": f"sanyog: {response}"}

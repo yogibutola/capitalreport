@@ -37,7 +37,7 @@ class PrashnUttarAgent:
             "distances": []
         }
 
-        self.logger.info(collection.name, collection.count_documents({}))
+        self.logger.info(f"Documents: {documents}")
         mongodb_store = MongoDBStore()
         results = mongodb_store.find(collection, query_embedding, documents)
         found_texts = []

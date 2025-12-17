@@ -44,7 +44,7 @@ class Orchestrator:
     def prashn_kijiye(self, query: str, document_names: str):
         try:
             if query.lower() == 'quit':
-                print("Exiting RAG assistant. Goodbye!")
+                self.logger.info("Exiting RAG assistant. Goodbye!")
                 return 'quitting'
 
             if query.lower() == 'clear':
@@ -52,6 +52,7 @@ class Orchestrator:
                 return 'clearing'
 
             if query.strip():
+                self.logger.info(f"Document names: {document_names}")
                 documents: list[str] = document_names.split(',')
                 documents = list({d.strip() for d in documents})
                 collection: Collection = self.mongodb_store.get_collection()
