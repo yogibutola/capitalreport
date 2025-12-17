@@ -44,6 +44,7 @@ class PrashnUttarAgent:
         found_metadatas = []
 
         for result in results:
+            self.logger.info("Found results.")
             found_texts.append(result.get("text", ""))
             found_metadatas.append(result.get("metadata", {}))
 
@@ -52,6 +53,7 @@ class PrashnUttarAgent:
         documents = combined['documents']
         metadatas = combined['metadatas']
 
+        self.logger.info(f"Combined documents: {documents}")
         # Combine document and metadata info
         context_blocks = []
         for doc, meta in zip(documents, metadatas):
@@ -63,6 +65,7 @@ class PrashnUttarAgent:
         # Format the retrieved context for the prompt
         context = "\n---\n".join(context_blocks)
 
+        self.logger.info(f"Context: {context}")
         # 2. Augmented Generation: Craft the RAG prompt
         prompt = f"""
         You are an expert Q&A assistant for the provided document.
@@ -108,4 +111,5 @@ class PrashnUttarAgent:
             self.logger.error(f"An error occurred while generating the response: {e}")
             return None
 
+        self.logger.info(f"Response: {response_text}")
         return response_text
