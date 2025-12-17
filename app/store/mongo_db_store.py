@@ -23,7 +23,7 @@ class MongoDBStore:
         return self.db[collection_name]
 
     def get_collection(self) -> Collection:
-        collection_name = f"document_knowledge_base"
+        collection_name = "document_knowledge_base"
         return self.db[collection_name]
 
     def store_pdf_embeddings_to_mongo_db(self, filename: str, embeddings: list, texts: list, metadatas: list[dict]):
@@ -57,7 +57,7 @@ class MongoDBStore:
         pipeline = [
             {
                 "$vectorSearch": {
-                    "index": "vector_index",  # Name of your Search Index in Atlas
+                    "index": "vector_index_capitalreport",  # Name of your Search Index in Atlas
                     "path": "embedding",  # Field where your vectors are stored
                     "queryVector": query_vector,
                     "numCandidates": 100,  # How many neighbors to look at (approx)
