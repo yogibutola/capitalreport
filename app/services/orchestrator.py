@@ -47,7 +47,7 @@ class Orchestrator:
                 detail="Could not save the file.",
             ) from None
         finally:
-            await file.close()
+            file.close()
     
 
     def prashn_kijiye(self, query: str, document_names: str):
