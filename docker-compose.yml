@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   capitalreport:
     image: capitalreport:v1.0.0
