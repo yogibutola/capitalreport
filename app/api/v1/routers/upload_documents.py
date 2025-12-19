@@ -3,6 +3,7 @@ from typing import Annotated
 from typing import List
 
 from fastapi import File, UploadFile, HTTPException, Depends, status, APIRouter
+from pymongo.errors import DuplicateKeyError, BulkWriteError
 
 from app.agents.vertex.prashn_uttar_agent import PrashnUttarAgent
 from app.services.data_extractor import DataExtractor
