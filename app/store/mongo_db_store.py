@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 from pymongo.synchronous.collection import Collection
+from pymongo.errors import BulkWriteError, DuplicateKeyError
 
 import logging
 
@@ -43,12 +44,27 @@ class MongoDBStore:
             docs_to_insert.append(doc)
 
         if docs_to_insert:
-            # insert_many automatically overwrites duplicates only if ordered=False
             self.logger.info("Inserting documents to the collection.")
-            collection.insert_many(docs_to_insert, ordered=False)
-            # print(f"Stored {len(docs_to_insert)} chunks in MongoDB collection '{collection.name}'.")
+            try:
+                # insert_many automatically overwrites duplicates only if ordered=False
+                collection.insert_many(docs_to_insert, ordered=False)
+                self.logger.info(f"Successfully inserted {len(docs_to_insert)} documents.")
+            except BulkWriteError as bwe:
+                # Check directly for E11000 duplicate key errors
+                duplicates = [e for e in bwe.details['writeErrors'] if e['code'] == 11000]
+                if duplicates:
+                    self.logger.warning(f"Skipped {len(duplicates)} duplicate documents.")
+                else:
+                    # If there are other errors, re-raise or log them
+                    self.logger.error(f"Bulk write error occurred: {bwe}")
+                    raise bwe
+            except DuplicateKeyError as dke:
+                self.logger.warning("Duplicate key error encountered.")
+                raise dke
         else:
             self.logger.info("No chunks to store.")
+            
+        
 
     def find(self, collection: Collection, query_embedding, documents: list[str]):
         query_vector = query_embedding

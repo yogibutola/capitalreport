@@ -35,6 +35,14 @@ def query_document(documents: str,
                    query: str = Query("Describe the document",  # Default value if no query parameter is provided
                                       title="Name to Greet",
                                       description="The name to include in the greeting response.")):
+    
+    if documents == "":
+        raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No documents selected.",
+            ) from None
+        
+
     orchestrator = get_orchestrator()
     response: str = orchestrator.prashn_kijiye(query, documents)
-    return {"answer": f"sanyog: {response}"}
+    return {"answer": f"ai: {response}"}

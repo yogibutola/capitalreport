@@ -45,6 +45,18 @@ async def upload_files(orchestrator: Annotated[Orchestrator, Depends(get_orchest
             gcs_url: str = gcp_store.upload_stream_to_gcs(file)
             orchestrator.store_the_docs(file, gcs_url)
             logger.info(f"GCP Storage URL: {gcs_url}")
+        except BulkWriteError as bwe:
+            logger.error(f"Bulk write error occurred: {bwe}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="There was a problem while saving the file. Please try again.",
+            ) from None
+        except DuplicateKeyError as dke:
+            logger.error(f"Duplicate key error occurred: {dke}")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This file is already uploaded. Please choose a different file.",
+            ) from None
         except Exception as e:
             logger.error(f"Error during file save: {e}")
             raise HTTPException(
