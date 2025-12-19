@@ -30,6 +30,7 @@ app.add_middleware(
 
 app.include_router(prashn_kijiye.router, prefix="/api/v1")
 app.include_router(upload_documents.router, prefix="/api/v1")
+app.include_router(list_files.router, prefix="/api/v1")
 
 
 def get_orchestrator() -> Orchestrator:

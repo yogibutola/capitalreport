@@ -41,3 +41,9 @@ class GCPStore:
         # )
         self.logger.info("Created pre-signed url.")
         return presigned_url
+
+    def list_files(self, file_type: str) -> list[str]:
+        client = storage.Client()
+        bucket = client.bucket(self.BUCKET_NAME)
+        blobs = bucket.list_blobs()
+        return [blob.name for blob in blobs]
