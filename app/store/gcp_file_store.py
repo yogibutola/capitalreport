@@ -47,3 +47,10 @@ class GCPStore:
         bucket = client.bucket(self.BUCKET_NAME)
         blobs = bucket.list_blobs()
         return [blob.name for blob in blobs]
+
+    def delete_file(self, filename: str):
+        client = storage.Client()
+        bucket = client.bucket(self.BUCKET_NAME)
+        blob = bucket.blob(filename)
+        blob.delete()
+        self.logger.info(f"Deleted file {filename} from GCP.")

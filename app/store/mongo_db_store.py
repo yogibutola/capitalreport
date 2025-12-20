@@ -98,3 +98,9 @@ class MongoDBStore:
         # Run the query
         results = list(collection.aggregate(pipeline))
         return results
+
+    def delete_document(self, filename: str):
+        collection = self.get_collection()
+        result = collection.delete_many({"filename": filename})
+        self.logger.info(f"Deleted {result.deleted_count} documents with filename {filename} from MongoDB.")
+
