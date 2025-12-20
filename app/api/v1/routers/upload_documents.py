@@ -44,7 +44,9 @@ async def upload_files(orchestrator: Annotated[Orchestrator, Depends(get_orchest
     for file in files:
         try:
             gcs_url: str = gcp_store.upload_stream_to_gcs(file)
-            orchestrator.store_the_docs(file, gcs_url)
+            msg: str =orchestrator.store_the_docs(file, gcs_url)
+            if msg == "File is empty of has an image.":
+                raise HTTPException(status_code=400, detail="File is empty of has an image.")
             logger.info(f"GCP Storage URL: {gcs_url}")
         except BulkWriteError as bwe:
             logger.error(f"Bulk write error occurred: {bwe}")

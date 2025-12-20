@@ -45,4 +45,4 @@ def query_document(documents: str,
 
     orchestrator = get_orchestrator()
     response: str = orchestrator.prashn_kijiye(query, documents)
-    return {"answer": f"Ledger: {response}"}
+    return {"answer": f"AEGIS: {response}"}

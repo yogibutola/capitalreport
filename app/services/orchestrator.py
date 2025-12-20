@@ -28,18 +28,25 @@ class Orchestrator:
         self.mongodb_store = mongodb_store
         self.logger = logging.getLogger(__name__)
 
-    def store_the_docs(self, file: UploadFile, gcs_url: str):
+    def store_the_docs(self, file: UploadFile, gcs_url: str) -> str:
         try:
             self.logger.info("Starting the process of reading, chunking, embedding and storing data.")
             file.file.seek(0)
             filename: str = file.filename
             extracted_text: list[str] = self.data_extractor.extract_data(file)
+            self.logger.info(f"Extracted text from file: {extracted_text}")
+            
+            if not extracted_text:
+                self.logger.error("No text extracted from file.")
+                return "File is empty of has an image."
+        
             chunks: list[dict[str, object]] = self.text_splitter.split_text_into_chunks(extracted_text, filename, gcs_url)
             text_chunks = [chunk["text"] for chunk in chunks]  # extract only text
             metadatas = [chunk["metadata"] for chunk in chunks]
             embeddings = self.embed_data.embed_texts(text_chunks)
             self.logger.info("Storing embeddings to vector database")
             self.mongodb_store.store_pdf_embeddings_to_mongo_db(filename, embeddings, text_chunks, metadatas)
+            return "File saved successfully."
         except Exception as e:
             self.logger.error(f"Error during file save: {e}")
             raise HTTPException(
