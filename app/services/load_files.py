@@ -1,5 +1,7 @@
 import logging
 
+from app.store.gcp_file_store import GCPStore
+
 logging.basicConfig(
     level=logging.INFO,  # Only output messages at INFO level and above
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
