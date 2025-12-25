@@ -29,3 +29,22 @@ def get_players(pb_player_service: PBPlayerService = Depends(get_pb_player_servi
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch players: {str(e)}"
         )
+
+@router.get("/players/{league_id}", response_model=PlayerResponse)
+def get_player_by_league_id(league_id: str, pb_player_service: PBPlayerService = Depends(get_pb_player_service)):
+    """
+    Get a player by league id.
+    
+    Args:
+        league_id: League id
+    
+    Returns:
+        PlayerResponse: Player data
+    """
+    try:
+        return pb_player_service.get_player_by_league_id(league_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch player by league id: {str(e)}"
+        )   

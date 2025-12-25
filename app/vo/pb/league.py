@@ -10,7 +10,7 @@ class   League(BaseModel):
     league_end_date: str
     league_duration: str = Field(..., min_length=1, description="Duration of the league")
     group_size: int = Field(..., gt=0, description="Size of the group, must be positive")
-    status: str
+    league_status: str
     match_format: str = Field(..., min_length=1, description="Format of the match, mandatory")
     players: List[Player]
 

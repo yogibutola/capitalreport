@@ -29,3 +29,9 @@ def get_all_leagues(pb_league_service: PBLeagueService = Depends(get_pb_league_s
 def get_league_by_status(status: str, pb_league_service: PBLeagueService = Depends(get_pb_league_service)):
     """ Get a league by status."""
     return pb_league_service.get_league_by_status(status)
+
+
+@router.get("/league/id/{league_id}", status_code=status.HTTP_200_OK)
+def get_players_by_league_id(league_id: str, pb_league_service: PBLeagueService = Depends(get_pb_league_service)):
+    """ Get a league by id."""
+    return pb_league_service.get_players_by_league_id(league_id)

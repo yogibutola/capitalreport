@@ -34,5 +34,9 @@ class PBLeagueService:
     def get_all_leagues(self)->list[dict]:
         return self.pb_league_store.get_all_leagues()
 
-    def get_league_by_status(self, status: str):
-        return self.pb_league_store.get_league_by_status(status)  
+    def get_league_by_status(self, league_status: str):
+        return self.pb_league_store.get_league_by_status(league_status)  
+
+    def get_players_by_league_id(self, league_id: str):
+        return self.pb_league_store.get_players_by_league_id(league_id)
+        

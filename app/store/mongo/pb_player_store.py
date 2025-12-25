@@ -11,6 +11,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
+
 class PBPlayerStore:
     def __init__(self, mongo_uri="mongodb://localhost:27017/?directConnection=true", db_name="pickleball"):
         uri = "mongodb+srv://yogender_db_user:egyFPoU9emubk13N@cluster0.ggoh6bt.mongodb.net/?appName=Cluster0"
@@ -49,45 +50,25 @@ class PBPlayerStore:
 
     def bulk_update_players_league_details(self, emails: list[str], league_data: dict):
         """
-        Update or add a league entry for multiple players at once.
+        Add a league entry to multiple players at once.
         """
-        collection = self.get_players_collection()
-        league_id = league_data["league_id"]
         emails = [e.lower() for e in emails]
-        
-        collection.update_many(
-            {"email": {"$in": emails}, "leagues.league_id": league_id},
-            {"$set": {
-                "leagues.$.league_name": league_data.get("league_name"),
-                "leagues.$.league_type": league_data.get("league_type"),
-                "leagues.$.league_status": league_data.get("league_status"),
-                "leagues.$.league_start_date": league_data.get("league_start_date"),
-                "leagues.$.league_end_date": league_data.get("league_end_date")
-            }}
-        )
-        
-        # # 2. Add new league entries for players who don't have this league_id yet
-        # # This is more complex in a single query, so we do it for players where it wasn't updated
-        # # Find players from the list who DON'T have this league_id
-        # # Actually, simpler to just $addToSet if not exists, but MongoDB 
-        # # doesn't easily do "push if not exists in array by specific field" in update_many without arrayFilters
-        
-        # # Alternative: use $push if it doesn't exist
-        # for email in emails:
-        #     collection.update_one(
-        #         {"email": email, "leagues.league_id": {"$ne": league_id}},
-        #         {"$push": {"leagues": league_data}}
-        #     )
+        collection = self.get_players_collection()
+        league_id = league_data.get("league_id")
 
-    def update_player_league_details(self, player_email: str, league_id: str, league_name: str):
-        """
-        Update or add a league entry for a single player.
-        """
-        self.bulk_update_players_league_details([player_email], {
-            "league_id": league_id,
-            "league_name": league_name,
-            "league_status": "Updated"
-        })
-        
+        for email in emails:
+            # We use a two-step update for each player to avoid duplicates:
+            # 1. Update if it exists
+            result = collection.update_one(
+                {"email": email, "leagues.league_id": league_id},
+                {"$set": {"leagues.$": league_data}}
+            )
+            
+            # 2. Push if it doesn't exist
+            if result.matched_count == 0:
+                collection.update_one(
+                    {"email": email},
+                    {"$push": {"leagues": league_data}}
+                )
+
     
-   
