@@ -30,6 +30,18 @@ class GCPStore:
         self.logger.info("Uploading complete.")
         return self.generate_signed_url(blob)
 
+    def upload_to_gcs(self, docx_bytes):
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(self.BUCKET_NAME)
+
+        blob_name = "audit_reports/rollforward_2025_2024.docx"
+        blob = bucket.blob(blob_name)
+
+        blob.upload_from_string(
+            docx_bytes,
+            content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+
     def generate_signed_url(self, blob):
         SERVICE_ACCOUNT_EMAIL ='stable-smithy-270416@appspot.gserviceaccount.com'
     

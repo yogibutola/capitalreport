@@ -1,0 +1,9 @@
+Here is a rephrased version of your prompt, structured for maximum clarity and precision for an AI agent:
+
+**"Generate a roll-forward of the attached audit report for the fiscal years ending December 31, 2025, and 2024. Please perform the following specific actions:**
+
+1. **Shift Dates:** Update all header dates, report dates, and fiscal year references throughout the document to reflect **2025 (Current Year)** and **2024 (Prior Year)**.
+2. **Remove Oldest Data:** Delete all financial data and columns referring to the year **2023**.
+3. **Move Prior Data:** Move the existing data from the **2024** columns into the **2024 (Prior Year)** columns.
+4. **Clear Current Data:** Create empty placeholders (e.g., `[INSERT]`) in the **2025 (Current Year)** columns for new data entry.
+5. **Output Format:** Provide the final result as a downloadable **DOCX** file."

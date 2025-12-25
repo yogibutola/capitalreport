@@ -14,6 +14,8 @@ from app.api.v1.routers import upload_documents
 from app.api.v1.routers import list_files
 from app.api.v1.routers import pb_league
 from app.api.v1.routers import pb_player
+from app.api.v1.routers import pb_authorization
+from app.api.v1.routers import generate_report
 
 app = FastAPI(title="Query Param Example")
 
@@ -36,6 +38,8 @@ app.include_router(upload_documents.router, prefix="/api/v1")
 app.include_router(list_files.router, prefix="/api/v1")
 app.include_router(pb_league.router, prefix="/api/v1")
 app.include_router(pb_player.router, prefix="/api/v1")
+app.include_router(pb_authorization.router, prefix="/api/v1")
+app.include_router(generate_report.router, prefix="/api/v1")
 
 
 def get_orchestrator() -> Orchestrator:

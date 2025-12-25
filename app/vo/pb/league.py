@@ -13,3 +13,8 @@ class   League(BaseModel):
     status: str
     match_format: str = Field(..., min_length=1, description="Format of the match, mandatory")
     players: List[Player]
+
+    @property
+    def player_emails(self) -> List[str]:
+        """Get a list of all player emails in the league"""
+        return [player.email for player in self.players]

@@ -1,3 +1,4 @@
+from app.agents.vertex.report_generation_agent import ReportGenerationAgent
 import logging
 
 from fastapi import UploadFile
@@ -74,6 +75,18 @@ class Orchestrator:
                 collection: Collection = self.mongodb_store.get_collection()
                 embedding_model = self.embed_data.get_embedding_model()
                 answer = self.prashn_uttar_agent.prashn_kijiye(query, embedding_model, collection, documents)
+                self.logger.info("Completed processing user request")
+                return answer
+        except Exception as e:
+            self.logger.error(f"\nAn error occurred during Q&A: {e}")
+            self.logger.error("Please check your API key and connection.")
+
+    def generate_report(self, user_input: str):
+        try:
+            if user_input.strip():
+                self.logger.info(f"User input: {user_input}")
+                report_generation_agent = ReportGenerationAgent()   
+                answer = report_generation_agent.generate_report(user_input)
                 self.logger.info("Completed processing user request")
                 return answer
         except Exception as e:

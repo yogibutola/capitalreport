@@ -1,5 +1,15 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, EmailStr, Field
+
+
+class PlayerLeague(BaseModel):
+    """Model for league details associated with a player"""
+    league_id: str = Field(..., description="Unique identifier for the league")
+    league_name: str = Field(..., description="Name of the league")
+    league_type: Optional[str] = Field(None, description="Type of the league")
+    league_status: Optional[str] = Field(None, description="Status of the player in the league")
+    league_start_date: Optional[str] = Field(None, description="Start date of the league")
+    league_end_date: Optional[str] = Field(None, description="End date of the league")
 
 
 class PlayerSignup(BaseModel):
@@ -19,6 +29,7 @@ class Player(BaseModel):
     email: EmailStr
     password: str  # This will be hashed
     dupr_rating: float
+    leagues: List[PlayerLeague] = Field(default_factory=list)
 
 
 class PlayerResponse(BaseModel):
@@ -28,3 +39,10 @@ class PlayerResponse(BaseModel):
     lastName: str
     email: EmailStr
     dupr_rating: float
+    leagues: List[PlayerLeague] = Field(default_factory=list)
+
+
+class PlayerLogin(BaseModel):
+    """Model for player login requests"""
+    email: EmailStr = Field(..., description="Player's email address")
+    password: str = Field(..., description="Player's password")

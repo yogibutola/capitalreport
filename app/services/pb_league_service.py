@@ -1,25 +1,20 @@
-from app.store.pb_mongo_db_store import PBMongoDBStore
+from app.store.mongo.pb_league_store import PBLeagueStore
 from app.vo.pb.league import League
 
 class PBLeagueService:
-    def __init__(self, mongo_db_store: PBMongoDBStore):
-        self.mongo_db_store = mongo_db_store
+    def __init__(self, pb_league_store: PBLeagueStore):
+        self.pb_league_store = pb_league_store
 
     def get_league_details(self):
         return "League details" 
 
-    def get_player_details(self):
-        return "Player details"
+
 
     def get_match_details(self):
         return "Match details"
 
     def get_team_details(self):
         return "Team details"
-
-
-    def get_player_stats(self):
-        return "Player stats"
 
     def get_team_stats(self):
         return "Team stats"
@@ -34,4 +29,10 @@ class PBLeagueService:
         return "Team match stats"
 
     def save_league_details(self, league_details: League):
-        self.mongo_db_store.store_new_league_details(league_details)
+        self.pb_league_store.store_new_league_details(league_details)
+
+    def get_all_leagues(self)->list[dict]:
+        return self.pb_league_store.get_all_leagues()
+
+    def get_league_by_status(self, status: str):
+        return self.pb_league_store.get_league_by_status(status)  
