@@ -10,12 +10,12 @@ from app.agents.genaiway.pdfdocument_extraction.pdf_agent import PdfAgent
 from app.agents.genaiway.pdfdocument_extraction.util.embed_data import EmbedData
 from app.agents.genaiway.pdfdocument_extraction.util.text_splitter import TextSplitter
 from app.api.v1.routers import prashn_kijiye
+from app.api.v1.routers import generate_report
 from app.api.v1.routers import upload_documents
 from app.api.v1.routers import list_files
-from app.api.v1.routers import pb_league
-from app.api.v1.routers import pb_player
-from app.api.v1.routers import pb_authorization
-from app.api.v1.routers import generate_report
+from app.api.v1.routers.pickleball import pb_league
+from app.api.v1.routers.pickleball import pb_player
+from app.api.v1.routers.pickleball import pb_authorization
 
 app = FastAPI(title="Query Param Example")
 
