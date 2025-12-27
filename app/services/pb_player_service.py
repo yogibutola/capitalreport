@@ -129,3 +129,7 @@ class PBPlayerService:
     def update_player_league(self, email: str, league_id: str, league_name: str):
         """Update or add a league for a player"""
         return self.pb_player_store.update_player_league_details(email, league_id, league_name)
+
+    def get_league_by_player_email(self, email_id: str):
+        return self.pb_player_store.get_league_by_player_email(email_id)
+        

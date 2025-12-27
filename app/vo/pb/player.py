@@ -10,6 +10,7 @@ class PlayerLeague(BaseModel):
     league_status: Optional[str] = Field(None, description="Status of the player in the league")
     league_start_date: Optional[str] = Field(None, description="Start date of the league")
     league_end_date: Optional[str] = Field(None, description="End date of the league")
+    rounds: List[dict] = Field(default_factory=list, description="List of rounds in the league")
 
 
 class PlayerSignup(BaseModel):
@@ -27,8 +28,8 @@ class Player(BaseModel):
     firstName: str
     lastName: str
     email: EmailStr
-    password: str  # This will be hashed
-    dupr_rating: float
+    password: Optional[str] = None  # This will be hashed
+    dupr_rating: Optional[float] = None
     leagues: List[PlayerLeague] = Field(default_factory=list)
 
 

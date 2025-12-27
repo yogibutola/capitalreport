@@ -48,3 +48,9 @@ def get_player_by_league_id(league_id: str, pb_player_service: PBPlayerService =
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch player by league id: {str(e)}"
         )   
+
+@router.get("/player/league/{email_id}", status_code=status.HTTP_200_OK)
+def get_league_by_player_email(email_id: str, pb_player_service: PBPlayerService = Depends(get_pb_player_service)):
+    """ Get a player by email."""
+    return pb_player_service.get_league_by_player_email(email_id)   
+    

@@ -71,4 +71,36 @@ class PBPlayerStore:
                     {"$push": {"leagues": league_data}}
                 )
 
-    
+    def get_league_by_player_email(self, email_id: str):
+        collection = self.get_players_collection()
+        pipeline = [
+            {"$match": {"email": email_id.lower()}},
+            {"$unwind": "$leagues"},
+            {
+                "$lookup": {
+                    "from": "league",
+                    "localField": "leagues.league_id",
+                    "foreignField": "league_id",
+                    "as": "league_details"
+                }
+            },
+            {
+                "$addFields": {
+                    "leagues.rounds": {
+                        "$ifNull": [
+                            {"$arrayElemAt": ["$league_details.rounds", 0]}, []
+                        ]
+                    }
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$_id",
+                    "leagues": {"$push": "$leagues"}
+                }
+            },
+            {"$project": {"leagues": 1, "_id": 0}}
+        ]
+        
+        result = list(collection.aggregate(pipeline))
+        return result[0] if result else None
