@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+
 class MatchDetailsPayload(BaseModel):
     match_id: str
     score_team_1: int
