@@ -1,6 +1,7 @@
 from app.store.mongo.pb_league_store import PBLeagueStore
 from app.vo.pb.league import League
 from app.vo.pb.match_details_payload import MatchDetailsPayload
+from app.vo.pb.slotting_details_payload import SlottingDetailsPayload
 
 
 class PBLeagueService:
@@ -40,11 +41,11 @@ class PBLeagueService:
     def get_players_by_league_id(self, league_id: str):
         return self.pb_league_store.get_players_by_league_id(league_id)
 
-    def update_league_with_round_details(self, league: League):
-        self.pb_league_store.update_league_with_round_details(league)
+    def update_league_with_round_details(self, slotting_details: SlottingDetailsPayload):
+        self.pb_league_store.update_league_with_round_details(slotting_details)
 
     def get_league_details_by_league_name(self, league_name: str):
         return self.pb_league_store.get_league_details_by_league_name(league_name)
 
-    def save_match_details(self, match_details: MatchDetailsPayload):
-        self.pb_league_store.save_match_details(match_details)
+    def save_match_score(self, match_details: MatchDetailsPayload):
+        self.pb_league_store.save_match_score(match_details)

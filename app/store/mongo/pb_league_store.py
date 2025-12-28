@@ -8,6 +8,7 @@ import logging
 from app.store.mongo.pb_player_store import PBPlayerStore
 from app.vo.pb.league import League
 from app.vo.pb.match_details_payload import MatchDetailsPayload
+from app.vo.pb.slotting_details_payload import SlottingDetailsPayload
 
 logging.basicConfig(
     level=logging.INFO,  # Only output messages at INFO level and above
@@ -40,6 +41,7 @@ class PBLeagueStore:
             "league_start_date": league_details.league_start_date,
             "league_end_date": league_details.league_end_date
         }
+        league_details.league_id = league.inserted_id
         pb_player_store = PBPlayerStore()
         pb_player_store.bulk_update_players_league_details(league_details.player_emails, league_data)
 
@@ -70,24 +72,24 @@ class PBLeagueStore:
         league = collection.find_one({"_id": ObjectId(league_id)}, {"players": 1})
         return league.get("players", []) if league else []
 
-    def update_league_with_round_details(self, league: League):
+    def update_league_with_round_details(self, slotting_details: SlottingDetailsPayload):
         collection = self.get_league_collection()
         # Use exclude_unset=True to only update the fields provided in the request
-        update_data = league.model_dump(exclude_unset=True)
+        update_data = slotting_details.model_dump(exclude_unset=True)
         # We don't want to update the _id field itself
         if "_id" in update_data:
             del update_data["_id"]
         if "league_id" in update_data:
             del update_data["league_id"]
-            
-        collection.update_one({"_id": ObjectId(league.league_id)}, {"$set": update_data})
-        self.logger.info(f"Successfully updated league details for ID: {league.league_id}")
+
+        collection.update_one({"_id": ObjectId(slotting_details.league_id)}, {"$set": update_data})
+        self.logger.info(f"Successfully updated league details for ID: {slotting_details.league_id}")
 
     def get_league_details_by_league_name(self, league_name: str):
         collection = self.get_league_collection()
         return collection.find_one({"league_name": league_name}, {"_id": 0})
 
-    def save_match_details(self, match_details: MatchDetailsPayload):
+    def save_match_score(self, match_details: MatchDetailsPayload):
         collection = self.get_league_collection()
         collection.update_one(
             {"league_name": match_details.league_name},

@@ -1,9 +1,11 @@
-from pydantic import BaseModel
+from typing import List, Optional
 
-class MatchDetailsPayload(BaseModel):
-    match_id: str
-    score_team_1: int
-    score_team_2: int
+from pydantic import BaseModel, Field
+
+from app.vo.pb.round import Round
+
+
+class SlottingDetailsPayload(BaseModel):
+    league_id: Optional[str] = None
     league_name: str
-    round_id: str
-    group_id: str
+    rounds: List[Round] = Field(default_factory=list)
