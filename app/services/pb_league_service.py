@@ -1,4 +1,6 @@
+from bson import ObjectId
 from app.store.mongo.pb_league_store import PBLeagueStore
+from app.store.mongo.pb_player_store import PBPlayerStore
 from app.vo.pb.league import League
 from app.vo.pb.match_details_payload import MatchDetailsPayload
 from app.vo.pb.slotting_details_payload import SlottingDetailsPayload
@@ -49,3 +51,36 @@ class PBLeagueService:
 
     def save_match_score(self, match_details: MatchDetailsPayload):
         self.pb_league_store.save_match_score(match_details)
+
+    def register_player(self, league_id: str, email: str):
+        # 1. Fetch player details
+        pb_player_store = PBPlayerStore()
+        player_doc = pb_player_store.find_player_by_email(email)
+        if not player_doc:
+            raise ValueError(f"Player with email {email} not found")
+
+        # 2. Fetch league details
+        league_collection = self.pb_league_store.get_league_collection()
+        league_doc = league_collection.find_one({"_id": ObjectId(league_id)})
+        if not league_doc:
+            raise ValueError(f"League with ID {league_id} not found")
+
+        # 3. Add player to league collection
+        player_data = {
+            "firstName": player_doc["firstName"],
+            "lastName": player_doc["lastName"],
+            "email": player_doc["email"],
+            "dupr_rating": player_doc.get("dupr_rating")
+        }
+        self.pb_league_store.add_player_to_league(league_id, player_data)
+
+        # 4. Update player record with league info
+        league_info = {
+            "league_id": str(league_doc["_id"]),
+            "league_name": league_doc["league_name"],
+            "league_type": league_doc.get("league_type", "PB"),
+            "league_status": league_doc.get("league_status") or league_doc.get("status"),
+            "league_start_date": league_doc.get("league_start_date"),
+            "league_end_date": league_doc.get("league_end_date")
+        }
+        pb_player_store.bulk_update_players_league_details([email], league_info)

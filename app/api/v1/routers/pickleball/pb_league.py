@@ -5,6 +5,8 @@ from app.vo.pb.league import League
 from app.services.pb_league_service import PBLeagueService
 from app.vo.pb.match_details_payload import MatchDetailsPayload
 from app.vo.pb.slotting_details_payload import SlottingDetailsPayload
+from app.vo.pb.league_registration_payload import LeagueRegistrationPayload
+from fastapi import status, APIRouter, Depends, HTTPException
 
 router = APIRouter(tags=["League"])
 
@@ -63,3 +65,17 @@ def save_match_score(match_details: MatchDetailsPayload,
                        pb_league_service: PBLeagueService = Depends(get_pb_league_service)):
     """ Save match details."""
     pb_league_service.save_match_score(match_details)
+
+
+@router.post("/league/register", status_code=status.HTTP_200_OK)
+def register_player_to_league(registration: LeagueRegistrationPayload,
+                             pb_league_service: PBLeagueService = Depends(get_pb_league_service)):
+    """Register a player for a league."""
+    try:
+        pb_league_service.register_player(registration.league_id, registration.email)
+        return {"message": "Player registered successfully"}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+

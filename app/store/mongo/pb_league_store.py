@@ -103,3 +103,10 @@ class PBLeagueStore:
                 {"m.match_id": match_details.match_id}
             ]
         )
+    def add_player_to_league(self, league_id: str, player_data: dict):
+        collection = self.get_league_collection()
+        collection.update_one(
+            {"_id": ObjectId(league_id)},
+            {"$addToSet": {"players": player_data}}
+        )
+        self.logger.info(f"Successfully added player {player_data.get('email')} to league {league_id}")
