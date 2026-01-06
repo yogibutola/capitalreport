@@ -1,3 +1,4 @@
+from typing import Optional
 from datetime import datetime
 
 from app.vo.pb.player import Player
@@ -9,7 +10,7 @@ class Match(BaseModel):
     match_id: str
     team_one: Team
     team_two: Team
-    siting_player: Player
+    siting_player: Optional[Player] = None
     time: datetime
     court_number: int
     # Use match_status to lock scoring.
