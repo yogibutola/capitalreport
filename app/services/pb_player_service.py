@@ -2,7 +2,8 @@ import bcrypt
 from fastapi import HTTPException, status
 
 from app.store.mongo.pb_player_store import PBPlayerStore
-from app.vo.pb.player import PlayerSignup, Player, PlayerResponse, PlayerLogin
+from app.vo.pb.player import PlayerSignup, Player, PlayerResponse, PlayerLogin, ClubSignup
+from app.utils.security import create_access_token
 
 
 class PBPlayerService:
@@ -48,14 +49,67 @@ class PBPlayerService:
                 detail="Invalid email or password"
             )
         
-        # Return player profile
+        # Generate access token
+        access_token = create_access_token(
+            data={"sub": player_data['email'], "role": player_data.get('role', 'player')}
+        )
+        
+        # Return player profile with token
         return PlayerResponse(
             id=str(player_data.get('_id')),
             firstName=player_data['firstName'],
             lastName=player_data['lastName'],
             email=player_data['email'],
             dupr_rating=player_data['dupr_rating'],
+            role=player_data.get('role', 'player'),
+            token=access_token,
             leagues=player_data.get('leagues', [])
+        )
+
+
+    def register_club(self, club_signup: "ClubSignup") -> PlayerResponse:
+        """
+        Register a new club (admin)
+        """
+        # Check if email already exists
+        existing_player = self.pb_player_store.find_player_by_email(club_signup.email)
+        if existing_player:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"User with email {club_signup.email} already exists"
+            )
+
+        # Hash the password
+        hashed_password = self.hash_password(club_signup.password)
+
+        # Create player model with admin role
+        player = Player(
+            firstName=club_signup.clubName,  # Store club name as first name for now
+            lastName="Admin",
+            email=club_signup.email.lower(),
+            password=hashed_password,
+            dupr_rating=0.0, # Not relevant for club admin
+            role="admin",
+            clubName=club_signup.clubName,
+            address=club_signup.address,
+            phone=club_signup.phone,
+            leagues=[]
+        )
+
+        # Store in database
+        player_data = player.model_dump(exclude={'id'})
+        created_player = self.pb_player_store.create_player(player_data)
+
+        # Return response
+        return PlayerResponse(
+            id=created_player.get('_id'),
+            firstName=created_player['firstName'],
+            lastName=created_player['lastName'],
+            email=created_player['email'],
+            dupr_rating=created_player['dupr_rating'],
+            role=created_player.get('role', 'admin'),
+            clubName=created_player.get('clubName'),
+            leagues=created_player.get('leagues', [])
         )
 
     def register_player(self, player_signup: PlayerSignup) -> PlayerResponse:
@@ -89,6 +143,7 @@ class PBPlayerService:
             email=player_signup.email.lower(),  # Store in lowercase
             password=hashed_password,
             dupr_rating=player_signup.dupr_rating,
+            role="player",  # Default role
             leagues=[]
         )
         
@@ -103,6 +158,7 @@ class PBPlayerService:
             lastName=created_player['lastName'],
             email=created_player['email'],
             dupr_rating=created_player['dupr_rating'],
+            role=created_player.get('role', 'player'),
             leagues=created_player.get('leagues', [])
         )
 
@@ -116,6 +172,7 @@ class PBPlayerService:
                 lastName=player['lastName'],
                 email=player['email'],
                 dupr_rating=player['dupr_rating'],
+                role=player.get('role', 'player'),
                 leagues=player.get('leagues', [])
             ) for player in players_data
         ]

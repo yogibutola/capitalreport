@@ -3,7 +3,7 @@ from fastapi import status, APIRouter, Depends, HTTPException
 from app.services.pb_player_service import PBPlayerService
 
 from app.store.mongo.pb_player_store import PBPlayerStore
-from app.vo.pb.player import PlayerSignup, PlayerResponse, PlayerLogin
+from app.vo.pb.player import PlayerSignup, PlayerResponse, PlayerLogin, ClubSignup
 
 router = APIRouter(tags=["Authorization"])
 
@@ -12,6 +12,31 @@ def get_pb_player_service() -> PBPlayerService:
     """Dependency injector for PBPlayerService."""
     pb_player_store = PBPlayerStore()
     return PBPlayerService(pb_player_store)
+
+
+@router.post("/signup/club", status_code=status.HTTP_201_CREATED, response_model=PlayerResponse)
+def signup_club(
+        club_signup: ClubSignup,
+        pb_player_service: PBPlayerService = Depends(get_pb_player_service)
+):
+    """
+    Register a new club (admin).
+
+    Args:
+        club_signup: Club signup data (clubName, email, password, address, phone)
+
+    Returns:
+        PlayerResponse: Created admin data
+    """
+    try:
+        return pb_player_service.register_club(club_signup)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create club: {str(e)}"
+        )
 
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED, response_model=PlayerResponse)
