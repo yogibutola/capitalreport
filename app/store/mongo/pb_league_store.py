@@ -7,7 +7,6 @@ import logging
 
 from app.store.mongo.pb_player_store import PBPlayerStore
 from app.vo.pb.league import League
-from app.vo.pb.match_details_payload import MatchDetailsPayload
 from app.vo.pb.slotting_details_payload import SlottingDetailsPayload
 
 logging.basicConfig(
@@ -89,20 +88,7 @@ class PBLeagueStore:
         collection = self.get_league_collection()
         return collection.find_one({"league_name": league_name}, {"_id": 0})
 
-    def save_match_score(self, match_details: MatchDetailsPayload):
-        collection = self.get_league_collection()
-        collection.update_one(
-            {"league_name": match_details.league_name},
-            {"$set": {
-                "rounds.$[r].group.$[g].match.$[m].team_one.score": match_details.score_team_1,
-                "rounds.$[r].group.$[g].match.$[m].team_two.score": match_details.score_team_2
-            }},
-            array_filters=[
-                {"r.round_id": match_details.round_id},
-                {"g.group_id": match_details.group_id},
-                {"m.match_id": match_details.match_id}
-            ]
-        )
+
     def add_player_to_league(self, league_id: str, player_data: dict):
         collection = self.get_league_collection()
         collection.update_one(

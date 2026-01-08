@@ -7,6 +7,10 @@ from pydantic import BaseModel
 
 
 class Match(BaseModel):
+    league_id: str
+    league_name: str
+    round_id: str
+    group_id: str
     match_id: str
     team_one: Team
     team_two: Team
@@ -14,5 +18,5 @@ class Match(BaseModel):
     time: datetime
     court_number: int
     # Use match_status to lock scoring.
-    match_status: str = 'YetToPlay | Completed | Cancelled' 
+    match_status: str = 'YetToPlay'
  

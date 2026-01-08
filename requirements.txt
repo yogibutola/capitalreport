@@ -93,6 +93,7 @@ pycparser==2.23 ; platform_python_implementation != "PyPy" and implementation_na
 pydantic-core==2.41.5 ; python_version >= "3.12"
 pydantic==2.12.5 ; python_version >= "3.12"
 pygments==2.19.2 ; python_version >= "3.12"
+pyjwt==2.10.1 ; python_version >= "3.12"
 pymongo==4.15.5 ; python_version >= "3.12"
 pyparsing==3.2.5 ; python_version >= "3.12"
 pypdf==3.17.4 ; python_version >= "3.12"

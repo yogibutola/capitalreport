@@ -3,7 +3,9 @@ from fastapi import status, APIRouter, Depends
 from app.store.mongo.pb_league_store import PBLeagueStore
 from app.vo.pb.league import League
 from app.services.pb_league_service import PBLeagueService
+from app.vo.pb.match import Match
 from app.vo.pb.match_details_payload import MatchDetailsPayload
+from app.vo.pb.response_model.league_response import LeagueResponse
 from app.vo.pb.slotting_details_payload import SlottingDetailsPayload
 from app.vo.pb.league_registration_payload import LeagueRegistrationPayload
 from app.api.v1.deps import get_current_admin, get_current_player
@@ -46,13 +48,14 @@ def get_league_details_by_league_name(league_name: str,
 
 ################################################### POST METHODS ###################################################
 
-@router.post("/league", status_code=status.HTTP_201_CREATED)
+@router.post("/league", status_code=status.HTTP_201_CREATED, response_model=LeagueResponse)
 def create_league(league: League, 
                   pb_league_service: PBLeagueService = Depends(get_pb_league_service),
                   payload: dict = Depends(get_current_admin)):
     """Create a new league. (Admin only)"""
     pb_league_service.save_league_details(league)
-    return {"message": "League created successfully", "league_id": league.league_id}
+    league_response = LeagueResponse(league_id=league.league_id, league_name=league.league_name)
+    return league_response
 
 
 @router.post("/league/round", status_code=status.HTTP_200_OK)

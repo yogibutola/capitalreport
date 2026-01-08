@@ -2,13 +2,17 @@ from bson import ObjectId
 from app.store.mongo.pb_league_store import PBLeagueStore
 from app.store.mongo.pb_player_store import PBPlayerStore
 from app.vo.pb.league import League
+from app.vo.pb.match import Match
 from app.vo.pb.match_details_payload import MatchDetailsPayload
 from app.vo.pb.slotting_details_payload import SlottingDetailsPayload
+from app.store.mongo.pb_match_store import PBMatchStore
+
 
 
 class PBLeagueService:
     def __init__(self, pb_league_store: PBLeagueStore):
         self.pb_league_store = pb_league_store
+        self.pb_match_store = PBMatchStore()
 
     def get_league_details(self):
         return "League details"
@@ -45,12 +49,21 @@ class PBLeagueService:
 
     def update_league_with_round_details(self, slotting_details: SlottingDetailsPayload):
         self.pb_league_store.update_league_with_round_details(slotting_details)
+        
+        # Extract match details from the slotting details
+        matches = []
+        for round_item in slotting_details.rounds:
+            for group_item in round_item.group:
+                for match_item in group_item.match:
+                    matches.append(match_item)
+        
+        self.pb_match_store.store_match_details(matches)
 
     def get_league_details_by_league_name(self, league_name: str):
         return self.pb_league_store.get_league_details_by_league_name(league_name)
 
     def save_match_score(self, match_details: MatchDetailsPayload):
-        self.pb_league_store.save_match_score(match_details)
+        self.pb_match_store.save_match_score(match_details)
 
     def register_player(self, league_id: str, email: str):
         # 1. Fetch player details
