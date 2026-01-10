@@ -86,7 +86,7 @@ class PBLeagueStore:
 
     def get_league_details_by_league_name(self, league_name: str):
         collection = self.get_league_collection()
-        return collection.find_one({"league_name": league_name}, {"_id": 0})
+        return collection.find_one({"league_name": league_name})
 
 
     def add_player_to_league(self, league_id: str, player_data: dict):

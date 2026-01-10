@@ -48,19 +48,36 @@ class PBLeagueService:
         return self.pb_league_store.get_players_by_league_id(league_id)
 
     def update_league_with_round_details(self, slotting_details: SlottingDetailsPayload):
-        self.pb_league_store.update_league_with_round_details(slotting_details)
-        
         # Extract match details from the slotting details
         matches = []
         for round_item in slotting_details.rounds:
             for group_item in round_item.group:
                 for match_item in group_item.match:
                     matches.append(match_item)
+                # Remove match details from group after extraction
+                group_item.match = []
         
+        # Save league details (now without match information)
+        self.pb_league_store.update_league_with_round_details(slotting_details)
+        
+        # Save extracted match details separately
         self.pb_match_store.store_match_details(matches)
 
     def get_league_details_by_league_name(self, league_name: str):
-        return self.pb_league_store.get_league_details_by_league_name(league_name)
+        league_details = self.pb_league_store.get_league_details_by_league_name(league_name)
+        if league_details and "_id" in league_details:
+            matches = self.pb_match_store.get_match_details_by_league_id(league_details["_id"])
+            # Convert matches to serializable format
+            for match in matches:
+                if "_id" in match:
+                    # We can either remove _id or convert it to a string. 
+                    # Match model uses match_id, so we can just remove _id.
+                    del match["_id"]
+            
+            league_details["league_id"] = str(league_details["_id"])
+            del league_details["_id"]
+            league_details["matches"] = matches
+        return league_details
 
     def save_match_score(self, match_details: MatchDetailsPayload):
         self.pb_match_store.save_match_score(match_details)
