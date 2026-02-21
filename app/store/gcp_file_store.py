@@ -45,12 +45,14 @@ class GCPStore:
     def generate_signed_url(self, blob):
         SERVICE_ACCOUNT_EMAIL ='stable-smithy-270416@appspot.gserviceaccount.com'
     
-        presigned_url = blob.generate_signed_url(
-            version="v4",
-            expiration=3600,  # 1 hour
-            method="GET",
-            service_account_email = SERVICE_ACCOUNT_EMAIL
-        )
+        # presigned_url = blob.generate_signed_url(
+        #     version="v4",
+        #     expiration=3600,  # 1 hour
+        #     method="GET",
+        #     service_account_email = SERVICE_ACCOUNT_EMAIL
+        # )
+
+        presigned_url = "http://locathost:8080"
         self.logger.info("Created pre-signed url.")
         return presigned_url
 
