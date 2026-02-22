@@ -23,8 +23,14 @@ class EmbedData:
     def embed_texts(self, texts: list):
         self.logger.info("Embedding text.")
         model = self.get_embedding_model()
-        embeddings = model.get_embeddings(texts)
-        vectors = [e.values for e in embeddings]
+        
+        batch_size = 250
+        vectors = []
+        for i in range(0, len(texts), batch_size):
+            batch_texts = texts[i:i + batch_size]
+            embeddings = model.get_embeddings(batch_texts)
+            vectors.extend([e.values for e in embeddings])
+            
         self.logger.info("Embedding complete.")
         return vectors
 
