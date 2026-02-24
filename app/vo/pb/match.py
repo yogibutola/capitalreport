@@ -9,8 +9,8 @@ from pydantic import BaseModel
 class Match(BaseModel):
     league_id: str
     league_name: str
-    round_id: str
-    group_id: str
+    round_id: int
+    group_id: int
     match_id: str
     team_one: Team
     team_two: Team

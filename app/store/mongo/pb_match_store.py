@@ -46,14 +46,30 @@ class PBMatchStore:
 
     def save_match_score(self, match_details: MatchDetailsPayload):
         collection = self.get_matches_collection()
+        match = self.get_match(match_details.league_id, match_details.match_id)
+        
+        # default assignment (assumes frontend sent team1/team2 in order)
+        s1 = match_details.score_team_1
+        s2 = match_details.score_team_2
+
+        # if we provided team names, match them up to the backend representation
+        if match and match_details.team_1_name and match_details.team_2_name:
+            team_one_name = match.get("team_one", {}).get("team_name")
+            team_two_name = match.get("team_two", {}).get("team_name")
+            
+            # if the payload's team 1 is actually team two on the backend
+            if team_two_name == match_details.team_1_name or team_one_name == match_details.team_2_name:
+                s1 = match_details.score_team_2
+                s2 = match_details.score_team_1
+
         collection.update_one(
             {
                 "match_id": match_details.match_id,
                 "league_id": match_details.league_id
             },
             {"$set": {
-                "team_one.score": match_details.score_team_1,
-                "team_two.score": match_details.score_team_2,
+                "team_one.score": s1,
+                "team_two.score": s2,
                 "match_status": match_details.match_status
             }}
         )
@@ -61,3 +77,18 @@ class PBMatchStore:
     def get_match_details_by_league_id(self, league_id: str):
         collection = self.get_matches_collection()
         return list(collection.find({"league_id": str(league_id)}))
+
+    def get_matches_by_group(self, league_id: str, round_id: int, group_id: int) -> List[dict]:
+        collection = self.get_matches_collection()
+        return list(collection.find({
+            "league_id": league_id,
+            "round_id": round_id,
+            "group_id": group_id
+        }))
+
+    def get_match(self, league_id: str, match_id: str) -> dict:
+        collection = self.get_matches_collection()
+        return collection.find_one({
+            "league_id": league_id,
+            "match_id": match_id
+        })

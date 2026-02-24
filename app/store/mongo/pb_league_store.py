@@ -48,11 +48,11 @@ class PBLeagueStore:
 
     def get_league_details(self, league_id: str):
         collection = self.get_league_collection()
-        return collection.find_one({"league_id": league_id})
+        return collection.find_one({"_id": ObjectId(league_id)})
 
     def update_league_details(self, league_id: str, league_details: League):
         collection = self.get_league_collection()
-        collection.update_one({"league_id": league_id}, {"$set": league_details.model_dump()})
+        collection.update_one({"_id": ObjectId(league_id)}, {"$set": league_details.model_dump()})
         self.logger.info("Successfully updated league details.")
 
     def get_all_leagues(self) -> list[dict]:
@@ -96,3 +96,90 @@ class PBLeagueStore:
             {"$addToSet": {"players": player_data}}
         )
         self.logger.info(f"Successfully added player {player_data.get('email')} to league {league_id}")
+
+    def add_players_to_round_group(self, league_id: str, round_id: int, group_id: int, players: list):
+        collection = self.get_league_collection()
+        # Complex update:
+        # 1. Try to push to existing group
+        # This requires the group to exist.
+        # If we are unsure if Round or Group exists, we might need upsert logic or simple check-then-update.
+        # Given Mongo dynamics, using arrayFilters is best for nested arrays.
+        
+        # Checking if round/group exists is safer for now.
+        league = collection.find_one({"_id": ObjectId(league_id)})
+        if not league: return
+        
+        rounds = league.get("rounds", [])
+        # Find if round exists
+        round_exists = False
+        for r in rounds:
+            if int(r.get("round_id", -1)) == round_id:
+                round_exists = True
+                # Check if group exists
+                group_exists = False
+                for g in r.get("group", []):
+                    if int(g.get("group_id", -1)) == group_id:
+                        group_exists = True
+                        # Update this group
+                        # In code, we can append to g["players"]
+                        existing_emails = set(p.get("email") for p in g.get("players", []))
+                        for p in players:
+                            if p["email"] not in existing_emails:
+                                g.setdefault("players", []).append(p)
+                                existing_emails.add(p["email"])
+                        break
+                if not group_exists:
+                    # Create group
+                    new_group = {
+                        "group_id": group_id,
+                        "group_name": f"Group {group_id}",
+                        "match": [],
+                        "players": players
+                    }
+                    r.setdefault("group", []).append(new_group)
+                break
+        
+        if not round_exists:
+            # Create round
+            new_group = {
+                "group_id": group_id,
+                "group_name": f"Group {group_id}",
+                "match": [],
+                "players": players
+            }
+            new_round = {
+                "round_id": round_id,
+                "group": [new_group]
+            }
+            rounds.append(new_round)
+            
+        # Update the whole rounds array
+        collection.update_one(
+            {"_id": ObjectId(league_id)},
+            {"$set": {"rounds": rounds}}
+        )
+
+    def set_group_matches(self, league_id: str, round_id: int, group_id: int, matches: list):
+        collection = self.get_league_collection()
+        # Similar logic: read-modify-write for simplicity avoiding deep arrayFilter complexity
+        league = collection.find_one({"_id": ObjectId(league_id)})
+        if not league: return
+        
+        rounds = league.get("rounds", [])
+        updated = False
+        for r in rounds:
+            if int(r.get("round_id", -1)) == round_id:
+                for g in r.get("group", []):
+                    if int(g.get("group_id", -1)) == group_id:
+                        g["match"] = [m.model_dump() if hasattr(m, 'model_dump') else m for m in matches]
+                        g["group_size"] = len(matches)
+                        updated = True
+                        break
+                if updated: break
+        
+        if updated:
+            collection.update_one(
+                {"_id": ObjectId(league_id)},
+                {"$set": {"rounds": rounds}}
+            )
+
