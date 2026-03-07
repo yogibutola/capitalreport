@@ -1,4 +1,4 @@
-from fastapi import status, APIRouter, Depends
+from fastapi import status, APIRouter, Depends, HTTPException
 
 from app.store.mongo.pb_league_store import PBLeagueStore
 from app.vo.pb.league import League
@@ -8,8 +8,8 @@ from app.vo.pb.match_details_payload import MatchDetailsPayload
 from app.vo.pb.response_model.league_response import LeagueResponse
 from app.vo.pb.slotting_details_payload import SlottingDetailsPayload
 from app.vo.pb.league_registration_payload import LeagueRegistrationPayload
+from app.vo.pb.withdrawal_payload import WithdrawalPayload
 from app.api.v1.deps import get_current_admin, get_current_player
-from fastapi import status, APIRouter, Depends, HTTPException
 
 router = APIRouter(tags=["League"])
 
@@ -88,3 +88,37 @@ def register_player_to_league(registration: LeagueRegistrationPayload,
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
+@router.post("/league/withdraw", status_code=status.HTTP_200_OK)
+def withdraw_from_league(withdrawal: WithdrawalPayload,
+                         pb_league_service: PBLeagueService = Depends(get_pb_league_service),
+                         payload: dict = Depends(get_current_player)):
+    """Withdraw a player from a specific play day."""
+    try:
+        # Assuming the email is extracted from the JWT payload
+        email = payload.get("sub") or withdrawal.email # Fallback if we added email to payload
+        # But wait, withdrawal payload doesn't have email in the plan. Let's make sure email comes from payload.
+        # Actually in other endpoints they extract from token or we can just expect it.
+        # The PlayerLogin uses sub. But let's check `get_current_user_payload` -> returns `payload` which has `sub` (email usually).
+        email = payload.get("sub")
+        if not email:
+            raise ValueError("Could not extract email from token")
+            
+        pb_league_service.withdraw_player(withdrawal.league_id, email, withdrawal.play_day, withdrawal.reason)
+        return {"message": "Player withdrawn successfully for the play day"}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@router.delete("/league/{league_id}", status_code=status.HTTP_200_OK)
+def delete_league(league_id: str,
+                  pb_league_service: PBLeagueService = Depends(get_pb_league_service),
+                  payload: dict = Depends(get_current_admin)):
+    """Delete a league and its associated matches. (Admin only)"""
+    try:
+        success = pb_league_service.delete_league(league_id)
+        if not success:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="League not found")
+        return {"message": "League deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

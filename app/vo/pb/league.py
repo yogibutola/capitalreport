@@ -4,6 +4,12 @@ from app.vo.pb.player import Player
 from app.vo.pb.round import Round
 
 
+class Withdrawal(BaseModel):
+    email: str = Field(..., description="Email of the withdrawn player")
+    play_day: int = Field(..., description="The play day the player is withdrawn from")
+    reason: str = Field(..., description="Reason for withdrawal")
+
+
 class   League(BaseModel):
     league_id: Optional[str] = None
     
@@ -23,6 +29,7 @@ class   League(BaseModel):
     match_format: str = Field(..., min_length=1, description="Format of the match")
     players: Optional[List[Player]] = Field(default_factory=list)
     rounds: Optional[List[Round]] = Field(default_factory=list)
+    withdrawals: Optional[List[Withdrawal]] = Field(default_factory=list, description="List of player withdrawals per play day")
 
     @property
     def player_emails(self) -> List[str]:

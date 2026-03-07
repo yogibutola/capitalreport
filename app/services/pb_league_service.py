@@ -128,6 +128,26 @@ class PBLeagueService:
         }
         pb_player_store.bulk_update_players_league_details([email], league_info)
 
+    def withdraw_player(self, league_id: str, email: str, play_day: int, reason: str):
+        # 1. Fetch player details
+        pb_player_store = PBPlayerStore()
+        player_doc = pb_player_store.find_player_by_email(email)
+        if not player_doc:
+            raise ValueError(f"Player with email {email} not found")
+
+        # 2. Fetch league details
+        league_doc = self.pb_league_store.get_league_details(league_id)
+        if not league_doc:
+            raise ValueError(f"League with ID {league_id} not found")
+        
+        # 3. Add withdrawal to league
+        withdrawal_data = {
+            "email": email,
+            "play_day": play_day,
+            "reason": reason
+        }
+        self.pb_league_store.add_withdrawal(league_id, withdrawal_data)
+
     def check_group_completion(self, league_id: str, round_id: int, group_id: int):
         matches = self.pb_match_store.get_matches_by_group(league_id, round_id, group_id)
         if not matches:
@@ -292,42 +312,53 @@ class PBLeagueService:
         self.check_and_slot_next_round_group(league_id, round_id, group_id_val)
 
     def check_and_slot_next_round_group(self, league_id: str, round_id: int, group_id: int):
-         # Check if group has enough players.
-         league_doc = self.pb_league_store.get_league_details(league_id)
-         group_size = league_doc.get("group_size", 4) # Default 4
+        # Only auto-slot for even round_ids (which means we are generating slots AFTER an odd round)
+        if round_id % 2 != 0:
+            return
+
+        # Check if group has enough players.
+        league_doc = self.pb_league_store.get_league_details(league_id)
+        group_size = league_doc.get("group_size", 4) # Default 4
          
-         # Find the group
-         rounds = league_doc.get("rounds", [])
-         target_round = next((r for r in rounds if int(r.get("round_id", -1)) == round_id), None)
-         if not target_round: return
-         
-         # Note: rounds might be dicts or objects depending on pymongo. Store usually returns dicts.
-         target_group = next((g for g in target_round.get("group", []) if int(g.get("group_id", -1)) == group_id), None)
-         if not target_group: return
-         
-         # Determine group size: default to league setting, override if group has specific size
-         target_size = target_group.get("group_size") or group_size
-         
-         players = target_group.get("players", [])
-         if len(players) >= target_size:
-             # Logic to generate matches!
-             # We should also check if matches already exist to avoid double slotting.
-             if target_group.get("match") and len(target_group["match"]) > 0:
-                 return # Already slotted
-             
-             # Generate Matches
-             # Re-use slotting logic?
-             # For now, simple logic or call a helper.
-             new_matches = self.generate_matches_for_group(league_id, round_id, group_id, players) # Take top N if > N
-             
-             # Save Matches to DB
-             self.pb_match_store.store_match_details(new_matches)
-             
-             # Update League Group with Matches
-             # We pass everything as objects/dicts?
-             # Store needs `SlottingDetailsPayload` or just raw update.
-             # Easier to use store method to specifically set matches.
-             self.pb_league_store.set_group_matches(league_id, round_id, group_id, new_matches)
+        # Find the group
+        rounds = league_doc.get("rounds", [])
+        target_round = next((r for r in rounds if int(r.get("round_id", -1)) == round_id), None)
+        if not target_round: return
+        
+        # Note: rounds might be dicts or objects depending on pymongo. Store usually returns dicts.
+        target_group = next((g for g in target_round.get("group", []) if int(g.get("group_id", -1)) == group_id), None)
+        if not target_group: return
+        
+        # Determine group size: default to league setting, override if group has specific size
+        target_size = target_group.get("group_size") or group_size
+        
+        players = target_group.get("players", [])
+        
+        # Determine play day and filter out withdrawn players
+        play_day = (round_id + 1) // 2
+        withdrawals = league_doc.get("withdrawals", [])
+        withdrawn_emails = {w["email"] for w in withdrawals if w["play_day"] == play_day}
+        active_players = [p for p in players if p.get("email") not in withdrawn_emails]
+        
+        if len(active_players) >= target_size:
+            # Logic to generate matches!
+            # We should also check if matches already exist to avoid double slotting.
+            if target_group.get("match") and len(target_group["match"]) > 0:
+                return # Already slotted
+            
+            # Generate Matches
+            # Re-use slotting logic?
+            # For now, simple logic or call a helper.
+            new_matches = self.generate_matches_for_group(league_id, round_id, group_id, active_players) # Take top N if > N
+            
+            # Save Matches to DB
+            self.pb_match_store.store_match_details(new_matches)
+            
+            # Update League Group with Matches
+            # We pass everything as objects/dicts?
+            # Store needs `SlottingDetailsPayload` or just raw update.
+            # Easier to use store method to specifically set matches.
+            self.pb_league_store.set_group_matches(league_id, round_id, group_id, new_matches)
 
     def generate_matches_for_group(self, league_id, round_id, group_id, players):
         from app.vo.pb.match import Match
@@ -428,3 +459,10 @@ class PBLeagueService:
                 )
                 matches.append(m)
         return matches
+
+    def delete_league(self, league_id: str):
+        # 1. Delete associated matches
+        self.pb_match_store.delete_matches_by_league(league_id)
+        
+        # 2. Delete the league
+        return self.pb_league_store.delete_league(league_id)

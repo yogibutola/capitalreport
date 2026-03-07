@@ -183,3 +183,17 @@ class PBLeagueStore:
                 {"$set": {"rounds": rounds}}
             )
 
+    def add_withdrawal(self, league_id: str, withdrawal_data: dict):
+        collection = self.get_league_collection()
+        collection.update_one(
+            {"_id": ObjectId(league_id)},
+            {"$push": {"withdrawals": withdrawal_data}}
+        )
+        self.logger.info(f"Successfully added withdrawal for {withdrawal_data.get('email')} for play day {withdrawal_data.get('play_day')} to league {league_id}")
+
+    def delete_league(self, league_id: str):
+        collection = self.get_league_collection()
+        result = collection.delete_one({"_id": ObjectId(league_id)})
+        self.logger.info(f"Successfully deleted league {league_id}. Deleted count: {result.deleted_count}")
+        return result.deleted_count > 0
+

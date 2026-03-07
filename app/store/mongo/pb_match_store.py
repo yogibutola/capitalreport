@@ -92,3 +92,9 @@ class PBMatchStore:
             "league_id": league_id,
             "match_id": match_id
         })
+
+    def delete_matches_by_league(self, league_id: str):
+        collection = self.get_matches_collection()
+        result = collection.delete_many({"league_id": str(league_id)})
+        self.logger.info(f"Successfully deleted matches for league {league_id}. Deleted count: {result.deleted_count}")
+        return result.deleted_count
