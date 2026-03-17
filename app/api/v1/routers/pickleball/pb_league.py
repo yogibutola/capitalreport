@@ -110,6 +110,19 @@ def withdraw_from_league(withdrawal: WithdrawalPayload,
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
+@router.post("/league/{league_id}/day/{play_day}/slot", status_code=status.HTTP_200_OK)
+def slot_first_round_of_day(league_id: str, play_day: int,
+                            pb_league_service: PBLeagueService = Depends(get_pb_league_service),
+                            payload: dict = Depends(get_current_admin)):
+    """Admin endpoint to manually trigger slotting for the first round of a specific play day."""
+    try:
+        pb_league_service.slot_first_round_of_day(league_id, play_day)
+        return {"message": f"First round matches slotted successfully for Play Day {play_day}"}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
 @router.delete("/league/{league_id}", status_code=status.HTTP_200_OK)
 def delete_league(league_id: str,
                   pb_league_service: PBLeagueService = Depends(get_pb_league_service),

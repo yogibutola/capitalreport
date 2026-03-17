@@ -97,7 +97,7 @@ class PBLeagueStore:
         )
         self.logger.info(f"Successfully added player {player_data.get('email')} to league {league_id}")
 
-    def add_players_to_round_group(self, league_id: str, round_id: int, group_id: int, players: list):
+    def add_players_to_round_group(self, league_id: str, round_id: int, group_id: int, players: list, position: str = "append"):
         collection = self.get_league_collection()
         # Complex update:
         # 1. Try to push to existing group
@@ -125,7 +125,11 @@ class PBLeagueStore:
                         existing_emails = set(p.get("email") for p in g.get("players", []))
                         for p in players:
                             if p["email"] not in existing_emails:
-                                g.setdefault("players", []).append(p)
+                                player_list = g.setdefault("players", [])
+                                if position == "prepend":
+                                    player_list.insert(0, p)
+                                else:
+                                    player_list.append(p)
                                 existing_emails.add(p["email"])
                         break
                 if not group_exists:
