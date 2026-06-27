@@ -71,6 +71,15 @@ class PBPlayerStore:
                     {"$push": {"leagues": league_data}}
                 )
 
+    def remove_league_from_player(self, email: str, league_id: str):
+        """Remove a league entry from a player's leagues array."""
+        collection = self.get_players_collection()
+        collection.update_one(
+            {"email": email.lower()},
+            {"$pull": {"leagues": {"league_id": league_id}}}
+        )
+        self.logger.info(f"Removed league {league_id} from player {email}")
+
     def get_league_by_player_email(self, email_id: str):
         collection = self.get_players_collection()
         pipeline = [

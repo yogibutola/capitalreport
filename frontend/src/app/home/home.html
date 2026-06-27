@@ -1,0 +1,156 @@
+<div class="home-container">
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content fade-in-up">
+            <h1 class="hero-title text-gradient">Elevate Your Game with DinkLeague</h1>
+            <p class="hero-subtitle">
+                The ultimate platform for league management, automated slotting, and real-time player statistics.
+            </p>
+        </div>
+
+        <!-- Image Carousel -->
+        <div class="carousel-container fade-in-up" style="animation-delay: 0.2s;">
+            <div class="carousel-track" [style.transform]="'translateX(-' + (currentSlide * 100) + '%)'">
+                <div class="carousel-slide" *ngFor="let image of images">
+                    <img [src]="image.src" [alt]="image.alt">
+                    <div class="slide-caption">
+                        <h3>{{ image.title }}</h3>
+                        <p>{{ image.caption }}</p>
+                        <a [routerLink]="image.link" class="btn btn-primary carousel-action-btn">{{ image.buttonText
+                            }}</a>
+                    </div>
+                </div>
+            </div>
+
+            <button class="carousel-btn prev" (click)="prevSlide()">❮</button>
+            <button class="carousel-btn next" (click)="nextSlide()">❯</button>
+
+            <div class="carousel-indicators">
+                <span *ngFor="let img of images; let i = index" [class.active]="i === currentSlide"
+                    (click)="setSlide(i)"></span>
+            </div>
+        </div>
+
+        <!-- Decorative Background Elements -->
+        <div class="bg-blur blur-1"></div>
+        <div class="bg-blur blur-2"></div>
+    </section>
+
+    <!-- Next Match Card (visible whenever logged in) -->
+    @if (authService.currentUser()) {
+    <section class="next-match-section fade-in-up" style="animation-delay: 0.35s;">
+        <div class="next-match-card" (click)="goToPlayerDashboard()">
+
+            @if (nextMatch(); as match) {
+                <div class="nmc-label-col">
+                    <span class="nmc-badge">Next Match</span>
+                </div>
+
+                <div class="nmc-datetime">
+                    <span class="nmc-date">{{ formatMatchDate(match.date) }}</span>
+                    <span class="nmc-time">{{ match.time }}</span>
+                </div>
+
+                <div class="nmc-separator"></div>
+
+                <div class="nmc-teams">
+                    <div class="nmc-team">
+                        <span class="nmc-team-label">My Team</span>
+                        <span class="nmc-team-name">{{ match.myTeamName || 'My Team' }}</span>
+                        @if (getTeammates(match)) {
+                        <span class="nmc-players">w/ {{ getTeammates(match) }}</span>
+                        }
+                    </div>
+                    <div class="nmc-vs">VS</div>
+                    <div class="nmc-team">
+                        <span class="nmc-team-label">Opponents</span>
+                        <span class="nmc-team-name">{{ match.opponentTeamName || 'Opponents' }}</span>
+                        @if (getOpponents(match)) {
+                        <span class="nmc-players">{{ getOpponents(match) }}</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="nmc-meta">
+                    <span class="nmc-league-tag">{{ match.leagueName }}</span>
+                    @if (match.roundName || match.roundId) {
+                    <span class="nmc-info-tag">{{ match.roundName || 'Round ' + match.roundId }}</span>
+                    }
+                    @if (match.court && match.court !== 'TBD') {
+                    <span class="nmc-info-tag">Court {{ match.court }}</span>
+                    }
+                </div>
+
+                <div class="nmc-cta">View Dashboard →</div>
+            } @else {
+                <div class="nmc-label-col">
+                    <span class="nmc-badge nmc-badge-muted">My Dashboard</span>
+                </div>
+
+                <div class="nmc-no-match-content">
+                    <span class="nmc-no-match-title">No upcoming matches</span>
+                    <span class="nmc-no-match-sub">
+                        Welcome back, {{ authService.currentUser()!.firstName }}! Your schedule is clear — check your leagues for new rounds.
+                    </span>
+                </div>
+
+                <div class="nmc-cta">Go to Dashboard →</div>
+            }
+
+        </div>
+    </section>
+    }
+
+    <!-- Features Grid -->
+    <section class="features-section">
+        <h2 class="section-title">Everything You Need to Run Your League</h2>
+
+        <div class="features-grid">
+            <!-- League Management -->
+            <div class="feature-card">
+                <div class="icon-wrapper">
+                    🏆
+                </div>
+                <h3>League Management</h3>
+                <p>Effortlessly organize leagues, manage groups, and track seasons with our intuitive admin dashboard.
+                </p>
+            </div>
+
+            <!-- Smart Slotting -->
+            <div class="feature-card">
+                <div class="icon-wrapper">
+                    🤖
+                </div>
+                <h3>Smart Slotting</h3>
+                <p>Say goodbye to manual scheduling. Our automated algorithm creates fair and balanced matches for every
+                    round.</p>
+            </div>
+
+            <!-- Player Stats -->
+            <div class="feature-card">
+                <div class="icon-wrapper">
+                    📊
+                </div>
+                <h3>Advanced Statistics</h3>
+                <p>Track DUPR ratings, win rates, and match history to visualize your progress and improvement.</p>
+            </div>
+
+            <!-- Match History -->
+            <div class="feature-card">
+                <div class="icon-wrapper">
+                    📝
+                </div>
+                <h3>Match History</h3>
+                <p>Keep a detailed record of every game played, complete with scores, partners, and opponents.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Multi-Language Banner -->
+    <section class="multilang-banner-section">
+        <div class="banner-container">
+            <img src="/assets/images/pickleball_footer_banner_v3.png" alt="DinkLeague — Pickleball in many languages"
+                class="multilang-banner">
+        </div>
+    </section>
+</div>

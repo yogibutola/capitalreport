@@ -1,0 +1,213 @@
+<div class="banking-dashboard-container">
+
+  <!-- Core Dashboard Interactive Area -->
+  <div class="dashboard-main-grid">
+    
+    <!-- Left Section: 3-column promo cards -->
+    <div class="grid-left-cards">
+
+      <!-- Next Match Card -->
+      <div class="promo-card gradient-green" routerLink="/player">
+        <div class="card-icon-header">
+          <div class="icon-circle">🎾</div>
+          <div class="arrow-indicator">❯</div>
+        </div>
+
+        @if (nextMatch; as match) {
+          <div class="card-info-body">
+            <p class="card-small-tag">Next Match</p>
+            <h3 class="card-main-heading">{{ formatMatchDate(match.date) }} · {{ match.time }}</h3>
+            <p class="card-extra-detail">vs {{ match.opponentTeamName || 'Opponents' }}</p>
+            @if (match.court && match.court !== 'TBD') {
+              <p class="card-extra-detail">Court {{ match.court }} · {{ match.leagueName }}</p>
+            }
+          </div>
+          <div class="card-action-footer">
+            <button class="card-action-btn-white">View Match</button>
+          </div>
+        } @else {
+          <div class="card-info-body">
+            <p class="card-small-tag">Next Match</p>
+            <h3 class="card-main-heading">No upcoming matches</h3>
+            <p class="card-extra-detail">Check your leagues for newly assigned rounds.</p>
+          </div>
+          <div class="card-action-footer">
+            <button class="card-action-btn-white">My Dashboard</button>
+          </div>
+        }
+      </div>
+
+      <!-- Card 1: Savings Accounts style (Light Lavender/Blue) -->
+      <div class="promo-card gradient-lavender">
+        <div class="card-icon-header">
+          <div class="icon-circle">🏆</div>
+          <div class="arrow-indicator">❯</div>
+        </div>
+        
+        <div class="card-info-body">
+          <p class="card-small-tag">Active Leagues</p>
+          @if (showDupr()) {
+            <h3 class="card-main-heading">{{ leagues().length }} Leagues Joined</h3>
+          @} @else {
+            <h3 class="card-main-heading">Leagues Active</h3>
+          }
+          
+          <p class="card-extra-detail">
+            @if (leagues().length > 0) {
+              {{ leagues()[0].name }} @if(leagues().length > 1) { & others }
+            } @else {
+              No active registrations
+            }
+          </p>
+        </div>
+        
+        <div class="card-action-footer">
+          <button class="card-action-btn" routerLink="/player/leagues">View Leagues</button>
+        </div>
+      </div>
+
+      <!-- Card 2: Demat & Trading style (Vibrant Purple) -->
+      <div class="promo-card gradient-purple">
+        <div class="card-icon-header">
+          <div class="icon-circle">📈</div>
+          <div class="arrow-indicator">❯</div>
+        </div>
+        
+        <div class="card-info-body">
+          <p class="card-small-tag">New Season</p>
+          <h3 class="card-main-heading">Join a New League</h3>
+          <p class="card-extra-detail">Open new possibilities in few clicks</p>
+        </div>
+        
+        <div class="card-action-footer">
+          <button class="card-action-btn-white" routerLink="/player/leagues">Join League</button>
+        </div>
+      </div>
+
+      <!-- Card 3: Avoid Restrictions style (Deep Dark Purple) -->
+      <div class="promo-card gradient-deep">
+        <div class="card-icon-header">
+          <div class="icon-circle">👥</div>
+          <div class="arrow-indicator">❯</div>
+        </div>
+        
+        <div class="card-info-body">
+          <p class="card-small-tag">Daily Slotting</p>
+          <h3 class="card-main-heading">Daily Slotting Panel</h3>
+          <p class="card-extra-detail">Avoid restrictions. Book your slots on time.</p>
+        </div>
+        
+        <div class="card-action-footer">
+          <button class="card-action-btn-white" routerLink="/league/slotting">Do it now</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Section: Sidebar Favorite Links -->
+    <div class="grid-right-sidebar">
+      <div class="favorite-links-card">
+        <h3 class="sidebar-card-title">My Favourite Links</h3>
+        
+        <ul class="favorite-links-list">
+          <li class="favorite-link-item" routerLink="/profile">
+            <span class="link-left-icon">👤</span>
+            <span class="link-label-text">Account Statement (Profile)</span>
+            <span class="link-right-arrow">❯</span>
+          </li>
+          <li class="favorite-link-item" routerLink="/matches/entry">
+            <span class="link-left-icon">🎾</span>
+            <span class="link-label-text">Enter Match Score</span>
+            <span class="link-right-arrow">❯</span>
+          </li>
+          <li class="favorite-link-item" routerLink="/league/slotting">
+            <span class="link-left-icon">📅</span>
+            <span class="link-label-text">View Daily Slots</span>
+            <span class="link-right-arrow">❯</span>
+          </li>
+          <li class="favorite-link-item" routerLink="/player">
+            <span class="link-left-icon">🏆</span>
+            <span class="link-label-text">My Leagues Dashboard</span>
+            <span class="link-right-arrow">❯</span>
+          </li>
+          <li class="favorite-link-item" onclick="alert('DinkLeague guidelines are governed by DUPR and club rules. Contact support for details.')">
+            <span class="link-left-icon">📚</span>
+            <span class="link-label-text">Guidelines & Rules</span>
+            <span class="link-right-arrow">❯</span>
+          </li>
+        </ul>
+        
+        <div class="sidebar-card-footer">
+          <span class="add-edit-link" routerLink="/player/leagues">Add & Edit Links</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Panel: Record Score (HDFC Send Money Style) -->
+  <section class="record-score-section">
+    <div class="record-score-card">
+      <div class="score-card-header">
+        <h3 class="panel-section-title">Record a Match Score</h3>
+        <div class="header-action-button" routerLink="/profile">
+          <span class="add-payee-icon">👤➕</span>
+          <span class="add-payee-label">Add Player</span>
+        </div>
+      </div>
+
+      <!-- Feedback Banners -->
+      <div class="alert alert-error" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+      <div class="alert alert-success" *ngIf="successMessage">
+        {{ successMessage }}
+      </div>
+
+      <form (submit)="recordScore(); $event.preventDefault();" class="score-form-grid">
+        <!-- Input Selector: Match -->
+        <div class="form-field-wrapper">
+          <label class="field-label-text">Select Upcoming Match</label>
+          <div class="select-field-container">
+            <select [(ngModel)]="selectedMatchId" name="selectedMatch" class="score-form-select">
+              <option value="" disabled selected>-- Select a Match --</option>
+              @for (match of upcomingMatches(); track match.id) {
+                <option [value]="match.id">
+                  {{ match.leagueName }} - vs {{ match.opponentTeamName || 'Opponents' }} ({{ match.date | date:'MMM d' }} @ {{ match.time }})
+                </option>
+              }
+              @if (upcomingMatches().length === 0) {
+                <option value="" disabled>No upcoming matches available</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Input Selector: Score 1 -->
+        <div class="form-field-wrapper score-input-field">
+          <label class="field-label-text">My Team Score</label>
+          <div class="input-field-container">
+            <input type="number" min="0" placeholder="0" [(ngModel)]="score1" name="teamScore1" class="score-number-input">
+          </div>
+        </div>
+
+        <!-- Input Selector: Score 2 -->
+        <div class="form-field-wrapper score-input-field">
+          <label class="field-label-text">Opponent Score</label>
+          <div class="input-field-container">
+            <input type="number" min="0" placeholder="0" [(ngModel)]="score2" name="teamScore2" class="score-number-input">
+          </div>
+        </div>
+
+        <!-- Submit Button: Proceed -->
+        <div class="form-field-wrapper button-wrapper">
+          <button type="submit" class="proceed-score-btn" [disabled]="recordingInProgress">
+            <span *ngIf="!recordingInProgress">Proceed</span>
+            <span *ngIf="recordingInProgress">Recording...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+</div>

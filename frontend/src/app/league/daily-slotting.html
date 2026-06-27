@@ -1,0 +1,125 @@
+<div class="container" style="padding-top: var(--space-lg);">
+    <div class="flex-center" style="justify-content: space-between; margin-bottom: var(--space-lg);">
+        <div>
+            <h2 class="text-gradient">Games Slotting: {{ league()?.league_name || 'Loading...' }}</h2>
+            <div class="flex-center gap-sm">
+                <p style="color: var(--color-text-muted); font-size: 0.9rem; margin: 0;">
+                    Play Day {{ playDay() }}
+                </p>
+                <input type="date" [ngModel]="slottingDate()" (ngModelChange)="slottingDate.set($event); onDateChange()" class="score-input"
+                    style="width: auto;">
+            </div>
+        </div>
+        <div class="flex-center gap-md">
+            <button class="btn btn-primary" [disabled]="!canSlotNextRound()" (click)="slotNextRound()">
+                Slot Round {{ nextRoundId() }}
+            </button>
+            <a routerLink="/admin" class="btn btn-secondary">Back to Admin</a>
+        </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: var(--space-xl);">
+        @for (round of roundsData(); track round.roundId) {
+        <div>
+            <div class="flex-center gap-md" style="margin-bottom: var(--space-md);">
+                <h3 style="margin: 0; color: var(--color-accent); font-size: 1.2rem;">Round {{ round.roundId }}</h3>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr; gap: var(--space-md);">
+                @for (level of getGroupLevelsForRound(round); track level) {
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div class="flex-center" (click)="toggleGroup(round.roundId, level)"
+                        style="justify-content: space-between; padding: var(--space-md); cursor: pointer; background: rgba(255,255,255,0.02); transition: background 0.2s;">
+                        <div class="flex-center gap-md">
+                            <h3 style="margin: 0;">Group {{ level }}</h3>
+                            <span class="badge" style="background: var(--color-accent);">Round {{ round.roundId }}</span>
+                        </div>
+                        <div class="flex-center gap-sm">
+                            <span style="color: var(--color-text-muted); font-size: 0.8rem;">
+                                {{ round.matches.get(level)?.length || 0 }} Matches
+                            </span>
+                            <span style="transition: transform 0.3s; display: inline-block;"
+                                [style.transform]="isGroupCollapsed(round.roundId, level) ? 'rotate(0deg)' : 'rotate(180deg)'">
+                                ▼
+                            </span>
+                        </div>
+                    </div>
+
+                    @if (!isGroupCollapsed(round.roundId, level)) {
+                    <div class="flex-col gap-lg" style="padding: var(--space-md); border-top: 1px solid rgba(255,255,255,0.1);">
+                        <!-- Matches -->
+                        <div class="flex-col gap-md">
+                            @for (match of round.matches.get(level) || []; track match.id; let i = $index) {
+                            <div class="match-box"
+                                style="background: rgba(255,255,255,0.05); padding: var(--space-md); border-radius: var(--radius-md); border-left: 4px solid var(--color-accent);">
+                                <div
+                                    style="font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase; margin-bottom: 8px; font-weight: bold;">
+                                    Match {{ i + 1 }}
+                                </div>
+                                <div class="flex-center gap-sm" style="margin-bottom: 10px;">
+                                    <input type="text" [(ngModel)]="match.time" placeholder="Time" class="score-input"
+                                        style="width: 80px;">
+                                    <input type="text" [(ngModel)]="match.courtNumber" placeholder="Court" class="score-input"
+                                        style="width: 60px;">
+                                </div>
+                                <div class="flex-center" style="justify-content: space-around; margin-bottom: var(--space-md);">
+                                    <div class="team text-center">
+                                        @for (p of match.team1; track p.email || p.id) {
+                                        <div style="font-weight: 500;">{{ p.firstName || p.name }}</div>
+                                        }
+                                        <input type="number" [(ngModel)]="match.score1" placeholder="Score" class="score-input"
+                                            style="width: 60px; margin-top: 8px;">
+                                    </div>
+                                    <div style="font-weight: bold; color: var(--color-text-muted);">VS</div>
+                                    <div class="team text-center">
+                                        @for (p of match.team2; track p.email || p.id) {
+                                        <div style="font-weight: 500;">{{ p.firstName || p.name }}</div>
+                                        }
+                                        <input type="number" [(ngModel)]="match.score2" placeholder="Score" class="score-input"
+                                            style="width: 60px; margin-top: 8px;">
+                                    </div>
+                                </div>
+                                <!-- Sitting Player for this match -->
+                                @if (round.sitting.get(level)?.[i]; as sittingArr) {
+                                  @if (sittingArr.length > 0) {
+                                  <div
+                                      style="font-size: 0.8rem; text-align: center; color: var(--color-text-muted); border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; margin-top: 8px;">
+                                      <span style="opacity: 0.7;">Sitting Out:</span> <span style="color: var(--color-accent);">{{ sittingArr[0].firstName || sittingArr[0].name }}</span>
+                                  </div>
+                                  }
+                                }
+                            </div>
+                            }
+                        </div>
+                    </div>
+                    }
+                </div>
+                }
+            </div>
+        </div>
+        }
+    </div>
+</div>
+
+<style>
+    .score-input {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        text-align: center;
+        padding: 4px;
+        border-radius: 4px;
+    }
+
+    .score-input:focus {
+        border-color: var(--color-accent);
+        outline: none;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 10px;
+        color: white;
+    }
+</style>

@@ -6,6 +6,9 @@ from app.vo.pb.match import Match
 from app.vo.pb.match_details_payload import MatchDetailsPayload
 from app.vo.pb.slotting_details_payload import SlottingDetailsPayload
 from app.store.mongo.pb_match_store import PBMatchStore
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -128,6 +131,19 @@ class PBLeagueService:
         }
         pb_player_store.bulk_update_players_league_details([email], league_info)
 
+    def unregister_player(self, league_id: str, email: str):
+        pb_player_store = PBPlayerStore()
+        player_doc = pb_player_store.find_player_by_email(email)
+        if not player_doc:
+            raise ValueError(f"Player with email {email} not found")
+
+        league_doc = self.pb_league_store.get_league_details(league_id)
+        if not league_doc:
+            raise ValueError(f"League with ID {league_id} not found")
+
+        self.pb_league_store.remove_player_from_league(league_id, email)
+        pb_player_store.remove_league_from_player(email, league_id)
+
     def withdraw_player(self, league_id: str, email: str, play_day: int, reason: str):
         # 1. Fetch player details
         pb_player_store = PBPlayerStore()
@@ -147,6 +163,9 @@ class PBLeagueService:
             "reason": reason
         }
         self.pb_league_store.add_withdrawal(league_id, withdrawal_data)
+
+        # 4. Remove player from any existing groups in that play day
+        self.pb_league_store.remove_player_from_play_day(league_id, email, play_day)
 
     def check_group_completion(self, league_id: str, round_id: int, group_id: int):
         matches = self.pb_match_store.get_matches_by_group(league_id, round_id, group_id)
@@ -271,27 +290,52 @@ class PBLeagueService:
         if current_round:
             total_groups = len(current_round.get("group", []))
 
+        # Check withdrawals for next round's play day
+        play_day = (next_round_num + 1) // 2
+        withdrawals = league_doc.get("withdrawals", [])
+        withdrawn_emails = {w["email"] for w in withdrawals if int(w["play_day"]) == play_day}
+
         top_player = standings[0]["player"]
         bottom_player = standings[-1]["player"]
         middle_players = [s["player"] for s in standings[1:-1]]
         
+        # Filter out withdrawn players
+        if top_player.get("email") in withdrawn_emails:
+            top_player = None
+        if bottom_player.get("email") in withdrawn_emails:
+            bottom_player = None
+        middle_players = [p for p in middle_players if p.get("email") not in withdrawn_emails]
+
+        affected_groups = {current_group_num}
+
         # Helper to add player to next round group
         # Middle players stay in their group (normal append order)
-        self.add_player_to_next_round(league_id, next_round_num, current_group_num, middle_players, "stay", position="append")
+        if middle_players:
+            self.add_player_to_next_round(league_id, next_round_num, current_group_num, middle_players, "stay", position="append")
 
         # Rule 5: Top player promotes → becomes BOTTOM of the upper group (append)
         if current_group_num > 1:
-            self.add_player_to_next_round(league_id, next_round_num, current_group_num - 1, [top_player], "promote", position="append")
+            if top_player:
+                self.add_player_to_next_round(league_id, next_round_num, current_group_num - 1, [top_player], "promote", position="append")
+            affected_groups.add(current_group_num - 1)
         else:
             # Group 1 winner stays in Group 1 (append — already bottom seed stays bottom)
-            self.add_player_to_next_round(league_id, next_round_num, current_group_num, [top_player], "stay", position="append")
+            if top_player:
+                self.add_player_to_next_round(league_id, next_round_num, current_group_num, [top_player], "stay", position="append")
 
         # Rule 5: Bottom player relegates → becomes TOP of the lower group (prepend)
         if current_group_num < total_groups:
-            self.add_player_to_next_round(league_id, next_round_num, current_group_num + 1, [bottom_player], "relegate", position="prepend")
+            if bottom_player:
+                self.add_player_to_next_round(league_id, next_round_num, current_group_num + 1, [bottom_player], "relegate", position="prepend")
+            affected_groups.add(current_group_num + 1)
         else:
             # Last group loser stays in last group (prepend — becomes top seed)
-            self.add_player_to_next_round(league_id, next_round_num, current_group_num, [bottom_player], "stay", position="prepend")
+            if bottom_player:
+                self.add_player_to_next_round(league_id, next_round_num, current_group_num, [bottom_player], "stay", position="prepend")
+
+        # After all players are added, check and slot for all affected groups.
+        for g_id in affected_groups:
+            self.check_and_slot_next_round_group(league_id, next_round_num, g_id)
 
     def add_player_to_next_round(self, league_id: str, round_id: int, group_id_num: int, players: list, move_type: str, position: str = "append"):
         """
@@ -299,9 +343,6 @@ class PBLeagueService:
         position: 'append' places them at the bottom; 'prepend' places them at the top.
         """
         self.pb_league_store.add_players_to_round_group(league_id, round_id, group_id_num, players, position=position)
-
-        # After adding, check if that group is full and can be slotted.
-        self.check_and_slot_next_round_group(league_id, round_id, group_id_num)
 
     def _get_total_groups_in_round(self, league_id: str, round_id: int) -> int:
         """Returns the number of groups in the given round."""
@@ -338,6 +379,8 @@ class PBLeagueService:
     def check_and_slot_next_round_group(self, league_id: str, round_id: int, group_id: int):
         # Rule 4: Only auto-slot for even round_ids (2nd round of the day)
         if round_id % 2 != 0:
+            logger.info(f"Autoslot SKIPPED: round {round_id} is odd (first round of day). "
+                        f"League {league_id}, group {group_id}. Admin must slot manually.")
             return
 
         # Check if group has enough players.
@@ -362,24 +405,43 @@ class PBLeagueService:
         # Determine play day and filter out withdrawn players
         play_day = (round_id + 1) // 2
         withdrawals = league_doc.get("withdrawals", [])
-        withdrawn_emails = {w["email"] for w in withdrawals if w["play_day"] == play_day}
+        withdrawn_emails = {w["email"] for w in withdrawals if int(w["play_day"]) == play_day}
         active_players = [p for p in players if p.get("email") not in withdrawn_emails]
 
+        if len(active_players) < len(players):
+            self.pb_league_store.update_round_group_players(league_id, round_id, group_id, active_players)
+
         if len(active_players) >= target_size:
-            # Already slotted guard
+            # Already slotted guard — check league doc's group.match array
             if target_group.get("match") and len(target_group["match"]) > 0:
+                logger.info(f"Autoslot SKIPPED: matches already exist in league doc for "
+                            f"round {round_id}, group {group_id}. League {league_id}.")
+                return
+
+            # Also check the match collection directly (admin's update_league_with_round_details
+            # clears group.match but stores matches in the separate collection)
+            existing_matches = self.pb_match_store.get_matches_by_group(league_id, round_id, group_id)
+            if existing_matches and len(existing_matches) > 0:
+                logger.info(f"Autoslot SKIPPED: {len(existing_matches)} matches already exist in match collection for "
+                            f"round {round_id}, group {group_id}. League {league_id}.")
                 return
 
             # Rules 1-3: Check that adjacent groups in the previous round are also complete
             prev_round_id = round_id - 1
             total_groups = self._get_total_groups_in_round(league_id, prev_round_id)
             if not self._are_adjacent_group_matches_complete(league_id, prev_round_id, group_id, total_groups):
+                logger.info(f"Autoslot SKIPPED: adjacent groups not complete for "
+                            f"round {round_id}, group {group_id}. League {league_id}.")
                 return  # Adjacent groups not finished yet — do not autoslot
 
             # Generate and persist matches
+            logger.info(f"Autoslot PROCEEDING: generating matches for "
+                        f"round {round_id}, group {group_id}. League {league_id}. "
+                        f"Active players: {len(active_players)}.")
             new_matches = self.generate_matches_for_group(league_id, round_id, group_id, active_players)
             self.pb_match_store.store_match_details(new_matches)
             self.pb_league_store.set_group_matches(league_id, round_id, group_id, new_matches)
+
 
     def slot_first_round_of_day(self, league_id: str, play_day: int):
         # 1. Fetch league and group details
@@ -393,7 +455,7 @@ class PBLeagueService:
         
         # Withdrawals for the specific day
         withdrawals = league_doc.get("withdrawals", [])
-        withdrawn_emails = {w["email"] for w in withdrawals if w["play_day"] == play_day}
+        withdrawn_emails = {w["email"] for w in withdrawals if int(w["play_day"]) == play_day}
 
         # 2. Logic based on Play Day
         if play_day == 1:
@@ -441,6 +503,9 @@ class PBLeagueService:
         target_size = target_group.get("group_size") or default_group_size
         players = target_group.get("players", [])
         active_players = [p for p in players if p.get("email") not in withdrawn_emails]
+        
+        if len(active_players) < len(players):
+            self.pb_league_store.update_round_group_players(league_id, round_id, group_id, active_players)
         
         if len(active_players) >= target_size:
             if target_group.get("match") and len(target_group["match"]) > 0:

@@ -73,15 +73,27 @@ class PBLeagueStore:
 
     def update_league_with_round_details(self, slotting_details: SlottingDetailsPayload):
         collection = self.get_league_collection()
-        # Use exclude_unset=True to only update the fields provided in the request
-        update_data = slotting_details.model_dump(exclude_unset=True)
-        # We don't want to update the _id field itself
-        if "_id" in update_data:
-            del update_data["_id"]
-        if "league_id" in update_data:
-            del update_data["league_id"]
+        league = collection.find_one({"_id": ObjectId(slotting_details.league_id)}, {"rounds": 1})
+        existing_rounds = league.get("rounds", []) if league else []
 
-        collection.update_one({"_id": ObjectId(slotting_details.league_id)}, {"$set": update_data})
+        incoming = {int(r.round_id): r.model_dump() for r in slotting_details.rounds}
+
+        merged = []
+        seen = set()
+        for existing in existing_rounds:
+            rid = int(existing.get("round_id", -1))
+            if rid in incoming:
+                merged.append(incoming[rid])
+            else:
+                merged.append(existing)
+            seen.add(rid)
+
+        for rid, rdata in incoming.items():
+            if rid not in seen:
+                merged.append(rdata)
+
+        merged.sort(key=lambda r: int(r.get("round_id", 0)))
+        collection.update_one({"_id": ObjectId(slotting_details.league_id)}, {"$set": {"rounds": merged}})
         self.logger.info(f"Successfully updated league details for ID: {slotting_details.league_id}")
 
     def get_league_details_by_league_name(self, league_name: str):
@@ -163,6 +175,50 @@ class PBLeagueStore:
             {"$set": {"rounds": rounds}}
         )
 
+    def update_round_group_players(self, league_id: str, round_id: int, group_id: int, active_players: list):
+        collection = self.get_league_collection()
+        league = collection.find_one({"_id": ObjectId(league_id)})
+        if not league: return
+        
+        rounds = league.get("rounds", [])
+        updated = False
+        for r in rounds:
+            if int(r.get("round_id", -1)) == round_id:
+                for g in r.get("group", []):
+                    if int(g.get("group_id", -1)) == group_id:
+                        g["players"] = active_players
+                        updated = True
+                        break
+                if updated: break
+        
+        if updated:
+            collection.update_one(
+                {"_id": ObjectId(league_id)},
+                {"$set": {"rounds": rounds}}
+            )
+
+    def remove_player_from_play_day(self, league_id: str, email: str, play_day: int):
+        collection = self.get_league_collection()
+        league = collection.find_one({"_id": ObjectId(league_id)})
+        if not league: return
+        
+        rounds = league.get("rounds", [])
+        updated = False
+        for r in rounds:
+            round_id = int(r.get("round_id", -1))
+            if round_id != -1 and (round_id + 1) // 2 == int(play_day):
+                for g in r.get("group", []):
+                    original_len = len(g.get("players", []))
+                    g["players"] = [p for p in g.get("players", []) if p.get("email") != email]
+                    if len(g["players"]) != original_len:
+                        updated = True
+        
+        if updated:
+            collection.update_one(
+                {"_id": ObjectId(league_id)},
+                {"$set": {"rounds": rounds}}
+            )
+
     def set_group_matches(self, league_id: str, round_id: int, group_id: int, matches: list):
         collection = self.get_league_collection()
         # Similar logic: read-modify-write for simplicity avoiding deep arrayFilter complexity
@@ -186,6 +242,15 @@ class PBLeagueStore:
                 {"_id": ObjectId(league_id)},
                 {"$set": {"rounds": rounds}}
             )
+
+    def remove_player_from_league(self, league_id: str, email: str):
+        """Remove a player from the league's players array."""
+        collection = self.get_league_collection()
+        collection.update_one(
+            {"_id": ObjectId(league_id)},
+            {"$pull": {"players": {"email": email.lower()}}}
+        )
+        self.logger.info(f"Removed player {email} from league {league_id}")
 
     def add_withdrawal(self, league_id: str, withdrawal_data: dict):
         collection = self.get_league_collection()

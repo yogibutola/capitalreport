@@ -1,0 +1,124 @@
+<div class="container" style="padding-top: var(--space-lg); padding-bottom: var(--space-xl);">
+    <div class="flex-center" style="justify-content: space-between; margin-bottom: var(--space-lg);">
+        <h2 class="text-gradient">Create New League</h2>
+        <a routerLink="/admin" class="btn btn-secondary">Back</a>
+    </div>
+
+    <div class="card" style="max-width: 800px; margin: 0 auto;">
+        <form (ngSubmit)="onSubmit()">
+
+            <!-- Basic Info -->
+            <h3
+                style="margin-bottom: var(--space-md); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: var(--space-sm);">
+                Basic Info</h3>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: var(--space-xs);">League Name</label>
+                    <input type="text" [(ngModel)]="name" name="name" class="input-field" placeholder="e.g. Summer 2025"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: var(--space-xs);">Start Date</label>
+                    <input type="date" [(ngModel)]="startDate" name="startDate" class="input-field" required>
+                </div>
+            </div>
+
+            <!-- Rules Config -->
+            <h3
+                style="margin-top: var(--space-lg); margin-bottom: var(--space-md); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: var(--space-sm);">
+                Rules Configuration</h3>
+            <div class="grid-3">
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: var(--space-xs);">Duration (Weeks)</label>
+                    <input type="number" [(ngModel)]="durationWeeks" name="duration" class="input-field" min="1"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: var(--space-xs);">Group Size</label>
+                    <input type="number" [(ngModel)]="groupSize" name="groupSize" class="input-field" min="2" required>
+                    <small style="color: var(--color-text-muted); font-size: 0.8rem;">Players per court</small>
+                </div>
+
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: var(--space-xs);">Match Format</label>
+                    <select [(ngModel)]="format" name="format" class="input-field" required>
+                        <option value="round-robin">Individual Round Robin</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <small style="color: var(--color-text-muted); font-size: 0.8rem;">4 games per round</small>
+                </div>
+            </div>
+
+            <!-- Player Selection -->
+            <h3
+                style="margin-top: var(--space-lg); margin-bottom: var(--space-md); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: var(--space-sm);">
+                Select Players</h3>
+            <div class="player-list-container">
+                @for (player of allPlayers(); track player.id) {
+                <label class="player-item" [class.selected]="selectedPlayerIds.has(player.id)">
+                    <input type="checkbox" [checked]="selectedPlayerIds.has(player.id)"
+                        (change)="togglePlayer(player.id)" style="display: none;">
+                    <span>{{ player.name }}</span>
+                    <span style="font-size: 0.8rem; color: var(--color-accent);">{{ player.dupr_rating.toFixed(2)
+                        }}</span>
+                </label>
+                }
+            </div>
+            <p style="text-align: right; color: var(--color-text-muted); margin-top: var(--space-xs);">
+                {{ selectedPlayerIds.size }} players selected
+            </p>
+
+            <button type="submit" class="btn" style="width: 100%; margin-top: var(--space-lg);">Create League</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-md);
+    }
+
+    .grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: var(--space-md);
+    }
+
+    .player-list-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: var(--space-sm);
+        max-height: 300px;
+        overflow-y: auto;
+        padding: var(--space-sm);
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: var(--radius-md);
+    }
+
+    .player-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-sm);
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+
+    .player-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .player-item.selected {
+        background: rgba(var(--color-primary), 0.2);
+        /* Fallback */
+        background: HSL(var(--color-primary) / 0.2);
+        border-color: HSL(var(--color-primary));
+    }
+</style>

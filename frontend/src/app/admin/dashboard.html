@@ -1,0 +1,89 @@
+<div class="admin-container container">
+
+  <!-- Admin Header Banner -->
+  <div class="admin-banner">
+    <div>
+      <h1 class="text-gradient" style="margin:0; font-size: 2rem;">Admin Dashboard</h1>
+      <p style="color: var(--color-text-muted); margin: 4px 0 0 0;">Manage leagues, players, and operations</p>
+    </div>
+    <div class="admin-banner-stats">
+      <div class="admin-stat-pill">
+        <span class="admin-stat-number">{{ leagues().length }}</span>
+        <span class="admin-stat-label">Total</span>
+      </div>
+      <div class="admin-stat-pill admin-stat-pill--active">
+        <span class="admin-stat-number">{{ activeLeagueCount() }}</span>
+        <span class="admin-stat-label">Active</span>
+      </div>
+    </div>
+    <a routerLink="/league" class="btn btn-secondary">View as Player</a>
+  </div>
+
+  <!-- Cards Grid -->
+  <div class="admin-cards">
+
+    <!-- League Management Card -->
+    <div class="card admin-card">
+      <div class="admin-card-header">
+        <div class="admin-card-title-row">
+          <span class="admin-card-icon">🏆</span>
+          <div>
+            <h3 style="margin:0;">League Management</h3>
+            <span style="font-size: 0.8rem; color: var(--color-text-muted);">Create and manage competition leagues</span>
+          </div>
+        </div>
+        <button class="btn" routerLink="/admin/create-league" style="white-space: nowrap;">+ New League</button>
+      </div>
+
+      <div class="league-list">
+        @for (league of leagues(); track league.league_id) {
+        <div class="admin-league-item" [routerLink]="['/admin/league', league.league_name]">
+          <div class="admin-league-left">
+            <div class="admin-league-name-row">
+              <span class="admin-league-name">{{ league.league_name }}</span>
+              <span class="admin-league-status"
+                    [class.status-active]="league.league_status === 'active'"
+                    [class.status-pending]="league.league_status !== 'active'">
+                {{ league.league_status }}
+              </span>
+            </div>
+            <span class="admin-league-meta">
+              {{ league.player_ids.length }} players
+              @if (league.league_duration) { · {{ league.league_duration }} weeks }
+            </span>
+          </div>
+          <div (click)="$event.stopPropagation()">
+            <button class="btn btn-secondary btn-danger-outline" style="padding: 4px 10px; font-size: 0.75rem;"
+              (click)="deleteLeague($event, league.league_id)">Delete</button>
+          </div>
+        </div>
+        }
+        @if (leagues().length === 0) {
+        <p style="color: var(--color-text-muted); text-align: center; padding: var(--space-md);">
+          No leagues yet. Create one above.
+        </p>
+        }
+      </div>
+    </div>
+
+    <!-- Gameplay Operations Card -->
+    <div class="card admin-card">
+      <div class="admin-card-header">
+        <div class="admin-card-title-row">
+          <span class="admin-card-icon">⚙️</span>
+          <div>
+            <h3 style="margin:0;">Gameplay Operations</h3>
+            <span style="font-size: 0.8rem; color: var(--color-text-muted);">Daily match management and slotting</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex-col gap-sm">
+        <button class="btn" (click)="triggerSlotting()">Trigger Daily Slotting</button>
+        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0; line-height: 1.5;">
+          Re-sorts players into groups based on current ratings. Run once per play day after all scores are entered.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>

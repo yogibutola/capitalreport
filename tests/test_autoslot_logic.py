@@ -57,8 +57,12 @@ class TestAutoslotLogic(unittest.TestCase):
         self.mock_league_store.get_league_details.return_value = league_doc_with_prev_round(
             {1: [{"email": "a@e.com"}]}, group_size=4
         )
-        # All matches in round 1 group 1 are complete
-        self.service.pb_match_store.get_matches_by_group.return_value = make_completed_matches()
+        # Return completed matches for prev round (round 1), empty for target round (round 2)
+        def match_side_effect(lid, rid, gid):
+            if rid == 1:
+                return make_completed_matches()
+            return []  # No existing matches for round 2 yet
+        self.service.pb_match_store.get_matches_by_group.side_effect = match_side_effect
 
         self.service.check_and_slot_next_round_group(league_id, round_id, group_id)
 
@@ -107,7 +111,10 @@ class TestAutoslotLogic(unittest.TestCase):
         }
 
         def side_effect(league_id, round_id, gid):
-            # Group 1 is incomplete; groups 2, 3 are complete
+            # For target round (2): no existing matches
+            if round_id == 2:
+                return []
+            # For prev round (1): Group 1 is incomplete; groups 2, 3 are complete
             if gid == 1:
                 return make_incomplete_matches()
             return make_completed_matches()
@@ -144,7 +151,12 @@ class TestAutoslotLogic(unittest.TestCase):
                 },
             ],
         }
-        self.service.pb_match_store.get_matches_by_group.return_value = make_completed_matches()
+        # Return completed for prev round (1), empty for target round (2)
+        def match_side_effect(lid, rid, gid):
+            if rid == 1:
+                return make_completed_matches()
+            return []
+        self.service.pb_match_store.get_matches_by_group.side_effect = match_side_effect
 
         self.service.check_and_slot_next_round_group("l1", 2, 1)
 
@@ -176,7 +188,12 @@ class TestAutoslotLogic(unittest.TestCase):
                 },
             ],
         }
-        self.service.pb_match_store.get_matches_by_group.return_value = make_completed_matches()
+        # Return completed for prev round (1), empty for target round (2)
+        def match_side_effect(lid, rid, gid):
+            if rid == 1:
+                return make_completed_matches()
+            return []
+        self.service.pb_match_store.get_matches_by_group.side_effect = match_side_effect
 
         self.service.check_and_slot_next_round_group("l1", 2, 2)
 
@@ -208,7 +225,12 @@ class TestAutoslotLogic(unittest.TestCase):
                 },
             ],
         }
-        self.service.pb_match_store.get_matches_by_group.return_value = make_completed_matches()
+        # Return completed for prev round (1), empty for target round (2)
+        def match_side_effect(lid, rid, gid):
+            if rid == 1:
+                return make_completed_matches()
+            return []
+        self.service.pb_match_store.get_matches_by_group.side_effect = match_side_effect
 
         self.service.check_and_slot_next_round_group("l1", 2, 2)
 

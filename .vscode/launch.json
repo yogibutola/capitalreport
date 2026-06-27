@@ -12,8 +12,8 @@
                 "--port",
                 "8000"
             ],
-            "jinja": true,
-            "justMyCode": true,
+            "jinja": "true",
+            "justMyCode": "true",
             "env": {
                 "GOOGLE_APPLICATION_CREDENTIALS": "${workspaceFolder}/credentials.json",
                 "GOOGLE_CLOUD_PROJECT": "stable-smithy-270416",

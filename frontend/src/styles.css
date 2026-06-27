@@ -1,0 +1,267 @@
+/* Global Styles & Design System — Brutalist Sports */
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Chivo+Mono:wght@400;700;900&family=Manrope:wght@400;600;800&display=swap');
+
+:root {
+  /* ─── DinkLeague HDFC Banking Style Core Palette ─── */
+  /* #001233  Deep Navy Blue Brand Background */
+  --color-brand-dark: 220 100% 7%;
+  /* #00205b  HDFC Royal Navy Blue Primary */
+  --color-brand-primary: 220 100% 18%;
+  /* #1b49c2  Vibrant Brand Accent Blue */
+  --color-brand-accent: 224 75% 44%;
+  /* #eab308  Gold / Amber highlight */
+  --color-brand-gold: 45 93% 47%;
+  
+  /* Standard colors mapped to DinkLeague branding */
+  --color-court-green: 220 100% 12%;
+  --color-rally-green: 224 75% 44%;
+  --color-ace-lime: 260 70% 60%;
+  --color-ball-yellow: 45 93% 47%;
+
+  /* Semantic mappings */
+  --color-primary: var(--color-brand-accent);
+  --color-primary-dark: 224 75% 30%;
+  --color-secondary: 260 70% 65%;
+  --color-accent: var(--color-brand-gold);
+  --color-success: 142 70% 45%;
+  --color-warning: 38 92% 50%;
+  --color-error: 0 84% 60%;
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+
+  /* BorderRadius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+
+  /* Premium watermark tile pattern */
+  --bg-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cpath d='M40 0C26 0 13 4 5 10c12 5 21 16 25 30 4-14 13-25 25-30-8-6-21-10-5-10zm0 80c14 0 27-4 35-10-12-5-21-16-25-30-4 14-13 25-25 30 8 6 21 10 5 10zM0 40c0 14 4 27 10 35 5-12 16-21 30-25-14-4-25-13-30-25C4 13 0 26 0 40zm80 0c0-14-4-27-10-35-5 12-16 21-30 25 14 4 25 13 30 25 6-8 10-21 10-5z' fill='%23ffffff' fill-opacity='0.02' fill-rule='evenodd'/%3E%3C/svg%3E");
+
+  /* Header Variables */
+  --header-bg: #ffffff;
+  --header-border: #e2e8f0;
+}
+
+/* Dark Theme Overrides — Premium Navy Dark */
+[data-theme="dark"] {
+  --color-bg-dark: 220 100% 6%;
+  --color-bg-card: 220 70% 10%;
+  --color-text-main: 0 0% 98%;
+  --color-text-muted: 220 15% 65%;
+  --header-bg: HSL(220 70% 10%);
+  --header-border: rgba(255, 255, 255, 0.06);
+  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --input-bg: rgba(0, 0, 0, 0.3);
+}
+
+/* Default Theme (Light — Clean Corporate Blue) */
+:root,
+[data-theme="light"] {
+  --color-bg-dark: 220 30% 95%;
+  --color-bg-card: 0 0% 100%;
+  --color-text-main: 220 40% 12%;
+  --color-text-muted: 220 12% 45%;
+  --header-bg: #ffffff;
+  --header-border: #e2e8f0;
+  --card-shadow: 0 8px 24px rgba(0, 32, 91, 0.06), 0 2px 8px rgba(0, 32, 91, 0.04);
+  --card-border: #e2e8f0;
+  --input-bg: rgba(255, 255, 255, 1);
+}
+
+body {
+  margin: 0;
+  font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+  background-color: HSL(var(--color-bg-dark));
+  background-image: var(--bg-pattern);
+  color: HSL(var(--color-text-main));
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6, .app-title {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin-top: 0;
+}
+
+.noise-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.02;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Utilities */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.gap-md {
+  gap: var(--space-md);
+}
+
+.gap-sm {
+  gap: var(--space-sm);
+}
+
+/* Components */
+.btn {
+  padding: 10px 24px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-weight: 700;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background-color: HSL(var(--color-brand-accent));
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(27, 73, 194, 0.2);
+}
+
+.btn:hover {
+  background-color: HSL(var(--color-primary-dark));
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(27, 73, 194, 0.3);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  border: 1px solid rgba(27, 73, 194, 0.3);
+  color: HSL(var(--color-brand-accent));
+  box-shadow: none;
+}
+
+.btn-secondary:hover {
+  border-color: HSL(var(--color-brand-accent));
+  background-color: rgba(27, 73, 194, 0.05);
+  color: HSL(var(--color-brand-accent));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(27, 73, 194, 0.08);
+}
+
+.card {
+  background-color: HSL(var(--color-bg-card));
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--card-border);
+  animation: fadeIn 0.4s ease-out backwards;
+  position: relative;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-group {
+  margin-bottom: var(--space-md);
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: var(--input-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  color: HSL(var(--color-text-main));
+  font-size: 0.95rem;
+  font-family: 'Manrope', sans-serif;
+  box-sizing: border-box;
+  transition: all var(--transition-fast);
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: HSL(var(--color-brand-accent));
+  box-shadow: 0 0 0 3px rgba(27, 73, 194, 0.15);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* Score-card dark-green accent (for match/game cards) */
+.score-card-bg {
+  background-color: HSL(var(--color-court-green));
+  color: #f5f5f5;
+}
+
+.avatar-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid white;
+
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: white;
+}
+
+.avatar-initials.tone-green {
+  background: #2d7a4f;
+}
+
+.avatar-initials.tone-teal {
+  background: #1a7a7a;
+}
+
+.avatar-initials.tone-blue {
+  background: #2d5faa;
+}
+
+.avatar-initials.tone-lime {
+  background: #5cac2d;
+}

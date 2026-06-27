@@ -1,0 +1,32 @@
+<div class="container" style="padding-top: var(--space-lg);">
+    <div class="flex-center" style="justify-content: space-between; margin-bottom: var(--space-lg);">
+        <h2 class="text-gradient">Match History</h2>
+        <a routerLink="/league" class="btn btn-secondary">Back</a>
+    </div>
+
+    <div class="flex-col gap-md">
+        @for (match of matches(); track match.id) {
+        <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <span style="color: var(--color-text-muted); font-size: 0.8rem;">{{ match.date | date:'mediumDate'
+                    }}</span>
+                <div class="flex-center gap-sm" style="margin-top: var(--space-sm);">
+                    <span [style.font-weight]="match.winnerTeam === 1 ? 'bold' : 'normal'"
+                        [style.color]="match.winnerTeam === 1 ? 'var(--color-success)' : 'inherit'">
+                        Team 1: {{ match.scores[0] }}
+                    </span>
+                    <span>vs</span>
+                    <span [style.font-weight]="match.winnerTeam === 2 ? 'bold' : 'normal'"
+                        [style.color]="match.winnerTeam === 2 ? 'var(--color-success)' : 'inherit'">
+                        Team 2: {{ match.scores[1] }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        } @empty {
+        <div class="card" style="text-align: center; color: var(--color-text-muted);">
+            No matches played yet.
+        </div>
+        }
+    </div>
+</div>

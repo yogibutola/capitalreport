@@ -1,0 +1,50 @@
+<div class="leagues-container">
+    <header class="leagues-header">
+        <h1 class="text-gradient">Available Leagues</h1>
+        <a routerLink="/player" class="btn btn-secondary">← Back to Dashboard</a>
+    </header>
+
+    <div class="card leagues-card">
+        <div class="table-responsive">
+            <table class="leagues-table">
+                <thead>
+                    <tr>
+                        <th>League Name</th>
+                        <th>Status</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (league of allLeagues(); track league.id) {
+                    <tr [class.registered]="isRegistered(league.id)">
+                        <td>
+                            <div class="league-name-cell">
+                                <span class="league-name">{{ league.name }}</span>
+                                @if (isRegistered(league.id)) {
+                                <span class="badge-registered">Registered</span>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-badge" [class]="'status-' + league.status">
+                                {{ league.status }}
+                            </span>
+                        </td>
+                        <td>{{ formatDate(league.startDate) }}</td>
+                        <td>{{ formatDate(league.endDate) }}</td>
+                        <td>
+                            @if (isRegistered(league.id)) {
+                            <button class="btn btn-danger" (click)="unregister(league.id, league.name)">Unregister</button>
+                            } @else {
+                            <button class="btn btn-primary" (click)="register(league.id)">Register</button>
+                            }
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

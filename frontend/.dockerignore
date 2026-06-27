@@ -1,0 +1,26 @@
+
+# Git
+.git
+.gitignore
+
+# Node/Angular
+node_modules
+.angular
+dist
+npm-debug.log
+yarn-error.log
+
+# VS Code
+.vscode
+.editorconfig
+
+# Docker (optional, preventing self-inclusion if context is large)
+Dockerfile
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Other
+README.md

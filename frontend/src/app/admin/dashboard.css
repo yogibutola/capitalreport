@@ -1,0 +1,200 @@
+.admin-container {
+    padding-top: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+}
+
+/* ─── Admin Banner ─── */
+.admin-banner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+    padding: var(--space-lg);
+    background: HSL(var(--color-bg-card));
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--card-border);
+}
+
+.admin-banner-stats {
+    display: flex;
+    gap: var(--space-md);
+    margin-left: auto;
+}
+
+.admin-stat-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: var(--radius-md);
+    min-width: 72px;
+}
+
+.admin-stat-pill--active {
+    background: HSL(var(--color-rally-green) / 0.15);
+    border: 1px solid HSL(var(--color-rally-green) / 0.4);
+}
+
+.admin-stat-number {
+    font-family: 'Anton', sans-serif;
+    font-size: 1.8rem;
+    color: HSL(var(--color-text-main));
+    line-height: 1;
+}
+
+.admin-stat-pill--active .admin-stat-number {
+    color: HSL(var(--color-ace-lime));
+}
+
+.admin-stat-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: HSL(var(--color-text-muted));
+    margin-top: 2px;
+}
+
+/* ─── Cards Grid ─── */
+.admin-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--space-lg);
+    align-items: start;
+    padding-bottom: var(--space-xl);
+}
+
+.admin-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.admin-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid rgba(168, 212, 90, 0.1);
+}
+
+.admin-card-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+}
+
+.admin-card-icon {
+    font-size: 1.8rem;
+    line-height: 1;
+    padding-top: 2px;
+}
+
+/* ─── League List ─── */
+.league-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.admin-league-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: HSL(var(--color-bg-dark));
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: 1px solid transparent;
+}
+
+.admin-league-item:hover {
+    border-color: HSL(var(--color-ace-lime) / 0.4);
+    background: HSL(var(--color-rally-green) / 0.06);
+}
+
+.admin-league-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.admin-league-name-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.admin-league-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.admin-league-meta {
+    font-size: 0.75rem;
+    color: HSL(var(--color-text-muted));
+    font-family: 'Chivo Mono', monospace;
+}
+
+.admin-league-status {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.admin-league-status.status-active {
+    background: HSL(var(--color-rally-green) / 0.2);
+    color: HSL(var(--color-ace-lime));
+}
+
+.admin-league-status.status-pending {
+    background: HSL(var(--color-ball-yellow) / 0.15);
+    color: HSL(var(--color-ball-yellow));
+}
+
+.btn-danger-outline {
+    border-color: HSL(var(--color-error) / 0.5) !important;
+    color: HSL(var(--color-error)) !important;
+}
+
+.btn-danger-outline:hover {
+    background-color: HSL(var(--color-error) / 0.1) !important;
+    border-color: HSL(var(--color-error)) !important;
+}
+
+@media (max-width: 768px) {
+    .admin-banner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .admin-banner-stats {
+        margin-left: 0;
+    }
+}
+
+/* ─── Light Mode Fixes ─── */
+[data-theme="light"] .admin-stat-pill--active .admin-stat-number {
+    color: HSL(var(--color-court-green));
+}
+
+[data-theme="light"] .admin-league-status.status-active {
+    color: HSL(var(--color-court-green));
+    background: HSL(var(--color-rally-green) / 0.15);
+}
+
+[data-theme="light"] .admin-league-status.status-pending {
+    color: HSL(38 85% 35%);
+    background: HSL(var(--color-ball-yellow) / 0.2);
+}

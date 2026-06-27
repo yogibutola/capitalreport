@@ -1,0 +1,108 @@
+<div class="flex-center" style="min-height: 100vh; padding: 2rem 0;">
+    <div class="card" style="width: 100%; max-width: 500px;">
+        <h2 class="text-gradient" style="text-align: center; margin-bottom: var(--space-xs);">Register Your Club</h2>
+        <p style="text-align: center; color: var(--color-text-muted); margin-bottom: var(--space-lg);">
+            Create an admin account to manage your league.
+        </p>
+
+        <form (ngSubmit)="onSignup()">
+            <!-- Club Name -->
+            <div class="form-group">
+                <label>Club Name</label>
+                <input type="text" [(ngModel)]="clubName" name="clubName" class="input-field"
+                    placeholder="e.g. DinkLeague Pro Club" required>
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+                <label>Admin Email</label>
+                <input type="email" [(ngModel)]="email" name="email" class="input-field" placeholder="admin@club.com"
+                    required>
+            </div>
+
+            <!-- Address -->
+            <div class="form-group">
+                <label>Address</label>
+                <input type="text" [(ngModel)]="address" name="address" class="input-field" placeholder="123 Main St"
+                    required>
+            </div>
+
+            <!-- Phone -->
+            <div class="form-group">
+                <label>Phone</label>
+                <input type="tel" [(ngModel)]="phone" name="phone" class="input-field" placeholder="555-0100" required>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" [(ngModel)]="password" name="password" class="input-field"
+                    placeholder="Create a strong password" required (focus)="passwordFocus = true"
+                    (blur)="passwordFocus = false">
+
+                <!-- Password Validation Checklist -->
+                <div class="validation-checklist" *ngIf="password || passwordFocus">
+                    <div [class.valid]="hasMinLength" [class.invalid]="!hasMinLength">
+                        <span class="icon">{{ hasMinLength ? 'Op' : 'O' }}</span> At least 8 characters
+                    </div>
+                    <div [class.valid]="hasUpperCase" [class.invalid]="!hasUpperCase">
+                        <span class="icon">{{ hasUpperCase ? 'Op' : 'O' }}</span> One uppercase letter (A-Z)
+                    </div>
+                    <div [class.valid]="hasNumber" [class.invalid]="!hasNumber">
+                        <span class="icon">{{ hasNumber ? 'Op' : 'O' }}</span> One number (0-9)
+                    </div>
+                    <div [class.valid]="hasSpecialChar" [class.invalid]="!hasSpecialChar">
+                        <span class="icon">{{ hasSpecialChar ? 'Op' : 'O' }}</span> One special character (@#$)
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn" style="width: 100%;" [disabled]="!isFormValid() || isSubmitting">
+                {{ isSubmitting ? 'Creating Account...' : 'Register Club' }}
+            </button>
+        </form>
+
+        <div style="margin-top: var(--space-md); text-align: center; font-size: 0.9rem;">
+            <a routerLink="/admin/login" style="color: var(--color-text-muted); text-decoration: none;">
+                Already have an account? <span style="color: HSL(var(--color-ace-lime));">Log in</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Inline styles for password validation specific to this component */
+    .validation-checklist {
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        background: rgba(0, 0, 0, 0.2);
+        padding: 0.75rem;
+        border-radius: 8px;
+    }
+
+    .validation-checklist div {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+        transition: color 0.2s;
+    }
+
+    .validation-checklist div.valid {
+        color: #5cac2d;
+        /* Rally Green */
+    }
+
+    .validation-checklist div.invalid {
+        color: #f44336;
+        /* Red - optional, or keep muted */
+        opacity: 0.8;
+    }
+
+    .icon {
+        font-weight: bold;
+        display: inline-block;
+        width: 1.2em;
+    }
+</style>

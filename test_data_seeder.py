@@ -76,6 +76,7 @@ def main():
         league_name=f"Pro_{timestamp}",
         league_description="League created by seed script for testing.",
         league_start_date=today,
+        league_duration="10",   
         group_size=4,
         match_format="Doubles",
         league_status="Active"

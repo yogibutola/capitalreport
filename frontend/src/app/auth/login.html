@@ -1,0 +1,27 @@
+<div class="flex-center" style="min-height: 100vh;">
+    <div class="card" style="width: 100%; max-width: 400px;">
+        <h2 class="text-gradient" style="text-align: center; margin-bottom: var(--space-lg);">DinkLeague</h2>
+
+        <form (ngSubmit)="onLogin()">
+            <div class="form-group">
+                <label style="display: block; margin-bottom: var(--space-xs);">Email</label>
+                <input type="email" [(ngModel)]="email" name="email" class="input-field" placeholder="Enter your email"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label style="display: block; margin-bottom: var(--space-xs);">Password</label>
+                <input type="password" [(ngModel)]="password" name="password" class="input-field"
+                    placeholder="Enter password" required>
+            </div>
+
+            <button type="submit" class="btn" style="width: 100%;">Sign In</button>
+        </form>
+
+        <div style="margin-top: var(--space-md); text-align: center; font-size: 0.9rem;">
+            <span style="color: var(--color-text-muted);">New here? </span>
+            <a routerLink="/signup" style="color: HSL(var(--color-ace-lime)); text-decoration: none;">Create an
+                account</a>
+        </div>
+    </div>
+</div>

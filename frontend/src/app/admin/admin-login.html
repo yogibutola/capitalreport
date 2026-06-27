@@ -1,0 +1,33 @@
+<div class="flex-center" style="min-height: 100vh;">
+    <div class="card" style="width: 100%; max-width: 400px;">
+        <h2 class="text-gradient" style="text-align: center; margin-bottom: var(--space-xs);">League Manager Access</h2>
+        <p style="text-align: center; color: var(--color-text-muted); margin-bottom: var(--space-lg);">Please sign in to
+            manage your league.</p>
+
+        <form (ngSubmit)="onLogin()">
+            <div class="form-group">
+                <label style="display: block; margin-bottom: var(--space-xs);">Admin Email</label>
+                <input type="email" [(ngModel)]="email" name="email" class="input-field" placeholder="Enter admin email"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label style="display: block; margin-bottom: var(--space-xs);">Password</label>
+                <input type="password" [(ngModel)]="password" name="password" class="input-field"
+                    placeholder="Enter password" required>
+            </div>
+
+            <button type="submit" class="btn" style="width: 100%;">Access Dashboard</button>
+        </form>
+
+        <div style="margin-top: var(--space-md); text-align: center; font-size: 0.9rem;">
+            <p>
+                <a routerLink="/admin/signup"
+                    style="color: HSL(var(--color-primary)); text-decoration: none; font-weight: bold;">Register New
+                    Club</a>
+            </p>
+            <a routerLink="/login" style="color: var(--color-text-muted); text-decoration: none;">Are you a player?
+                <span style="color: HSL(var(--color-ace-lime));">Sign in here</span></a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,49 @@
+<div class="container" style="padding-top: var(--space-lg);">
+    <div class="flex-center" style="justify-content: space-between; margin-bottom: var(--space-lg);">
+        <h2 class="text-gradient">Player Statistics</h2>
+        <a routerLink="/league" class="btn btn-secondary">Back</a>
+    </div>
+
+    @if (stats(); as s) {
+    <div class="grid-stats">
+        <div class="card flex-center flex-col">
+            <h1 class="stat-value text-gradient">{{ s.winRate.toFixed(1) }}%</h1>
+            <span class="stat-label">Win Rate</span>
+        </div>
+        <div class="card flex-center flex-col">
+            <h1 class="stat-value">{{ s.totalMatches }}</h1>
+            <span class="stat-label">Total Matches</span>
+        </div>
+        <div class="card flex-center flex-col">
+            <h1 class="stat-value" style="color: var(--color-success);">{{ s.wins }}</h1>
+            <span class="stat-label">Wins</span>
+        </div>
+        <div class="card flex-center flex-col">
+            <h3 class="stat-value" style="font-size: 1.5rem;">{{ s.bestPartner || 'N/A' }}</h3>
+            <span class="stat-label">Best Partner</span>
+        </div>
+    </div>
+    }
+</div>
+
+<style>
+    .grid-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-md);
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .stat-label {
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+        margin-top: var(--space-xs);
+    }
+</style>

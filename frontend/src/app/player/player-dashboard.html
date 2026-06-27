@@ -1,0 +1,369 @@
+<div class="banking-dashboard-container">
+
+  <!-- Top Bar: Player Identity + Navigation Pills + League Selector -->
+  <div class="player-top-bar">
+    <div class="player-identity-block">
+      <div class="avatar-initials tone-green player-avatar-sm">
+        {{ authService.currentUser()?.firstName?.[0] }}{{ authService.currentUser()?.lastName?.[0] }}
+      </div>
+      <div class="player-id-info">
+        <span class="player-id-name">{{ authService.currentUser()?.firstName }} {{ authService.currentUser()?.lastName }}</span>
+        <span class="player-id-rating">DUPR {{ authService.currentUser()?.dupr_rating | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <nav class="player-nav-bar">
+      <button class="nav-pill-btn" [class.active]="activeSection() === 'matches'" (click)="setActiveSection('matches')">
+        🎾 Matches
+      </button>
+      <button class="nav-pill-btn" [class.active]="activeSection() === 'leagues'" (click)="setActiveSection('leagues')">
+        🏆 My Leagues
+      </button>
+      <button class="nav-pill-btn" [class.active]="activeSection() === 'stats'" (click)="setActiveSection('stats')">
+        📊 Standings
+      </button>
+      <button class="nav-pill-btn" [class.active]="activeSection() === 'league-details'" (click)="setActiveSection('league-details')">
+        🚪 Withdraw
+      </button>
+    </nav>
+
+    @if (leagues().length > 1) {
+    <div class="player-league-selector">
+      <select class="league-select" [value]="selectedLeague()?.id" (change)="selectLeague($any($event.target).value)">
+        @for (league of leagues(); track league.id) {
+          <option [value]="league.id">{{ league.name }}</option>
+        }
+      </select>
+    </div>
+    }
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="player-content-area">
+
+    <!-- ── MATCHES ── -->
+    @if (activeSection() === 'matches') {
+
+    <h2 class="content-section-title">Upcoming Matches</h2>
+
+    <div class="matches-grid">
+      @if (upcomingMatches().length === 0) {
+      <div class="empty-state panel-card">
+        <h3 style="font-family: 'Anton', sans-serif; font-size: 2rem; text-transform: uppercase;">NO UPCOMING MATCHES</h3>
+        <p style="color: var(--color-text-muted);">Check back later or select a different league.</p>
+      </div>
+      }
+      @for (match of upcomingMatches(); track match.id; let i = $index) {
+      <div class="match-card card" (click)="viewMatchDetail(match.id)" [style.animation-delay]="(i * 0.05) + 's'">
+        <div class="match-header">
+          <div class="match-date">
+            <span class="date-text">{{ formatDate(match.date) }}</span>
+            <span class="time-text">{{ match.time }}</span>
+          </div>
+          <div class="match-meta">
+            @if (match.roundName || match.roundId) {
+              <span class="round-badge">{{ match.roundName || 'Round ' + match.roundId }}</span>
+            }
+            @if (match.groupId) {
+              <span class="group-badge">Group {{ match.groupId }}</span>
+            }
+            <span class="court-badge">{{ match.court || 'Court TBD' }}</span>
+          </div>
+        </div>
+
+        <div class="match-teams">
+          <div class="team my-team">
+            <div class="team-info-row">
+              <span class="team-name">{{ match.myTeamName || 'My Team' }}</span>
+              @if (editingMatchId() === match.id) {
+                <input type="number" class="score-input-inline" placeholder="0"
+                       [value]="tempScore1()"
+                       (input)="tempScore1.set($any($event.target).value)"
+                       (click)="$event.stopPropagation()">
+              } @else {
+                @if (match.status === 'completed') {
+                  <span class="final-score">{{ match.team1Score }}</span>
+                }
+              }
+            </div>
+            <span class="team-players">{{ getTeammates(match) || 'Partner TBD' }}</span>
+          </div>
+
+          <div class="vs-divider">VS</div>
+
+          <div class="team opponent-team">
+            <div class="team-info-row">
+              <span class="team-name">{{ match.opponentTeamName || 'Opponents' }}</span>
+              @if (editingMatchId() === match.id) {
+                <input type="number" class="score-input-inline" placeholder="0"
+                       [value]="tempScore2()"
+                       (input)="tempScore2.set($any($event.target).value)"
+                       (click)="$event.stopPropagation()">
+              } @else {
+                @if (match.status === 'completed') {
+                  <span class="final-score">{{ match.team2Score }}</span>
+                }
+              }
+            </div>
+            <span class="team-players">{{ getOpponents(match) }}</span>
+          </div>
+        </div>
+
+        <div class="match-footer">
+          <span class="league-tag">{{ match.leagueName }}</span>
+          <div class="score-actions" (click)="$event.stopPropagation()">
+            @if (editingMatchId() !== match.id) {
+              <button class="btn btn-secondary btn-xs" (click)="setEditingMatch(match.id); $event.stopPropagation()">Score</button>
+            } @else {
+              <div class="flex-center" style="gap: var(--space-xs)">
+                <button class="btn btn-primary btn-xs" (click)="submitScore(match); $event.stopPropagation()">Save</button>
+                <button class="btn btn-secondary btn-xs" (click)="setEditingMatch(null); $event.stopPropagation()">Cancel</button>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+
+    <h2 class="content-section-title" style="margin-top: var(--space-xl);">Completed Matches</h2>
+
+    <div class="matches-grid">
+      @if (completedMatches().length === 0) {
+      <div class="empty-state panel-card">
+        <h3 style="font-family: 'Anton', sans-serif; font-size: 2rem; text-transform: uppercase;">NO COMPLETED MATCHES</h3>
+        <p style="color: var(--color-text-muted);">As you finish matches, they will appear here.</p>
+      </div>
+      }
+      @for (match of completedMatches(); track match.id; let i = $index) {
+      <div class="match-card card completed-card" (click)="viewMatchDetail(match.id)" [style.animation-delay]="(i * 0.05) + 's'"
+           [class.win-card]="(match.team1Score || 0) > (match.team2Score || 0)">
+        <div class="match-header">
+          <div class="match-date">
+            <span class="date-text">{{ formatDate(match.date) }}</span>
+            <span class="time-text">{{ match.time }}</span>
+          </div>
+          <div class="match-meta">
+            @if (match.roundName || match.roundId) {
+              <span class="round-badge">{{ match.roundName || 'Round ' + match.roundId }}</span>
+            }
+            @if (match.groupId) {
+              <span class="group-badge">Group {{ match.groupId }}</span>
+            }
+            <span class="court-badge">{{ match.court || 'Court TBD' }}</span>
+          </div>
+        </div>
+
+        <div class="match-teams">
+          <div class="team my-team" [class.winner]="(match.team1Score || 0) > (match.team2Score || 0)">
+            <div class="team-info-row">
+              <span class="team-name">{{ match.myTeamName || 'My Team' }}</span>
+              <span class="final-score">{{ match.team1Score }}</span>
+            </div>
+            <span class="team-players">{{ getTeammates(match) || 'Partner TBD' }}</span>
+          </div>
+
+          <div class="vs-divider">VS</div>
+
+          <div class="team opponent-team" [class.winner]="(match.team2Score || 0) > (match.team1Score || 0)">
+            <div class="team-info-row">
+              <span class="team-name">{{ match.opponentTeamName || 'Opponents' }}</span>
+              <span class="final-score">{{ match.team2Score }}</span>
+            </div>
+            <span class="team-players">{{ getOpponents(match) }}</span>
+          </div>
+        </div>
+
+        <div class="match-footer">
+          <span class="league-tag">{{ match.leagueName }}</span>
+          <span class="view-details">Match Results →</span>
+        </div>
+      </div>
+      }
+    </div>
+
+    @if (completedMatches().length > 0 && completedMatches()[0].groupId) {
+    <div style="margin-top: var(--space-xl);">
+      <h2 class="content-section-title">My Group Standings</h2>
+      <div class="group-standings-mini panel-card">
+        <h3 class="standings-mini-title">Group {{ completedMatches()[0].groupId! }} · Current Standings</h3>
+        <table class="standings-mini-table">
+          <thead>
+            <tr>
+              <th>Pos</th><th>Player</th>
+              <th class="text-center">Matches</th>
+              <th class="text-right">Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (standing of getGroupStandings(completedMatches()[0].groupId!); track standing.email; let i = $index) {
+            <tr [class.current-player]="standing.email === playerService.getCurrentPlayerId().toLowerCase()">
+              <td class="pos-mini">{{ i + 1 }}</td>
+              <td class="player-mini">
+                {{ standing.name }}
+                @if (standing.email === playerService.getCurrentPlayerId().toLowerCase()) {
+                  <span class="you-indicator">YOU</span>
+                }
+              </td>
+              <td class="text-center">{{ standing.matchesPlayed }}</td>
+              <td class="score-mini text-right">{{ standing.totalScore }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    }
+    }
+
+    <!-- ── MY LEAGUES ── -->
+    @if (activeSection() === 'leagues') {
+    <div class="section-header-row">
+      <h2 class="content-section-title">My Leagues</h2>
+      <a routerLink="/player/leagues" class="btn btn-primary">Find More Leagues</a>
+    </div>
+
+    <div class="leagues-grid">
+      @for (league of leagues(); track league.id) {
+      <div class="match-card card" [class.selected]="selectedLeague()?.id === league.id"
+           (click)="selectLeague(league.id); setActiveSection('league-details')">
+        <div class="match-header">
+          <h3 style="margin: 0; color: var(--color-primary);">{{ league.name }}</h3>
+          <span class="league-status" [class]="'status-' + league.status">{{ league.status }}</span>
+        </div>
+        <div style="margin-top: var(--space-md); color: var(--color-text-muted);">
+          <p>Starts: {{ league.startDate | date }}</p>
+          <p>Ends: {{ league.endDate | date }}</p>
+        </div>
+        <div class="match-footer" style="margin-top: var(--space-md);">
+          <span class="view-details">View Details →</span>
+          <button class="btn btn-secondary btn-xs" style="color: var(--color-error, #e74c3c); border-color: var(--color-error, #e74c3c);"
+                  (click)="$event.stopPropagation(); unregister(league.id, league.name)">
+            Unregister
+          </button>
+        </div>
+      </div>
+      }
+    </div>
+    }
+
+    <!-- ── STANDINGS ── -->
+    @if (activeSection() === 'stats') {
+    <div class="section-header-row">
+      <h2 class="content-section-title">
+        Standings
+        @if (selectedLeague()) { <span class="section-subtitle">· {{ selectedLeague()?.name }}</span> }
+      </h2>
+    </div>
+
+    @if (selectedLeague()) {
+    <div class="standings-container panel-card">
+      @if (standings().length === 0) {
+      <div class="empty-state">
+        <p>No matches completed yet. Standings appear after the first score is recorded.</p>
+      </div>
+      } @else {
+      <table class="standings-table">
+        <thead>
+          <tr>
+            <th>Pos</th><th>Player</th>
+            <th class="text-center">Matches</th>
+            <th class="text-right">Total Points</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of standings(); track entry.email; let i = $index) {
+          <tr [class.currentUser]="entry.email === playerService.getCurrentPlayerId().toLowerCase()">
+            <td class="pos-cell">{{ i + 1 }}</td>
+            <td class="player-cell">
+              <span class="player-name">{{ entry.name }}</span>
+              @if (entry.email === playerService.getCurrentPlayerId().toLowerCase()) {
+                <span class="me-badge">YOU</span>
+              }
+            </td>
+            <td class="text-center">{{ entry.matchesPlayed }}</td>
+            <td class="score-cell text-right">{{ entry.totalScore }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+      }
+    </div>
+    } @else {
+    <div class="empty-state panel-card">
+      <h3>No league selected</h3>
+      <p>Select a league from My Leagues to see standings.</p>
+    </div>
+    }
+    }
+
+    <!-- ── LEAGUE DETAILS / WITHDRAW ── -->
+    @if (activeSection() === 'league-details') {
+    <div class="section-header-row">
+      <h2 class="content-section-title">
+        League Details
+        @if (selectedLeague()) { <span class="section-subtitle">· {{ selectedLeague()?.name }}</span> }
+      </h2>
+      <button class="btn btn-secondary" (click)="setActiveSection('leagues')">← Back to Leagues</button>
+    </div>
+
+    @if (selectedLeague(); as league) {
+    <div class="panel-card" style="margin-bottom: var(--space-xl);">
+      <div class="flex-center" style="gap: var(--space-lg); flex-wrap: wrap;">
+        <h3 style="margin: 0; color: var(--color-primary);">League Information</h3>
+        <div class="flex-center" style="gap: var(--space-md); flex-wrap: wrap; color: var(--color-text-muted);">
+          @if (league.startDate) { <div><strong>Start:</strong> {{ league.startDate | date }}</div> }
+          @if (league.endDate)   { <div><strong>End:</strong> {{ league.endDate | date }}</div> }
+          @if (league.duration)  { <div><strong>Duration:</strong> {{ league.duration }} weeks</div> }
+        </div>
+      </div>
+    </div>
+
+    <h3 class="content-section-title" style="font-size: 1rem; margin-bottom: var(--space-md);">Play Days</h3>
+    <div class="panel-card" style="padding: 0; overflow: hidden;">
+      <table class="leagues-table" style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th class="table-th">Play Day</th>
+            <th class="table-th">Date</th>
+            <th class="table-th" style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (day of getPlayDays(); track day.day) {
+          <tr>
+            <td class="table-td">Day {{ day.day }}</td>
+            <td class="table-td">{{ day.date | date:'mediumDate' }}</td>
+            <td class="table-td" style="text-align: right;">
+              @if (day.withdrawn) {
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                <span class="badge status-completed" style="border-radius: 4px; padding: 2px 8px; font-size: 0.8rem; font-weight: bold;">Withdrawn</span>
+                @if (day.reason) { <small style="color: var(--color-text-muted);">{{ day.reason }}</small> }
+              </div>
+              } @else {
+              <button class="btn btn-secondary" style="padding: 6px 16px; font-size: 0.9rem;" (click)="withdrawFromDay(league.id, day.day)">
+                Withdraw
+              </button>
+              }
+            </td>
+          </tr>
+          }
+          @if (getPlayDays().length === 0) {
+          <tr>
+            <td colspan="3" style="text-align: center; padding: var(--space-lg); color: var(--color-text-muted);">No play days scheduled yet.</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    } @else {
+    <div class="empty-state panel-card">
+      <h3>No league selected</h3>
+      <p>Go to My Leagues and select a league first.</p>
+    </div>
+    }
+    }
+
+  </div><!-- /player-content-area -->
+
+</div>

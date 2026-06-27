@@ -123,6 +123,23 @@ def slot_first_round_of_day(league_id: str, play_day: int,
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
+@router.delete("/league/{league_id}/player", status_code=status.HTTP_200_OK)
+def unregister_player_from_league(league_id: str,
+                                   pb_league_service: PBLeagueService = Depends(get_pb_league_service),
+                                   payload: dict = Depends(get_current_player)):
+    """Unregister the authenticated player from a league."""
+    email = payload.get("sub")
+    if not email:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not extract email from token")
+    try:
+        pb_league_service.unregister_player(league_id, email)
+        return {"message": "Player unregistered successfully"}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Unregister failed: {type(e).__name__}: {e}")
+
+
 @router.delete("/league/{league_id}", status_code=status.HTTP_200_OK)
 def delete_league(league_id: str,
                   pb_league_service: PBLeagueService = Depends(get_pb_league_service),

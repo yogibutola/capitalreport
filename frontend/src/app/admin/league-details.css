@@ -1,0 +1,94 @@
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.info-item label {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.info-item span {
+    font-size: 1rem;
+    color: HSL(var(--color-text-main));
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.players-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.players-table thead {
+    background: rgba(30, 58, 36, 0.2);
+}
+
+.players-table th {
+    padding: var(--space-sm) var(--space-md);
+    text-align: left;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--card-border);
+}
+
+.players-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s, color 0.2s;
+}
+
+.players-table th.sortable:hover {
+    background: rgba(30, 58, 36, 0.3);
+    color: HSL(var(--color-ace-lime));
+}
+
+.players-table td {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--card-border);
+    color: HSL(var(--color-text-main));
+}
+
+.players-table tbody tr {
+    transition: background 0.2s;
+}
+
+.players-table tbody tr:hover {
+    background: rgba(30, 58, 36, 0.12);
+}
+
+/* DUPR-style prominent rating badge — Ball Yellow */
+.rating-badge {
+    background: HSL(var(--color-ball-yellow));
+    color: #1E3A24;
+    padding: 2px 10px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.btn.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: not-allowed;
+    filter: grayscale(0.5);
+}

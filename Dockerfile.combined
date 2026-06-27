@@ -1,0 +1,70 @@
+# =============================================
+# Stage 1: Build Angular frontend
+# =============================================
+FROM node:22-alpine AS frontend-builder
+
+WORKDIR /frontend
+
+COPY frontend/package*.json ./
+RUN npm ci
+
+COPY frontend/ ./
+RUN npm run build
+
+# =============================================
+# Stage 2: Build Python backend dependencies
+# =============================================
+FROM python:3.12-slim AS backend-builder
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential gcc libpq-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY requirements.txt ./
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+
+COPY app/ ./app/
+
+# =============================================
+# Stage 3: Final image — both runtimes
+# =============================================
+FROM python:3.12-slim AS final
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Install Node.js 22 + supervisord alongside the Python runtime
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates libpq-dev supervisor \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# --- Backend ---
+COPY --from=backend-builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=backend-builder /usr/local/bin /usr/local/bin
+COPY --from=backend-builder /app/app /app/app
+
+# --- Frontend (SSR) ---
+# Copy built artefacts
+COPY --from=frontend-builder /frontend/dist /app/frontend/dist
+# Copy package manifests and install only production deps for the SSR server
+COPY frontend/package*.json /app/frontend/
+RUN cd /app/frontend && npm ci --omit=dev
+
+# --- Process manager ---
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Backend on 8000, frontend SSR on 4000
+EXPOSE 8000 4000
+
+CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

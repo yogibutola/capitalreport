@@ -1,0 +1,167 @@
+<div class="container" style="padding-top: var(--space-lg); padding-bottom: var(--space-xl);">
+    @if (match()) {
+    <div class="match-detail-container">
+        <!-- Header -->
+        <div class="detail-header">
+            <button class="btn btn-secondary" (click)="goBack()">
+                ← Back to Matches
+            </button>
+            <h2 class="text-gradient">Match Details</h2>
+        </div>
+
+        <!-- Match Info Card -->
+        <div class="card detail-card">
+            <div class="info-section">
+                <h3>Match Information</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">League</span>
+                        <span class="info-value">{{ match()!.leagueName }}</span>
+                    </div>
+                    @if (match()?.roundId) {
+                    <div class="info-item">
+                        <span class="info-label">Round</span>
+                        <span class="info-value">Round {{ match()!.roundId }}</span>
+                    </div>
+                    }
+                    @if (match()?.groupId) {
+                    <div class="info-item">
+                        <span class="info-label">Group</span>
+                        <span class="info-value">Group {{ match()!.groupId }}</span>
+                    </div>
+                    }
+                    <div class="info-item">
+                        <span class="info-label">Date</span>
+                        <span class="info-value">{{ formatDate(match()!.date) }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Time</span>
+                        <span class="info-value">{{ match()!.time }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Court</span>
+                        <span class="info-value court-highlight">{{ match()!.court }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Status</span>
+                        <span class="status-badge" [class]="'status-' + match()!.status">
+                            {{ match()!.status }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teams Display -->
+        <div class="teams-container">
+            <!-- My Team -->
+            <div class="card team-card my-team-card"
+                [class.winner]="(match()?.team1Score || 0) > (match()?.team2Score || 0)">
+                <div class="team-header">
+                    <div class="header-content">
+                        <h3>My Team</h3>
+                        @if (match()?.myTeamName) {
+                        <span class="team-name" style="font-weight: 600; margin-left: var(--space-sm);">{{
+                            match()?.myTeamName }}</span>
+                        }
+                        <span class="team-badge my-badge">YOU</span>
+                    </div>
+                    @if (isScoring()) {
+                    <div class="score-input-container fade-in">
+                        <label>Score</label>
+                        <input type="number" [(ngModel)]="team1Score" min="0" max="15" class="score-input-small"
+                            placeholder="0" autoFocus (keydown)="preventNonIntegerInput($event)">
+                    </div>
+                    } @else if (match()?.status === 'completed') {
+                    <div class="final-score-display">
+                        <span class="score-value">{{ match()?.team1Score }}</span>
+                    </div>
+                    }
+                </div>
+                <div class="players-list">
+                    @for (player of getMyTeamPlayers(); track player.id) {
+                    <div class="player-row" [class.is-you]="player.id === currentPlayerId">
+                        <div class="player-info">
+                            <span class="player-name">{{ player.name }}</span>
+                            @if (player.id === currentPlayerId) {
+                            <span class="you-indicator">(You)</span>
+                            }
+                        </div>
+                        <span class="player-rating">{{ player.rating.toFixed(1) }}</span>
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <!-- VS Divider -->
+            <div class="vs-section">
+                <div class="vs-circle" [class.completed]="match()?.status === 'completed'">
+                    {{ match()?.status === 'completed' ? (match()!.team1Score + ' : ' + match()!.team2Score) : 'VS' }}
+                </div>
+            </div>
+
+            <!-- Opponent Team -->
+            <div class="card team-card opponent-team-card"
+                [class.winner]="(match()?.team2Score || 0) > (match()?.team1Score || 0)">
+                <div class="team-header">
+                    <div class="header-content">
+                        <h3>Opponent Team</h3>
+                        @if (match()?.opponentTeamName) {
+                        <span class="team-name" style="font-weight: 600; margin-left: var(--space-sm);">{{
+                            match()?.opponentTeamName }}</span>
+                        }
+                        <span class="team-badge opponent-badge">OPP</span>
+                    </div>
+                    @if (isScoring()) {
+                    <div class="score-input-container fade-in">
+                        <label>Score</label>
+                        <input type="number" [(ngModel)]="team2Score" min="0" max="15" class="score-input-small"
+                            placeholder="0" (keydown)="preventNonIntegerInput($event)">
+                    </div>
+                    } @else if (match()?.status === 'completed') {
+                    <div class="final-score-display">
+                        <span class="score-value">{{ match()?.team2Score }}</span>
+                    </div>
+                    }
+                </div>
+                <div class="players-list">
+                    @for (player of getOpponentTeamPlayers(); track player.id) {
+                    <div class="player-row">
+                        <span class="player-name">{{ player.name }}</span>
+                        <span class="player-rating">{{ player.rating.toFixed(1) }}</span>
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-section">
+            @if (isScoring()) {
+            <button class="btn btn-primary" (click)="submitScore()">Save Score</button>
+            <button class="btn btn-secondary" (click)="toggleScoreEntry()">Cancel</button>
+            } @else if (match()?.status !== 'completed') {
+            <button class="btn" (click)="toggleScoreEntry()">Enter Score</button>
+            <button class="btn btn-secondary" (click)="goBack()">Back to Dashboard</button>
+            } @else {
+            <div class="completed-msg">
+                <span class="icon">✓</span> Match Completed
+            </div>
+
+            <button class="btn btn-primary" style="margin-top: var(--space-md);" (click)="toggleScoreEntry()">Edit
+                Score</button>
+
+            <button class="btn btn-secondary" (click)="goBack()">Back to Dashboard</button>
+            }
+        </div>
+    </div>
+    } @else {
+    <div class="card empty-state">
+        <h3>Match not found</h3>
+        <p style="color: var(--color-text-muted); margin-bottom: var(--space-md);">
+            The match you're looking for doesn't exist.
+        </p>
+        <button class="btn" (click)="goBack()">Back to Matches</button>
+    </div>
+    }
+</div>
