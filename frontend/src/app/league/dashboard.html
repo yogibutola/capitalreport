@@ -145,68 +145,69 @@
 
   </div>
 
-  <!-- Bottom Panel: Record Score (HDFC Send Money Style) -->
-  <section class="record-score-section">
-    <div class="record-score-card">
+  <!-- Bottom Panel: Player Search -->
+  <section class="player-search-section">
+    <div class="search-card">
       <div class="score-card-header">
-        <h3 class="panel-section-title">Record a Match Score</h3>
-        <div class="header-action-button" routerLink="/profile">
-          <span class="add-payee-icon">👤➕</span>
-          <span class="add-payee-label">Add Player</span>
-        </div>
+        <h3 class="panel-section-title">Find a Player</h3>
       </div>
 
-      <!-- Feedback Banners -->
-      <div class="alert alert-error" *ngIf="errorMessage">
-        {{ errorMessage }}
-      </div>
-      <div class="alert alert-success" *ngIf="successMessage">
-        {{ successMessage }}
-      </div>
-
-      <form (submit)="recordScore(); $event.preventDefault();" class="score-form-grid">
-        <!-- Input Selector: Match -->
+      <form (submit)="searchPlayers(); $event.preventDefault();" class="search-form-grid">
         <div class="form-field-wrapper">
-          <label class="field-label-text">Select Upcoming Match</label>
-          <div class="select-field-container">
-            <select [(ngModel)]="selectedMatchId" name="selectedMatch" class="score-form-select">
-              <option value="" disabled selected>-- Select a Match --</option>
-              @for (match of upcomingMatches(); track match.id) {
-                <option [value]="match.id">
-                  {{ match.leagueName }} - vs {{ match.opponentTeamName || 'Opponents' }} ({{ match.date | date:'MMM d' }} @ {{ match.time }})
-                </option>
-              }
-              @if (upcomingMatches().length === 0) {
-                <option value="" disabled>No upcoming matches available</option>
-              }
-            </select>
-          </div>
-        </div>
-
-        <!-- Input Selector: Score 1 -->
-        <div class="form-field-wrapper score-input-field">
-          <label class="field-label-text">My Team Score</label>
+          <label class="field-label-text">First Name</label>
           <div class="input-field-container">
-            <input type="number" min="0" placeholder="0" [(ngModel)]="score1" name="teamScore1" class="score-number-input">
+            <input type="text" placeholder="Enter first name" [(ngModel)]="searchFirstName" name="searchFirstName" class="search-text-input" autocomplete="off"/>
           </div>
         </div>
 
-        <!-- Input Selector: Score 2 -->
-        <div class="form-field-wrapper score-input-field">
-          <label class="field-label-text">Opponent Score</label>
+        <div class="form-field-wrapper">
+          <label class="field-label-text">Last Name</label>
           <div class="input-field-container">
-            <input type="number" min="0" placeholder="0" [(ngModel)]="score2" name="teamScore2" class="score-number-input">
+            <input type="text" placeholder="Enter last name" [(ngModel)]="searchLastName" name="searchLastName" class="search-text-input" autocomplete="off"/>
           </div>
         </div>
 
-        <!-- Submit Button: Proceed -->
-        <div class="form-field-wrapper button-wrapper">
-          <button type="submit" class="proceed-score-btn" [disabled]="recordingInProgress">
-            <span *ngIf="!recordingInProgress">Proceed</span>
-            <span *ngIf="recordingInProgress">Recording...</span>
+        <div class="form-field-wrapper">
+          <label class="field-label-text">&nbsp;</label>
+          <button type="submit" class="proceed-score-btn" [disabled]="isSearching()">
+            @if (isSearching()) { Searching… } @else { Search }
           </button>
         </div>
+
+        @if (hasSearched()) {
+          <div class="form-field-wrapper">
+            <label class="field-label-text">&nbsp;</label>
+            <button type="button" class="clear-search-btn" (click)="clearSearch()">Clear</button>
+          </div>
+        }
       </form>
+
+      @if (searchError()) {
+        <div class="alert alert-error">⚠ {{ searchError() }}</div>
+      }
+
+      @if (hasSearched() && !isSearching() && !searchError()) {
+        @if (searchResults().length === 0) {
+          <div class="search-empty-state">No players found matching "{{ searchFirstName }} {{ searchLastName }}"</div>
+        } @else {
+          <div class="search-results-header">{{ searchResults().length }} player{{ searchResults().length !== 1 ? 's' : '' }} found</div>
+          <ul class="search-results-list">
+            @for (player of searchResults(); track player.id) {
+              <li class="search-result-item">
+                <div class="player-avatar">{{ player.firstName[0] }}{{ player.lastName[0] }}</div>
+                <div class="player-info">
+                  <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
+                  <span class="player-email">{{ player.email }}</span>
+                </div>
+                <div class="player-rating-badge">
+                  <span class="rating-label">DUPR</span>
+                  <span class="rating-value">{{ player.dupr_rating | number:'1.1-2' }}</span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      }
     </div>
   </section>
 

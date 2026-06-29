@@ -12,10 +12,12 @@ services:
       - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
       - GOOGLE_CLOUD_PROJECT=stable-smithy-270416
       - GOOGLE_CLOUD_LOCATION=us-central1
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #   ports:
-  #     - "4000:4000"
-  #   depends_on:
-  #     - capitalreport
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "4000:4000"
+    environment:
+      - BACKEND_URL=http://capitalreport:8000
+    depends_on:
+      - capitalreport

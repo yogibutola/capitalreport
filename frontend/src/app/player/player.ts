@@ -34,6 +34,8 @@ export interface PlayerStanding {
     name: string;
     totalScore: number;
     matchesPlayed: number;
+    wins: number;
+    losses: number;
 }
 
 export interface UpcomingMatch {
@@ -132,6 +134,9 @@ export class PlayerService {
         if (!selectedId) return null;
         return this.leagues().find(l => l.id === selectedId);
     });
+
+    // Raw league API response preserved so any player's matches can be parsed on demand
+    private rawLeagueDetails: { details: any; leagueId: string; leagueName: string } | null = null;
 
     private http = inject(HttpClient);
     private authService = inject(AuthService);
@@ -254,6 +259,9 @@ export class PlayerService {
             return [];
         }
 
+        // Preserve raw data so getMatchesForEmail() can parse any player's view on demand
+        this.rawLeagueDetails = { details, leagueId, leagueName };
+
         const userEmail = this.authService.currentUser()?.email;
         if (!userEmail) {
             console.warn('[PlayerService] No user email found, cannot filter matches.');
@@ -276,16 +284,19 @@ export class PlayerService {
         const standingsMap = new Map<string, PlayerStanding>();
 
         // Helper to add player score to standings
-        const updateStanding = (player: any, score: number, isCompleted: boolean) => {
+        const updateStanding = (player: any, score: number, isCompleted: boolean, isWin: boolean) => {
             if (!player || !player.email) return;
             const email = player.email.toLowerCase();
             let state = standingsMap.get(email);
             if (!state) {
-                state = { email, name: player.name, totalScore: 0, matchesPlayed: 0 };
+                state = { email, name: player.name, totalScore: 0, matchesPlayed: 0, wins: 0, losses: 0 };
                 standingsMap.set(email, state);
             }
             state.totalScore += score;
-            if (isCompleted) state.matchesPlayed += 1;
+            if (isCompleted) {
+                state.matchesPlayed += 1;
+                if (isWin) { state.wins += 1; } else { state.losses += 1; }
+            }
         };
 
         const processMatch = (m: any) => {
@@ -341,8 +352,9 @@ export class PlayerService {
             if (isCompleted) {
                 const s1 = Number(t1.score || 0);
                 const s2 = Number(t2.score || 0);
-                [p1, p2].forEach(p => updateStanding(p, s1, true));
-                [p3, p4].forEach(p => updateStanding(p, s2, true));
+                const team1Won = s1 > s2;
+                [p1, p2].forEach(p => updateStanding(p, s1, true, team1Won));
+                [p3, p4].forEach(p => updateStanding(p, s2, true, !team1Won));
             }
 
             // Check if current user is in this match for the dashboard lists
@@ -535,6 +547,108 @@ export class PlayerService {
                 }
             })
         );
+    }
+
+    /** Returns all matches in the current league where `email` is a participant, from their perspective. */
+    getMatchesForEmail(email: string): UpcomingMatch[] {
+        if (!this.rawLeagueDetails) return [];
+        const { details, leagueId, leagueName } = this.rawLeagueDetails;
+        return this.parseMatchesForEmail(details, leagueId, leagueName, email.toLowerCase());
+    }
+
+    private parseMatchesForEmail(details: any, leagueId: string, leagueName: string, emailLower: string): UpcomingMatch[] {
+        const playersLookup = new Map<string, any>();
+        if (details.players) {
+            details.players.forEach((p: any) => {
+                if (p.email) playersLookup.set(p.email.toLowerCase(), p);
+            });
+        }
+
+        const normalizePlayer = (p: any) => {
+            if (!p) return null;
+            if (typeof p === 'string') {
+                const lk = playersLookup.get(p.toLowerCase());
+                return { email: p.toLowerCase(), name: lk ? `${lk.firstName} ${lk.lastName}` : p, dupr_rating: lk?.dupr_rating || 0 };
+            }
+            const email = (p.email || p.id || '').toLowerCase();
+            const lk = playersLookup.get(email);
+            return {
+                email,
+                name: p.name || (p.firstName ? `${p.firstName} ${p.lastName}` : (lk ? `${lk.firstName} ${lk.lastName}` : 'Unknown')),
+                dupr_rating: p.dupr_rating || lk?.dupr_rating || 0
+            };
+        };
+
+        const results: UpcomingMatch[] = [];
+
+        const processMatch = (m: any) => {
+            const t1 = m.team_one || m.team1;
+            const t2 = m.team_two || m.team2;
+            if (!t1 || !t2) return;
+
+            const p1 = normalizePlayer(t1.player_one || t1.player1);
+            const p2 = normalizePlayer(t1.player_two || t1.player2);
+            const p3 = normalizePlayer(t2.player_one || t2.player1);
+            const p4 = normalizePlayer(t2.player_two || t2.player2);
+
+            const allPlayers = [p1, p2, p3, p4].filter(Boolean);
+            if (!allPlayers.some(p => p!.email === emailLower)) return;
+
+            const s1 = Number(t1.score || 0);
+            const s2 = Number(t2.score || 0);
+            const isCompleted = (
+                String(m.match_status)?.toLowerCase() === 'completed' ||
+                String(m.match_status)?.toLowerCase() === 'finished' ||
+                s1 > 0 || s2 > 0
+            );
+
+            const isTeam1 = [p1, p2].some(p => p?.email === emailLower);
+
+            let matchDate = m.date ? new Date(m.date) : new Date();
+            let timeStr = String(m.time || 'TBD');
+            if (timeStr.includes('T')) {
+                const parts = timeStr.split('T');
+                if (isNaN(matchDate.getTime())) matchDate = new Date(parts[0]);
+                timeStr = parts[1].substring(0, 5);
+            }
+
+            results.push({
+                id: String(m._id || m.match_id),
+                leagueId: String(leagueId),
+                leagueName: m.league_name || details.league_name || leagueName,
+                date: isNaN(matchDate.getTime()) ? new Date() : matchDate,
+                time: timeStr,
+                court: String(m.court_number || m.court || 'TBD'),
+                players: allPlayers.map(p => ({ id: p!.email, name: p!.name, rating: p!.dupr_rating })),
+                myTeamPlayerIds: isTeam1
+                    ? [p1?.email, p2?.email].filter((e): e is string => !!e)
+                    : [p3?.email, p4?.email].filter((e): e is string => !!e),
+                opponentTeamPlayerIds: isTeam1
+                    ? [p3?.email, p4?.email].filter((e): e is string => !!e)
+                    : [p1?.email, p2?.email].filter((e): e is string => !!e),
+                roundId: Number(m.round_id || 0),
+                roundName: m.round_name || m.roundName || '',
+                groupId: Number(m.group_id || 0),
+                status: isCompleted ? 'completed' : 'upcoming',
+                team1Score: isTeam1 ? s1 : s2,
+                team2Score: isTeam1 ? s2 : s1,
+                myTeamName: isTeam1 ? t1.team_name : t2.team_name,
+                opponentTeamName: isTeam1 ? t2.team_name : t1.team_name
+            });
+        };
+
+        if (details.matches && Array.isArray(details.matches)) {
+            details.matches.forEach((m: any) => processMatch(m));
+        }
+        if (results.length === 0 && details.rounds && Array.isArray(details.rounds)) {
+            details.rounds.forEach((round: any) => {
+                round.group?.forEach((group: any) => {
+                    group.match?.forEach((match: any) => processMatch(match));
+                });
+            });
+        }
+
+        return results;
     }
 
     withdrawFromPlayDay(leagueId: string, playDay: number, reason: string): Observable<boolean> {

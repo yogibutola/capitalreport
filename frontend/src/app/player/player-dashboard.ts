@@ -1,7 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { PlayerService, UpcomingMatch } from './player';
+import { PlayerService, UpcomingMatch, PlayerStanding } from './player';
 import { AuthService } from '../auth/auth';
 
 @Component({
@@ -26,11 +26,46 @@ export class PlayerDashboardComponent {
     activeSection = signal<'matches' | 'leagues' | 'stats' | 'standings' | 'league-details'>('matches');
     selectedRound = signal<string>('');
     editingMatchId = signal<string | null>(null);
+
+    // Viewed player (set when clicking a standings row)
+    viewedPlayer = signal<{ name: string; email: string; rating: number } | null>(null);
+    selectedPlayerMatches = signal<UpcomingMatch[]>([]);
+
+    filteredCompletedMatches = computed(() => {
+        const round = this.selectedRound();
+        const matches = this.completedMatches();
+        if (!round) return matches;
+        return matches.filter(m => String(m.roundId) === round);
+    });
+
+    viewedUpcomingMatches = computed(() => {
+        const vp = this.viewedPlayer();
+        if (!vp || vp.email === this.playerService.getCurrentPlayerId().toLowerCase()) {
+            return this.upcomingMatches();
+        }
+        return this.selectedPlayerMatches().filter(m => m.status !== 'completed');
+    });
+
+    viewedCompletedMatches = computed(() => {
+        const vp = this.viewedPlayer();
+        if (!vp || vp.email === this.playerService.getCurrentPlayerId().toLowerCase()) {
+            return this.filteredCompletedMatches();
+        }
+        let matches = this.selectedPlayerMatches().filter(m => m.status === 'completed');
+        const round = this.selectedRound();
+        if (round) matches = matches.filter(m => String(m.roundId) === round);
+        return matches;
+    });
+
     tempScore1 = signal<string>('');
     tempScore2 = signal<string>('');
 
     setActiveSection(section: 'matches' | 'leagues' | 'stats' | 'standings' | 'league-details') {
         this.activeSection.set(section);
+        if (section !== 'matches') {
+            this.viewedPlayer.set(null);
+            this.selectedPlayerMatches.set([]);
+        }
     }
 
     setSelectedRound(roundId: string) {
@@ -189,6 +224,14 @@ export class PlayerDashboardComponent {
         }
     }
 
+    isFutureDate(date: Date): boolean {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const playDate = new Date(date);
+        playDate.setHours(0, 0, 0, 0);
+        return playDate > today;
+    }
+
     withdrawFromDay(leagueId: string, playDay: number) {
         const reason = prompt(`Please enter a reason for withdrawing from Play Day ${playDay}:`);
         if (reason !== null && reason.trim() !== '') {
@@ -198,6 +241,30 @@ export class PlayerDashboardComponent {
                 }
             });
         }
+    }
+
+    viewPlayerMatches(entry: PlayerStanding): void {
+        const allMatches = [...this.upcomingMatches(), ...this.completedMatches()];
+        const playerInMatch = allMatches
+            .flatMap(m => m.players)
+            .find(p => p.id.toLowerCase() === entry.email.toLowerCase());
+        const rating = playerInMatch?.rating ?? 0;
+
+        this.viewedPlayer.set({ name: entry.name, email: entry.email.toLowerCase(), rating });
+        this.selectedPlayerMatches.set(this.playerService.getMatchesForEmail(entry.email));
+        this.setActiveSection('matches');
+    }
+
+    clearViewedPlayer(): void {
+        this.viewedPlayer.set(null);
+        this.selectedPlayerMatches.set([]);
+    }
+
+    getInitials(name: string): string {
+        const parts = name.trim().split(/\s+/);
+        return parts.length >= 2
+            ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+            : name.slice(0, 2).toUpperCase();
     }
 
     viewMatchDetail(matchId: string) {

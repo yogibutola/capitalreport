@@ -146,6 +146,86 @@
         </div>
     </section>
 
+    <!-- Player Search Section -->
+    <section class="player-search-section fade-in-up" style="animation-delay: 0.4s;">
+        <div class="player-search-inner">
+            <div class="player-search-header">
+                <span class="player-search-icon">🔍</span>
+                <h2 class="player-search-title">Find a Player</h2>
+                <p class="player-search-subtitle">Search for any player in the DinkLeague community by first and last name.</p>
+            </div>
+
+            <form class="player-search-form" (ngSubmit)="searchPlayers()">
+                <div class="player-search-fields">
+                    <input
+                        type="text"
+                        class="player-search-input"
+                        placeholder="First name"
+                        [(ngModel)]="searchFirstName"
+                        name="playerFirstName"
+                        autocomplete="off"
+                    />
+                    <input
+                        type="text"
+                        class="player-search-input"
+                        placeholder="Last name"
+                        [(ngModel)]="searchLastName"
+                        name="playerLastName"
+                        autocomplete="off"
+                    />
+                </div>
+                <div class="player-search-actions">
+                    <button type="submit" class="btn btn-primary player-search-btn" [disabled]="isSearching()">
+                        @if (isSearching()) { <span class="spinner"></span> Searching… }
+                        @else { Search }
+                    </button>
+                    @if (hasSearched()) {
+                        <button type="button" class="btn btn-secondary player-search-btn" (click)="clearSearch()">Clear</button>
+                    }
+                </div>
+            </form>
+
+            <!-- Error state -->
+            @if (searchError()) {
+                <div class="player-search-error">⚠ {{ searchError() }}</div>
+            }
+
+            <!-- Results -->
+            @if (hasSearched() && !isSearching() && !searchError()) {
+                @if (searchResults().length === 0) {
+                    <div class="player-search-empty">
+                        <span class="player-search-empty-icon">🎾</span>
+                        <p>No players found matching <strong>"{{ searchFirstName }} {{ searchLastName }}"</strong></p>
+                    </div>
+                } @else {
+                    <div class="player-search-results-header">
+                        {{ searchResults().length }} player{{ searchResults().length !== 1 ? 's' : '' }} found
+                    </div>
+                    <ul class="player-search-results">
+                        @for (player of searchResults(); track player.id) {
+                            <li class="player-result-card">
+                                <div class="prc-avatar">{{ player.firstName[0] }}{{ player.lastName[0] }}</div>
+                                <div class="prc-info">
+                                    <span class="prc-name">{{ player.firstName }} {{ player.lastName }}</span>
+                                    <span class="prc-email">{{ player.email }}</span>
+                                    @if (player.leagues?.length) {
+                                        <span class="prc-leagues">
+                                            {{ player.leagues.length }} league{{ player.leagues.length !== 1 ? 's' : '' }}
+                                        </span>
+                                    }
+                                </div>
+                                <div class="prc-rating">
+                                    <span class="prc-rating-label">DUPR</span>
+                                    <span class="prc-rating-value">{{ player.dupr_rating | number:'1.1-2' }}</span>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            }
+        </div>
+    </section>
+
     <!-- Multi-Language Banner -->
     <section class="multilang-banner-section">
         <div class="banner-container">
