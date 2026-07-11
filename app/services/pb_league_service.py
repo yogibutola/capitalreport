@@ -83,6 +83,14 @@ class PBLeagueService:
             league_details["matches"] = matches
         return league_details
 
+    def get_matches_by_player_email(self, email: str):
+        """Get all matches for a player across all leagues, in serializable form."""
+        matches = self.pb_match_store.get_matches_by_player_email(email)
+        for match in matches:
+            if "_id" in match:
+                del match["_id"]
+        return matches
+
     def save_match_score(self, match_details: MatchDetailsPayload):
         self.pb_match_store.save_match_score(match_details)
         

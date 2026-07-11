@@ -108,6 +108,21 @@
     font-weight: 500;
 }
 
+.header-welcome-quote {
+    font-size: 0.72rem;
+    color: #cbd5e1;
+    font-weight: 500;
+    font-style: italic;
+    max-width: 260px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+[data-theme="light"] .header-welcome-quote {
+    color: #475569;
+}
+
 /* Middle Search Bar */
 .header-search-bar {
     flex: 1;

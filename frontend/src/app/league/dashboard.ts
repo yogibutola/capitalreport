@@ -32,9 +32,10 @@ export class DashboardComponent {
   currentUser = this.authService.currentUser;
   leagues = this.playerService.getLeagues;
   upcomingMatches = this.playerService.getUpcomingMatches;
+  completedMatches = this.playerService.getCompletedMatches;
+  availableLeagues = this.playerService.getAvailableLeagues;
 
   // Premium banking visual states
-  showDupr = signal<boolean>(true);
   welcomeTimestamp = '';
 
   // Player search
@@ -50,6 +51,30 @@ export class DashboardComponent {
     const matches = this.upcomingMatches();
     if (!matches.length) return null;
     return [...matches].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+  }
+
+  get latestAvailableLeague() {
+    return this.availableLeagues()[0] ?? null;
+  }
+
+  // Last 5 completed games as W/L, oldest → most recent
+  get lastFiveResults(): ('W' | 'L')[] {
+    return [...this.completedMatches()]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5)
+      .reverse()
+      .map(m => (m.team1Score || 0) > (m.team2Score || 0) ? 'W' : 'L');
+  }
+
+  get lastFiveRecord(): string {
+    const results = this.lastFiveResults;
+    const wins = results.filter(r => r === 'W').length;
+    return `${wins}W - ${results.length - wins}L`;
+  }
+
+  formatLeagueDates(start: Date, end: Date): string {
+    const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+    return `${new Date(start).toLocaleDateString('en-US', opts)} – ${new Date(end).toLocaleDateString('en-US', opts)}`;
   }
 
   formatMatchDate(date: Date): string {
@@ -85,10 +110,7 @@ export class DashboardComponent {
     });
 
     this.generateLastLoginTimestamp();
-  }
-
-  toggleDupr() {
-    this.showDupr.update(val => !val);
+    this.playerService.fetchAllLeagues();
   }
 
   private generateLastLoginTimestamp() {

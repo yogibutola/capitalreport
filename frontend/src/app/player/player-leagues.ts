@@ -1,7 +1,7 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { PlayerService, PlayerLeague } from './player';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { PlayerService } from './player';
 
 @Component({
     selector: 'app-player-leagues',
@@ -12,16 +12,24 @@ import { PlayerService, PlayerLeague } from './player';
 })
 export class PlayerLeaguesComponent implements OnInit {
     playerService = inject(PlayerService);
+    router = inject(Router);
+    route = inject(ActivatedRoute);
 
-    allLeagues = this.playerService.getAllLeagues;
     playerLeagues = this.playerService.getLeagues;
+    availableLeagues = this.playerService.getAvailableLeagues;
+
+    activeTab = signal<'my' | 'available'>('my');
 
     ngOnInit() {
         this.playerService.fetchAllLeagues();
+        if (this.route.snapshot.queryParamMap.get('tab') === 'available') {
+            this.activeTab.set('available');
+        }
     }
 
-    isRegistered(leagueId: string): boolean {
-        return this.playerLeagues().some(l => l.id === leagueId);
+    viewLeague(leagueId: string) {
+        this.playerService.selectLeague(leagueId);
+        this.router.navigate(['/player'], { queryParams: { section: 'league-details' } });
     }
 
     register(leagueId: string) {

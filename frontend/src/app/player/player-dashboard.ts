@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PlayerService, UpcomingMatch, PlayerStanding } from './player';
 import { AuthService } from '../auth/auth';
 
@@ -15,6 +15,15 @@ export class PlayerDashboardComponent {
     playerService = inject(PlayerService);
     authService = inject(AuthService);
     router = inject(Router);
+    route = inject(ActivatedRoute);
+
+    constructor() {
+        // Allow deep-linking to a specific section (e.g. from the Leagues page)
+        const section = this.route.snapshot.queryParamMap.get('section');
+        if (section === 'stats' || section === 'league-details' || section === 'matches') {
+            this.activeSection.set(section);
+        }
+    }
 
     leagues = this.playerService.getLeagues;
     selectedLeague = this.playerService.getSelectedLeague;
@@ -23,13 +32,74 @@ export class PlayerDashboardComponent {
     standings = this.playerService.getStandings;
 
     // Local navigation state
-    activeSection = signal<'matches' | 'leagues' | 'stats' | 'standings' | 'league-details'>('matches');
+    activeSection = signal<'matches' | 'stats' | 'standings' | 'league-details'>('matches');
     selectedRound = signal<string>('');
     editingMatchId = signal<string | null>(null);
+
+    // Collapsible section state (all open by default)
+    upcomingExpanded = signal(true);
+    standingsExpanded = signal(true);
+    completedExpanded = signal(true);
 
     // Viewed player (set when clicking a standings row)
     viewedPlayer = signal<{ name: string; email: string; rating: number } | null>(null);
     selectedPlayerMatches = signal<UpcomingMatch[]>([]);
+
+    // The player's default round/group: earliest upcoming, or latest completed as fallback
+    currentGroupRound = computed(() => {
+        const upcoming = this.upcomingMatches();
+        if (upcoming.length > 0) {
+            const sorted = [...upcoming].sort((a, b) => (a.roundId || 0) - (b.roundId || 0));
+            const m = sorted[0];
+            if (m.roundId && m.groupId) {
+                return { roundId: m.roundId, groupId: m.groupId, roundName: m.roundName || '' };
+            }
+        }
+        const completed = this.completedMatches();
+        if (completed.length > 0) {
+            const sorted = [...completed].sort((a, b) => (b.roundId || 0) - (a.roundId || 0));
+            const m = sorted[0];
+            if (m.roundId && m.groupId) {
+                return { roundId: m.roundId, groupId: m.groupId, roundName: m.roundName || '' };
+            }
+        }
+        return null;
+    });
+
+    // All unique round/group combinations the player has matches in, sorted newest first
+    availableGroupRounds = computed(() => {
+        const allMatches = [...this.upcomingMatches(), ...this.completedMatches()];
+        const seen = new Map<string, { roundId: number; groupId: number; roundName: string }>();
+        allMatches.forEach(m => {
+            if (m.roundId && m.groupId) {
+                const key = `${m.roundId}-${m.groupId}`;
+                if (!seen.has(key)) {
+                    seen.set(key, { roundId: m.roundId, groupId: m.groupId, roundName: m.roundName || `Round ${m.roundId}` });
+                }
+            }
+        });
+        return Array.from(seen.values()).sort((a, b) => b.roundId - a.roundId || a.groupId - b.groupId);
+    });
+
+    // User-selected round/group key ("roundId-groupId"), null means use the default
+    selectedGroupRoundKey = signal<string | null>(null);
+
+    // The effective round/group for the standings display
+    activeGroupRound = computed(() => {
+        const key = this.selectedGroupRoundKey();
+        if (key) {
+            const found = this.availableGroupRounds().find(r => `${r.roundId}-${r.groupId}` === key);
+            if (found) return found;
+        }
+        return this.currentGroupRound();
+    });
+
+    // Standings for the active group/round, sourced from raw league data (all players)
+    currentGroupStandings = computed(() => {
+        const cr = this.activeGroupRound();
+        if (!cr) return [];
+        return this.playerService.getGroupStandingsForRound(cr.groupId, cr.roundId);
+    });
 
     filteredCompletedMatches = computed(() => {
         const round = this.selectedRound();
@@ -60,7 +130,7 @@ export class PlayerDashboardComponent {
     tempScore1 = signal<string>('');
     tempScore2 = signal<string>('');
 
-    setActiveSection(section: 'matches' | 'leagues' | 'stats' | 'standings' | 'league-details') {
+    setActiveSection(section: 'matches' | 'stats' | 'standings' | 'league-details') {
         this.activeSection.set(section);
         if (section !== 'matches') {
             this.viewedPlayer.set(null);
@@ -213,17 +283,6 @@ export class PlayerDashboardComponent {
         return days;
     }
 
-    unregister(leagueId: string, leagueName: string) {
-        if (confirm(`Are you sure you want to unregister from "${leagueName}"? This cannot be undone.`)) {
-            this.playerService.unregisterFromLeague(leagueId).subscribe({
-                error: (err) => {
-                    const detail = err.error?.detail || err.message || `HTTP ${err.status}`;
-                    alert(`Failed to unregister: ${detail}`);
-                }
-            });
-        }
-    }
-
     isFutureDate(date: Date): boolean {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -306,27 +365,4 @@ export class PlayerDashboardComponent {
             .join(', ');
     }
 
-    getGroupStandings(groupId: string | number): any[] {
-        if (!groupId) return [];
-        const gId = Number(groupId);
-
-        const allStandings = this.standings();
-        const completedMatches = this.completedMatches();
-
-        // Get all player IDs from matches in this group
-        const groupPlayerIds = new Set<string>();
-        completedMatches
-            .filter(m => m.groupId === gId)
-            .forEach(match => {
-                match.players.forEach(p => groupPlayerIds.add(p.id.toLowerCase()));
-            });
-
-        // Filter standings to only include players in this group
-        const groupStandings = allStandings.filter((standing: any) =>
-            groupPlayerIds.has(standing.email.toLowerCase())
-        );
-
-        // Sort by total score descending
-        return groupStandings.sort((a: any, b: any) => b.totalScore - a.totalScore);
-    }
 }

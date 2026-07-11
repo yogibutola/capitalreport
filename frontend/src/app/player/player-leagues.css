@@ -106,14 +106,169 @@
     opacity: 1;
 }
 
+/* ─── Tabs ─── */
+.leagues-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-xl);
+}
+
+.nav-pill-btn {
+    background: none;
+    border: 1px solid transparent;
+    color: #475569;
+    font-size: 0.825rem;
+    font-weight: 700;
+    padding: 7px 18px;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: 'Manrope', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+[data-theme="dark"] .nav-pill-btn { color: #cbd5e1; }
+
+.nav-pill-btn:hover {
+    color: #0f172a;
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .nav-pill-btn:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.07);
+}
+
+.nav-pill-btn.active {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border-color: transparent;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.empty-leagues {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: var(--space-xl);
+}
+
+/* ─── My Leagues section ─── */
+.my-leagues-section {
+    margin-bottom: var(--space-xl);
+}
+
+.section-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.content-section-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: HSL(var(--color-text-main));
+    margin: 0 0 var(--space-lg) 0;
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-sm);
+}
+
+[data-theme="light"] .content-section-title { color: #0f172a; }
+
+.leagues-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-lg);
+}
+
+.match-card {
+    cursor: pointer;
+    transition: all 0.1s ease;
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-bg-card);
+    border: 3px solid var(--card-border);
+    border-radius: var(--radius-lg);
+}
+
+.match-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 4px;
+    background: linear-gradient(to right, #22c55e, #a855f7);
+}
+
+.match-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+    border-color: #22c55e;
+}
+
+[data-theme="light"] .match-card {
+    background-color: #ffffff;
+    border-color: #e2e8f0;
+}
+
+[data-theme="light"] .match-card:hover {
+    border-color: #22c55e;
+    box-shadow: 0 8px 24px rgba(34, 197, 94, 0.15);
+}
+
+.match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+[data-theme="light"] .match-header { border-bottom-color: #f1f5f9; }
+
+.match-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--space-sm);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="light"] .match-footer { border-top-color: #f1f5f9; }
+
+.view-details { font-size: 0.82rem; color: #22c55e; font-weight: 600; }
+[data-theme="light"] .view-details { color: #16a34a; }
+
+.btn-xs { padding: 2px 8px; font-size: 0.75rem; height: auto; }
+
+.league-status {
+    font-size: 0.72rem;
+    padding: 2px 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.league-status.status-active   { background: rgba(34,197,94,0.15); color: #22c55e; }
+.league-status.status-upcoming { background: rgba(251,191,36,0.15); color: #fbbf24; }
+.league-status.status-completed{ background: rgba(255,255,255,0.08); color: var(--color-text-muted); }
+
 @media (max-width: 768px) {
     .leagues-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
     }
-    
+
     .leagues-container {
         padding: 1rem;
     }
+
+    .section-header-row { flex-direction: column; align-items: flex-start; }
 }

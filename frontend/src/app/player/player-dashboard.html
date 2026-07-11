@@ -25,9 +25,6 @@
       <button class="nav-pill-btn" [class.active]="activeSection() === 'matches'" (click)="setActiveSection('matches')">
         🎾 Matches
       </button>
-      <button class="nav-pill-btn" [class.active]="activeSection() === 'leagues'" (click)="setActiveSection('leagues')">
-        🏆 My Leagues
-      </button>
       <button class="nav-pill-btn" [class.active]="activeSection() === 'stats'" (click)="setActiveSection('stats')">
         📊 Standings
       </button>
@@ -62,163 +59,123 @@
       }
     }
 
-    <h2 class="content-section-title">Upcoming Matches</h2>
-
-    <div class="matches-grid">
-      @if (viewedUpcomingMatches().length === 0) {
-      <div class="empty-state panel-card">
-        <h3 style="font-family: 'Anton', sans-serif; font-size: 2rem; text-transform: uppercase;">NO UPCOMING MATCHES</h3>
-        <p style="color: var(--color-text-muted);">Check back later or select a different league.</p>
-      </div>
-      }
-      @for (match of viewedUpcomingMatches(); track match.id; let i = $index) {
-      <div class="match-card card" (click)="viewMatchDetail(match.id)" [style.animation-delay]="(i * 0.05) + 's'">
-        <div class="match-header">
-          <div class="match-date">
-            <span class="date-text">{{ formatDate(match.date) }}</span>
-            <span class="time-text">{{ match.time }}</span>
-          </div>
-          <div class="match-meta">
-            @if (match.roundName || match.roundId) {
-              <span class="round-badge">{{ match.roundName || 'Round ' + match.roundId }}</span>
-            }
-            @if (match.groupId) {
-              <span class="group-badge">Group {{ match.groupId }}</span>
-            }
-            <span class="court-badge">{{ match.court || 'Court TBD' }}</span>
-          </div>
+    <!-- ── Upcoming Matches ── -->
+    <div class="collapsible-section">
+      <button class="collapsible-header" (click)="upcomingExpanded.set(!upcomingExpanded())">
+        <h2 class="content-section-title" style="margin: 0;">Upcoming Matches</h2>
+        <span class="chevron" [class.open]="upcomingExpanded()">›</span>
+      </button>
+      @if (upcomingExpanded()) {
+      <div class="matches-grid">
+        @if (viewedUpcomingMatches().length === 0) {
+        <div class="empty-state panel-card">
+          <h3 style="font-family: 'Anton', sans-serif; font-size: 2rem; text-transform: uppercase;">NO UPCOMING MATCHES</h3>
+          <p style="color: var(--color-text-muted);">Check back later or select a different league.</p>
         </div>
-
-        <div class="match-teams">
-          <div class="team my-team">
-            <div class="team-info-row">
-              <span class="team-name">{{ match.myTeamName || 'My Team' }}</span>
-              @if (editingMatchId() === match.id) {
-                <input type="number" class="score-input-inline" placeholder="0"
-                       [value]="tempScore1()"
-                       (input)="tempScore1.set($any($event.target).value)"
-                       (click)="$event.stopPropagation()">
-              } @else {
-                @if (match.status === 'completed') {
-                  <span class="final-score">{{ match.team1Score }}</span>
-                }
-              }
+        }
+        @for (match of viewedUpcomingMatches(); track match.id; let i = $index) {
+        <div class="match-card card" (click)="viewMatchDetail(match.id)" [style.animation-delay]="(i * 0.05) + 's'">
+          <div class="match-header">
+            <div class="match-date">
+              <span class="date-text">{{ formatDate(match.date) }}</span>
+              <span class="time-text">{{ match.time }}</span>
             </div>
-            <span class="team-players">{{ getTeammates(match) || 'Partner TBD' }}</span>
+            <div class="match-meta">
+              @if (match.roundName || match.roundId) {
+                <span class="round-badge">{{ match.roundName || 'Round ' + match.roundId }}</span>
+              }
+              @if (match.groupId) {
+                <span class="group-badge">Group {{ match.groupId }}</span>
+              }
+              <span class="court-badge">{{ match.court || 'Court TBD' }}</span>
+            </div>
           </div>
 
-          <div class="vs-divider">VS</div>
-
-          <div class="team opponent-team">
-            <div class="team-info-row">
-              <span class="team-name">{{ match.opponentTeamName || 'Opponents' }}</span>
-              @if (editingMatchId() === match.id) {
-                <input type="number" class="score-input-inline" placeholder="0"
-                       [value]="tempScore2()"
-                       (input)="tempScore2.set($any($event.target).value)"
-                       (click)="$event.stopPropagation()">
-              } @else {
-                @if (match.status === 'completed') {
-                  <span class="final-score">{{ match.team2Score }}</span>
+          <div class="match-teams">
+            <div class="team my-team">
+              <div class="team-info-row">
+                <span class="team-name">{{ match.myTeamName || 'My Team' }}</span>
+                @if (editingMatchId() === match.id) {
+                  <input type="number" class="score-input-inline" placeholder="0"
+                         [value]="tempScore1()"
+                         (input)="tempScore1.set($any($event.target).value)"
+                         (click)="$event.stopPropagation()">
+                } @else {
+                  @if (match.status === 'completed') {
+                    <span class="final-score">{{ match.team1Score }}</span>
+                  }
                 }
-              }
-            </div>
-            <span class="team-players">{{ getOpponents(match) }}</span>
-          </div>
-        </div>
-
-        <div class="match-footer">
-          <span class="league-tag">{{ match.leagueName }}</span>
-          <div class="score-actions" (click)="$event.stopPropagation()">
-            @if (editingMatchId() !== match.id) {
-              <button class="btn btn-secondary btn-xs" (click)="setEditingMatch(match.id); $event.stopPropagation()">Score</button>
-            } @else {
-              <div class="flex-center" style="gap: var(--space-xs)">
-                <button class="btn btn-primary btn-xs" (click)="submitScore(match); $event.stopPropagation()">Save</button>
-                <button class="btn btn-secondary btn-xs" (click)="setEditingMatch(null); $event.stopPropagation()">Cancel</button>
               </div>
-            }
+              <span class="team-players">{{ getTeammates(match) || 'Partner TBD' }}</span>
+            </div>
+
+            <div class="vs-divider">VS</div>
+
+            <div class="team opponent-team">
+              <div class="team-info-row">
+                <span class="team-name">{{ match.opponentTeamName || 'Opponents' }}</span>
+                @if (editingMatchId() === match.id) {
+                  <input type="number" class="score-input-inline" placeholder="0"
+                         [value]="tempScore2()"
+                         (input)="tempScore2.set($any($event.target).value)"
+                         (click)="$event.stopPropagation()">
+                } @else {
+                  @if (match.status === 'completed') {
+                    <span class="final-score">{{ match.team2Score }}</span>
+                  }
+                }
+              </div>
+              <span class="team-players">{{ getOpponents(match) }}</span>
+            </div>
+          </div>
+
+          <div class="match-footer">
+            <span class="league-tag">{{ match.leagueName }}</span>
+            <div class="score-actions" (click)="$event.stopPropagation()">
+              @if (editingMatchId() !== match.id) {
+                <button class="btn btn-secondary btn-xs" (click)="setEditingMatch(match.id); $event.stopPropagation()">Score</button>
+              } @else {
+                <div class="flex-center" style="gap: var(--space-xs)">
+                  <button class="btn btn-primary btn-xs" (click)="submitScore(match); $event.stopPropagation()">Save</button>
+                  <button class="btn btn-secondary btn-xs" (click)="setEditingMatch(null); $event.stopPropagation()">Cancel</button>
+                </div>
+              }
+            </div>
           </div>
         </div>
-      </div>
-      }
-    </div>
-
-    <div class="section-header-row" style="margin-top: var(--space-xl); align-items: center;">
-      <h2 class="content-section-title" id="completed-matches-section" style="margin: 0;">Completed Matches</h2>
-      @if (getAvailableRounds().length > 0) {
-      <div class="round-filter-pills">
-        <button class="round-pill" [class.active]="selectedRound() === ''" (click)="setSelectedRound('')">All Rounds</button>
-        @for (round of getAvailableRounds(); track round.id) {
-          <button class="round-pill" [class.active]="selectedRound() === round.id" (click)="setSelectedRound(round.id)">
-            {{ round.name }}
-          </button>
         }
       </div>
       }
     </div>
 
-    <div class="matches-grid">
-      @if (viewedCompletedMatches().length === 0) {
-      <div class="empty-state panel-card">
-        <h3 style="font-family: 'Anton', sans-serif; font-size: 2rem; text-transform: uppercase;">NO COMPLETED MATCHES</h3>
-        <p style="color: var(--color-text-muted);">
-          @if (selectedRound()) { No matches found for this round. } @else { As you finish matches, they will appear here. }
-        </p>
-      </div>
-      }
-      @for (match of viewedCompletedMatches(); track match.id; let i = $index) {
-      <div class="match-card card completed-card" (click)="viewMatchDetail(match.id)" [style.animation-delay]="(i * 0.05) + 's'"
-           [class.win-card]="(match.team1Score || 0) > (match.team2Score || 0)">
-        <div class="match-header">
-          <div class="match-date">
-            <span class="date-text">{{ formatDate(match.date) }}</span>
-            <span class="time-text">{{ match.time }}</span>
+    <!-- ── Group Standings ── -->
+    @if (activeGroupRound(); as agr) {
+    <div class="collapsible-section">
+      <button class="collapsible-header" (click)="standingsExpanded.set(!standingsExpanded())">
+        <h2 class="content-section-title" style="margin: 0;">Group Standings</h2>
+        <div class="collapsible-header-right" (click)="$event.stopPropagation()">
+          @if (availableGroupRounds().length > 1) {
+          <div class="select-wrapper" style="min-width: 0;">
+            <select class="league-select"
+                    [value]="selectedGroupRoundKey() ?? (agr.roundId + '-' + agr.groupId)"
+                    (change)="selectedGroupRoundKey.set($any($event.target).value)">
+              @for (gr of availableGroupRounds(); track gr.roundId + '-' + gr.groupId) {
+                <option [value]="gr.roundId + '-' + gr.groupId">
+                  {{ gr.roundName || 'Round ' + gr.roundId }} · Group {{ gr.groupId }}
+                </option>
+              }
+            </select>
           </div>
-          <div class="match-meta">
-            @if (match.roundName || match.roundId) {
-              <span class="round-badge">{{ match.roundName || 'Round ' + match.roundId }}</span>
-            }
-            @if (match.groupId) {
-              <span class="group-badge">Group {{ match.groupId }}</span>
-            }
-            <span class="court-badge">{{ match.court || 'Court TBD' }}</span>
-          </div>
+          } @else {
+          <span class="section-subtitle">{{ agr.roundName || 'Round ' + agr.roundId }} · Group {{ agr.groupId }}</span>
+          }
         </div>
+        <span class="chevron" [class.open]="standingsExpanded()">›</span>
+      </button>
+      @if (standingsExpanded()) {
 
-        <div class="match-teams">
-          <div class="team my-team" [class.winner]="(match.team1Score || 0) > (match.team2Score || 0)">
-            <div class="team-info-row">
-              <span class="team-name">{{ match.myTeamName || 'My Team' }}</span>
-              <span class="final-score">{{ match.team1Score }}</span>
-            </div>
-            <span class="team-players">{{ getTeammates(match) || 'Partner TBD' }}</span>
-          </div>
-
-          <div class="vs-divider">VS</div>
-
-          <div class="team opponent-team" [class.winner]="(match.team2Score || 0) > (match.team1Score || 0)">
-            <div class="team-info-row">
-              <span class="team-name">{{ match.opponentTeamName || 'Opponents' }}</span>
-              <span class="final-score">{{ match.team2Score }}</span>
-            </div>
-            <span class="team-players">{{ getOpponents(match) }}</span>
-          </div>
-        </div>
-
-        <div class="match-footer">
-          <span class="league-tag">{{ match.leagueName }}</span>
-          <span class="view-details">Match Results →</span>
-        </div>
-      </div>
-      }
-    </div>
-
-    @if (completedMatches().length > 0 && completedMatches()[0].groupId) {
-    <div style="margin-top: var(--space-xl);">
-      <h2 class="content-section-title">My Group Standings</h2>
       <div class="group-standings-mini panel-card">
-        <h3 class="standings-mini-title">Group {{ completedMatches()[0].groupId! }} · Current Standings</h3>
+        @if (currentGroupStandings().length > 0) {
         <table class="standings-mini-table">
           <thead>
             <tr>
@@ -230,7 +187,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (standing of getGroupStandings(completedMatches()[0].groupId!); track standing.email; let i = $index) {
+            @for (standing of currentGroupStandings(); track standing.email; let i = $index) {
             <tr [class.current-player]="standing.email === playerService.getCurrentPlayerId().toLowerCase()">
               <td class="pos-mini">{{ i + 1 }}</td>
               <td class="player-mini">
@@ -247,37 +204,89 @@
             }
           </tbody>
         </table>
+        } @else {
+        <div style="text-align: center; color: var(--color-text-muted); padding: var(--space-md);">
+          No completed matches in this group yet.
+        </div>
+        }
       </div>
+      }
     </div>
     }
-    }
 
-    <!-- ── MY LEAGUES ── -->
-    @if (activeSection() === 'leagues') {
-    <div class="section-header-row">
-      <h2 class="content-section-title">My Leagues</h2>
-      <a routerLink="/player/leagues" class="btn btn-primary">Find More Leagues</a>
-    </div>
+    <!-- ── Completed Matches ── -->
+    <div class="collapsible-section">
+      <button class="collapsible-header" (click)="completedExpanded.set(!completedExpanded())">
+        <div style="display: flex; align-items: center; gap: var(--space-lg); flex-wrap: wrap;">
+          <h2 class="content-section-title" style="margin: 0;">Completed Matches</h2>
+          @if (completedExpanded() && getAvailableRounds().length > 0) {
+          <div class="round-filter-pills" (click)="$event.stopPropagation()">
+            <button class="round-pill" [class.active]="selectedRound() === ''" (click)="setSelectedRound('')">All Rounds</button>
+            @for (round of getAvailableRounds(); track round.id) {
+              <button class="round-pill" [class.active]="selectedRound() === round.id" (click)="setSelectedRound(round.id)">
+                {{ round.name }}
+              </button>
+            }
+          </div>
+          }
+        </div>
+        <span class="chevron" [class.open]="completedExpanded()">›</span>
+      </button>
+      @if (completedExpanded()) {
+      <div class="matches-grid">
+        @if (viewedCompletedMatches().length === 0) {
+        <div class="empty-state panel-card">
+          <h3 style="font-family: 'Anton', sans-serif; font-size: 2rem; text-transform: uppercase;">NO COMPLETED MATCHES</h3>
+          <p style="color: var(--color-text-muted);">
+            @if (selectedRound()) { No matches found for this round. } @else { As you finish matches, they will appear here. }
+          </p>
+        </div>
+        }
+        @for (match of viewedCompletedMatches(); track match.id; let i = $index) {
+        <div class="match-card card completed-card" (click)="viewMatchDetail(match.id)" [style.animation-delay]="(i * 0.05) + 's'"
+             [class.win-card]="(match.team1Score || 0) > (match.team2Score || 0)">
+          <div class="match-header">
+            <div class="match-date">
+              <span class="date-text">{{ formatDate(match.date) }}</span>
+              <span class="time-text">{{ match.time }}</span>
+            </div>
+            <div class="match-meta">
+              @if (match.roundName || match.roundId) {
+                <span class="round-badge">{{ match.roundName || 'Round ' + match.roundId }}</span>
+              }
+              @if (match.groupId) {
+                <span class="group-badge">Group {{ match.groupId }}</span>
+              }
+              <span class="court-badge">{{ match.court || 'Court TBD' }}</span>
+            </div>
+          </div>
 
-    <div class="leagues-grid">
-      @for (league of leagues(); track league.id) {
-      <div class="match-card card" [class.selected]="selectedLeague()?.id === league.id"
-           (click)="selectLeague(league.id); setActiveSection('league-details')">
-        <div class="match-header">
-          <h3 style="margin: 0; color: var(--color-primary);">{{ league.name }}</h3>
-          <span class="league-status" [class]="'status-' + league.status">{{ league.status }}</span>
+          <div class="match-teams">
+            <div class="team my-team" [class.winner]="(match.team1Score || 0) > (match.team2Score || 0)">
+              <div class="team-info-row">
+                <span class="team-name">{{ match.myTeamName || 'My Team' }}</span>
+                <span class="final-score">{{ match.team1Score }}</span>
+              </div>
+              <span class="team-players">{{ getTeammates(match) || 'Partner TBD' }}</span>
+            </div>
+
+            <div class="vs-divider">VS</div>
+
+            <div class="team opponent-team" [class.winner]="(match.team2Score || 0) > (match.team1Score || 0)">
+              <div class="team-info-row">
+                <span class="team-name">{{ match.opponentTeamName || 'Opponents' }}</span>
+                <span class="final-score">{{ match.team2Score }}</span>
+              </div>
+              <span class="team-players">{{ getOpponents(match) }}</span>
+            </div>
+          </div>
+
+          <div class="match-footer">
+            <span class="league-tag">{{ match.leagueName }}</span>
+            <span class="view-details">Match Results →</span>
+          </div>
         </div>
-        <div style="margin-top: var(--space-md); color: var(--color-text-muted);">
-          <p>Starts: {{ league.startDate | date }}</p>
-          <p>Ends: {{ league.endDate | date }}</p>
-        </div>
-        <div class="match-footer" style="margin-top: var(--space-md);">
-          <span class="view-details">View Details →</span>
-          <button class="btn btn-secondary btn-xs" style="color: var(--color-error, #e74c3c); border-color: var(--color-error, #e74c3c);"
-                  (click)="$event.stopPropagation(); unregister(league.id, league.name)">
-            Unregister
-          </button>
-        </div>
+        }
       </div>
       }
     </div>
@@ -334,7 +343,7 @@
     } @else {
     <div class="empty-state panel-card">
       <h3>No league selected</h3>
-      <p>Select a league from My Leagues to see standings.</p>
+      <p>Select a league from the <a routerLink="/player/leagues">Leagues</a> page to see standings.</p>
     </div>
     }
     }
@@ -346,7 +355,7 @@
         League Details
         @if (selectedLeague()) { <span class="section-subtitle">· {{ selectedLeague()?.name }}</span> }
       </h2>
-      <button class="btn btn-secondary" (click)="setActiveSection('leagues')">← Back to Leagues</button>
+      <a routerLink="/player/leagues" class="btn btn-secondary">← Back to Leagues</a>
     </div>
 
     @if (selectedLeague(); as league) {
@@ -404,7 +413,7 @@
     } @else {
     <div class="empty-state panel-card">
       <h3>No league selected</h3>
-      <p>Go to My Leagues and select a league first.</p>
+      <p>Go to the <a routerLink="/player/leagues">Leagues</a> page and select a league first.</p>
     </div>
     }
     }

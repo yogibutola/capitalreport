@@ -317,6 +317,37 @@ input:checked + .slider:before {
     color: #1e3a8a;
 }
 
+.gradient-lavender {
+    cursor: pointer;
+}
+
+/* Last 5 games W/L form badges */
+.form-badges {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.form-badge {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.form-badge.win {
+    background-color: #059669;
+}
+
+.form-badge.loss {
+    background-color: #dc2626;
+}
+
 .gradient-purple {
     background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
     color: #ffffff;

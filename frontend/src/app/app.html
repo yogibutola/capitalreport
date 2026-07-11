@@ -19,7 +19,11 @@
 
       <div class="header-welcome-block" *ngIf="currentUser()">
         <span class="header-welcome-name">Welcome, {{ currentUser()!.firstName }} {{ currentUser()!.lastName }}</span>
-        <span class="header-welcome-sub">Good to have you back</span>
+        @if (pickleballQuote()) {
+          <span class="header-welcome-quote">🥒 {{ pickleballQuote() }}</span>
+        } @else {
+          <span class="header-welcome-sub">Good to have you back</span>
+        }
       </div>
 
       <div class="header-search-bar">

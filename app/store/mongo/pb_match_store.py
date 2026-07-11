@@ -78,6 +78,19 @@ class PBMatchStore:
         collection = self.get_matches_collection()
         return list(collection.find({"league_id": str(league_id)}))
 
+    def get_matches_by_player_email(self, email: str) -> List[dict]:
+        """Get all matches across all leagues where the player participates."""
+        collection = self.get_matches_collection()
+        email_lower = email.lower()
+        return list(collection.find({
+            "$or": [
+                {"team_one.player_one.email": email_lower},
+                {"team_one.player_two.email": email_lower},
+                {"team_two.player_one.email": email_lower},
+                {"team_two.player_two.email": email_lower}
+            ]
+        }))
+
     def get_matches_by_group(self, league_id: str, round_id: int, group_id: int) -> List[dict]:
         collection = self.get_matches_collection()
         return list(collection.find({

@@ -1,6 +1,7 @@
-import { Injectable, inject } from '@angular/core';
-import { MatchService } from '../matches/match';
-import { LeagueService } from '../league/league';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 export interface PlayerStats {
   totalMatches: number;
@@ -8,61 +9,100 @@ export interface PlayerStats {
   losses: number;
   winRate: number;
   bestPartner: string | null; // Name of best partner
+  leaguesPlayed: number;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class StatsService {
-  private matchService = inject(MatchService);
-  private leagueService = inject(LeagueService);
+  private http = inject(HttpClient);
 
-  getPlayerStats(userId: string): PlayerStats {
-    const matches = this.matchService.getMatches(userId)(); // Access signal value
-    const playerMatches = matches.filter(m => m.players.includes(userId));
+  // All matches for the player, across all leagues
+  private matches = signal<any[]>([]);
+  private loadedForEmail: string | null = null;
+
+  /** Fetch all matches for a player across all leagues (cached per email). */
+  loadMatchesForPlayer(email: string) {
+    const emailLower = email.toLowerCase();
+    if (this.loadedForEmail === emailLower) return;
+    this.loadedForEmail = emailLower;
+
+    this.http.get<any[]>(`api/v1/player/${encodeURIComponent(emailLower)}/matches`).pipe(
+      catchError(err => {
+        console.error('[StatsService] Error fetching player matches:', err);
+        return of([]);
+      })
+    ).subscribe(matches => {
+      this.matches.set(Array.isArray(matches) ? matches : []);
+    });
+  }
+
+  getPlayerStats(email: string): PlayerStats {
+    const emailLower = email.toLowerCase();
+    const allMatches = this.matches();
 
     let wins = 0;
-    const partnerWins = new Map<string, number>();
+    let completed = 0;
+    const leagueIds = new Set<string>();
+    const partnerWins = new Map<string, { name: string; wins: number }>();
 
-    playerMatches.forEach(match => {
-      // userId is in match.players [0,1,2,3]. Teams are [0,1] vs [2,3]
-      const team1 = [match.players[0], match.players[1]];
-      const team2 = [match.players[2], match.players[3]];
+    const playerEmail = (p: any) => (p?.email || '').toLowerCase();
+    const playerName = (p: any) =>
+      p?.name || (p?.firstName ? `${p.firstName} ${p.lastName}` : (p?.email || 'Unknown'));
 
-      const myTeam = team1.includes(userId) ? 1 : 2;
-      const won = match.winnerTeam === myTeam;
+    allMatches.forEach(m => {
+      const t1 = m.team_one || m.team1;
+      const t2 = m.team_two || m.team2;
+      if (!t1 || !t2) return;
+
+      if (m.league_id) leagueIds.add(String(m.league_id));
+
+      const s1 = Number(t1.score || 0);
+      const s2 = Number(t2.score || 0);
+      const statusLower = String(m.match_status || '').toLowerCase();
+      const isCompleted = statusLower === 'completed' || statusLower === 'finished' || s1 > 0 || s2 > 0;
+      if (!isCompleted) return;
+
+      const team1Players = [t1.player_one || t1.player1, t1.player_two || t1.player2];
+      const team2Players = [t2.player_one || t2.player1, t2.player_two || t2.player2];
+
+      const isTeam1 = team1Players.some(p => playerEmail(p) === emailLower);
+      const isTeam2 = team2Players.some(p => playerEmail(p) === emailLower);
+      if (!isTeam1 && !isTeam2) return;
+
+      completed++;
+      const won = isTeam1 ? s1 > s2 : s2 > s1;
 
       if (won) {
         wins++;
-        // Find partner
-        const team = myTeam === 1 ? team1 : team2;
-        const partnerId = team.find(id => id !== userId);
-        if (partnerId) {
-          partnerWins.set(partnerId, (partnerWins.get(partnerId) || 0) + 1);
+        const myTeam = isTeam1 ? team1Players : team2Players;
+        const partner = myTeam.find(p => p && playerEmail(p) !== emailLower);
+        if (partner) {
+          const key = playerEmail(partner);
+          const entry = partnerWins.get(key) || { name: playerName(partner), wins: 0 };
+          entry.wins++;
+          partnerWins.set(key, entry);
         }
       }
     });
 
-    // Find best partner
-    let bestPartnerId: string | null = null;
+    let bestPartner: string | null = null;
     let maxWins = 0;
-    partnerWins.forEach((count, id) => {
-      if (count > maxWins) {
-        maxWins = count;
-        bestPartnerId = id;
+    partnerWins.forEach(entry => {
+      if (entry.wins > maxWins) {
+        maxWins = entry.wins;
+        bestPartner = entry.name;
       }
     });
 
-    const bestPartnerName = bestPartnerId
-      ? this.leagueService.getPlayers()().find(p => p.id === bestPartnerId)?.name || 'Unknown'
-      : null;
-
     return {
-      totalMatches: playerMatches.length,
+      totalMatches: completed,
       wins,
-      losses: playerMatches.length - wins,
-      winRate: playerMatches.length > 0 ? (wins / playerMatches.length) * 100 : 0,
-      bestPartner: bestPartnerName
+      losses: completed - wins,
+      winRate: completed > 0 ? (wins / completed) * 100 : 0,
+      bestPartner,
+      leaguesPlayed: leagueIds.size
     };
   }
 }

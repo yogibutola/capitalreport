@@ -1,4 +1,4 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, effect } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { StatsService } from './stats';
 import { AuthService } from '../auth/auth';
@@ -14,10 +14,20 @@ export class ProfileComponent {
   statsService = inject(StatsService);
   authService = inject(AuthService);
 
+  constructor() {
+    // Load matches from all leagues for the logged-in player
+    effect(() => {
+      const email = this.authService.currentUser()?.email;
+      if (email) {
+        this.statsService.loadMatchesForPlayer(email);
+      }
+    });
+  }
+
   stats = computed(() => {
-    const userId = this.authService.currentUser()?.id;
-    if (userId) {
-      return this.statsService.getPlayerStats(userId);
+    const email = this.authService.currentUser()?.email;
+    if (email) {
+      return this.statsService.getPlayerStats(email);
     }
     return null;
   });

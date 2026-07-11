@@ -37,68 +37,79 @@
         }
       </div>
 
-      <!-- Card 1: Savings Accounts style (Light Lavender/Blue) -->
-      <div class="promo-card gradient-lavender">
+      <!-- Card 1: My Stats (Light Lavender/Blue) -->
+      <div class="promo-card gradient-lavender" routerLink="/profile">
         <div class="card-icon-header">
-          <div class="icon-circle">🏆</div>
+          <div class="icon-circle">📊</div>
           <div class="arrow-indicator">❯</div>
         </div>
-        
+
         <div class="card-info-body">
-          <p class="card-small-tag">Active Leagues</p>
-          @if (showDupr()) {
-            <h3 class="card-main-heading">{{ leagues().length }} Leagues Joined</h3>
-          @} @else {
-            <h3 class="card-main-heading">Leagues Active</h3>
+          <p class="card-small-tag">My Stats</p>
+          @if (lastFiveResults.length > 0) {
+            <h3 class="card-main-heading">Last {{ lastFiveResults.length }} Games · {{ lastFiveRecord }}</h3>
+            <div class="form-badges">
+              @for (result of lastFiveResults; track $index) {
+                <span class="form-badge" [class.win]="result === 'W'" [class.loss]="result === 'L'">{{ result }}</span>
+              }
+            </div>
+          } @else {
+            <h3 class="card-main-heading">No games played yet</h3>
+            <p class="card-extra-detail">Your recent results will appear here.</p>
           }
-          
-          <p class="card-extra-detail">
-            @if (leagues().length > 0) {
-              {{ leagues()[0].name }} @if(leagues().length > 1) { & others }
-            } @else {
-              No active registrations
-            }
-          </p>
         </div>
-        
+
         <div class="card-action-footer">
-          <button class="card-action-btn" routerLink="/player/leagues">View Leagues</button>
+          <button class="card-action-btn">View Stats</button>
         </div>
       </div>
 
       <!-- Card 2: Demat & Trading style (Vibrant Purple) -->
-      <div class="promo-card gradient-purple">
+      <div class="promo-card gradient-purple" routerLink="/player/leagues" [queryParams]="{ tab: 'available' }">
         <div class="card-icon-header">
           <div class="icon-circle">📈</div>
           <div class="arrow-indicator">❯</div>
         </div>
-        
-        <div class="card-info-body">
-          <p class="card-small-tag">New Season</p>
-          <h3 class="card-main-heading">Join a New League</h3>
-          <p class="card-extra-detail">Open new possibilities in few clicks</p>
-        </div>
-        
-        <div class="card-action-footer">
-          <button class="card-action-btn-white" routerLink="/player/leagues">Join League</button>
-        </div>
+
+        @if (latestAvailableLeague; as league) {
+          <div class="card-info-body">
+            <p class="card-small-tag">Join a New League</p>
+            <h3 class="card-main-heading">{{ league.name }}</h3>
+            <p class="card-extra-detail">{{ formatLeagueDates(league.startDate, league.endDate) }}</p>
+            @if (league.duration) {
+              <p class="card-extra-detail">{{ league.duration }}</p>
+            }
+          </div>
+          <div class="card-action-footer">
+            <button class="card-action-btn-white">Join League</button>
+          </div>
+        } @else {
+          <div class="card-info-body">
+            <p class="card-small-tag">New Season</p>
+            <h3 class="card-main-heading">Join a New League</h3>
+            <p class="card-extra-detail">Open new possibilities in few clicks</p>
+          </div>
+          <div class="card-action-footer">
+            <button class="card-action-btn-white">View Leagues</button>
+          </div>
+        }
       </div>
 
-      <!-- Card 3: Avoid Restrictions style (Deep Dark Purple) -->
+      <!-- Card 3: Tournaments (Deep Dark Purple) -->
       <div class="promo-card gradient-deep">
         <div class="card-icon-header">
-          <div class="icon-circle">👥</div>
+          <div class="icon-circle">🏆</div>
           <div class="arrow-indicator">❯</div>
         </div>
-        
+
         <div class="card-info-body">
-          <p class="card-small-tag">Daily Slotting</p>
-          <h3 class="card-main-heading">Daily Slotting Panel</h3>
-          <p class="card-extra-detail">Avoid restrictions. Book your slots on time.</p>
+          <p class="card-small-tag">Tournaments</p>
+          <h3 class="card-main-heading">Tournaments</h3>
+          <p class="card-extra-detail">Under construction</p>
         </div>
-        
+
         <div class="card-action-footer">
-          <button class="card-action-btn-white" routerLink="/league/slotting">Do it now</button>
+          <button class="card-action-btn-white" disabled>Coming Soon</button>
         </div>
       </div>
 

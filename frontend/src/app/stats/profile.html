@@ -1,6 +1,6 @@
 <div class="container" style="padding-top: var(--space-lg);">
     <div class="flex-center" style="justify-content: space-between; margin-bottom: var(--space-lg);">
-        <h2 class="text-gradient">Player Statistics</h2>
+        <h2 class="text-gradient">Player Statistics (All Leagues)</h2>
         <a routerLink="/league" class="btn btn-secondary">Back</a>
     </div>
 
@@ -15,8 +15,16 @@
             <span class="stat-label">Total Matches</span>
         </div>
         <div class="card flex-center flex-col">
-            <h1 class="stat-value" style="color: var(--color-success);">{{ s.wins }}</h1>
+            <h1 class="stat-value" style="color: hsl(var(--color-success));">{{ s.wins }}</h1>
             <span class="stat-label">Wins</span>
+        </div>
+        <div class="card flex-center flex-col">
+            <h1 class="stat-value" style="color: hsl(var(--color-error));">{{ s.losses }}</h1>
+            <span class="stat-label">Losses</span>
+        </div>
+        <div class="card flex-center flex-col">
+            <h1 class="stat-value">{{ s.leaguesPlayed }}</h1>
+            <span class="stat-label">Leagues Played</span>
         </div>
         <div class="card flex-center flex-col">
             <h3 class="stat-value" style="font-size: 1.5rem;">{{ s.bestPartner || 'N/A' }}</h3>

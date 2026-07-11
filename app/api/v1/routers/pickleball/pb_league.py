@@ -46,6 +46,13 @@ def get_league_details_by_league_name(league_name: str,
     return pb_league_service.get_league_details_by_league_name(league_name)
 
 
+@router.get("/player/{email_id}/matches", status_code=status.HTTP_200_OK)
+def get_matches_by_player_email(email_id: str,
+                                pb_league_service: PBLeagueService = Depends(get_pb_league_service)):
+    """ Get all matches for a player across all leagues."""
+    return pb_league_service.get_matches_by_player_email(email_id)
+
+
 ################################################### POST METHODS ###################################################
 
 @router.post("/league", status_code=status.HTTP_201_CREATED, response_model=LeagueResponse)

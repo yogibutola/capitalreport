@@ -88,6 +88,14 @@ export class PlayerService {
     // Computed: Get status of all available leagues
     getAllLeagues = computed(() => this.allLeagues());
 
+    // Computed: Leagues the player has not joined, newest start date first
+    getAvailableLeagues = computed(() => {
+        const registeredIds = new Set(this.leagues().map(l => l.id));
+        return this.allLeagues()
+            .filter(l => !registeredIds.has(l.id))
+            .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+    });
+
     // Computed: Get active leagues only
     getActiveLeagues = computed(() => {
         const leagues = this.leagues();
@@ -403,8 +411,8 @@ export class PlayerService {
                     roundName: m.round_name || m.roundName || '',
                     groupId: Number(m.group_id || 0),
                     status: isCompleted ? 'completed' : 'upcoming',
-                    team1Score: Number(t1.score || 0),
-                    team2Score: Number(t2.score || 0),
+                    team1Score: isTeam1 ? Number(t1.score || 0) : Number(t2.score || 0),
+                    team2Score: isTeam1 ? Number(t2.score || 0) : Number(t1.score || 0),
                     myTeamName: isTeam1 ? t1.team_name : t2.team_name,
                     opponentTeamName: isTeam1 ? t2.team_name : t1.team_name
                 });
@@ -502,7 +510,8 @@ export class PlayerService {
                     name: l.league_name || l.name || 'Unknown League',
                     status: (l.status || l.league_status || 'active').toLowerCase(),
                     startDate: new Date(l.startDate || l.league_start_date || new Date()),
-                    endDate: new Date(l.endDate || l.league_end_date || new Date())
+                    endDate: new Date(l.endDate || l.league_end_date || new Date()),
+                    duration: l.duration || l.league_duration || undefined
                 }));
             }),
             catchError(err => {
@@ -649,6 +658,96 @@ export class PlayerService {
         }
 
         return results;
+    }
+
+    /** Returns standings for all players in a specific group and round, computed from raw league data. */
+    getGroupStandingsForRound(groupId: number, roundId: number): PlayerStanding[] {
+        if (!this.rawLeagueDetails) return [];
+        const { details } = this.rawLeagueDetails;
+
+        const playersLookup = new Map<string, any>();
+        if (details.players) {
+            details.players.forEach((p: any) => {
+                if (p.email) playersLookup.set(p.email.toLowerCase(), p);
+            });
+        }
+
+        const normalizePlayer = (p: any) => {
+            if (!p) return null;
+            if (typeof p === 'string') {
+                const lk = playersLookup.get(p.toLowerCase());
+                return { email: p.toLowerCase(), name: lk ? `${lk.firstName} ${lk.lastName}` : p };
+            }
+            const email = (p.email || p.id || '').toLowerCase();
+            const lk = playersLookup.get(email);
+            return {
+                email,
+                name: p.name || (p.firstName ? `${p.firstName} ${p.lastName}` : (lk ? `${lk.firstName} ${lk.lastName}` : 'Unknown'))
+            };
+        };
+
+        const standingsMap = new Map<string, PlayerStanding>();
+        const processedMatchIds = new Set<string>();
+        let completedMatchCount = 0;
+
+        const processMatch = (m: any) => {
+            if (Number(m.group_id) !== groupId || Number(m.round_id) !== roundId) return;
+
+            // Deduplicate: skip if this match_id was already processed from another source
+            const matchId = String(m.match_id || m._id || '');
+            if (matchId && processedMatchIds.has(matchId)) return;
+            if (matchId) processedMatchIds.add(matchId);
+
+            const t1 = m.team_one || m.team1;
+            const t2 = m.team_two || m.team2;
+            if (!t1 || !t2) return;
+
+            const s1 = Number(t1.score || 0);
+            const s2 = Number(t2.score || 0);
+            const isCompleted = (
+                String(m.match_status)?.toLowerCase() === 'completed' ||
+                String(m.match_status)?.toLowerCase() === 'finished' ||
+                s1 > 0 || s2 > 0
+            );
+            if (!isCompleted) return;
+
+            completedMatchCount++;
+            const team1Won = s1 > s2;
+            const players1 = [normalizePlayer(t1.player_one || t1.player1), normalizePlayer(t1.player_two || t1.player2)];
+            const players2 = [normalizePlayer(t2.player_one || t2.player1), normalizePlayer(t2.player_two || t2.player2)];
+
+            const updateEntry = (player: any, score: number, isWin: boolean) => {
+                if (!player?.email) return;
+                const email = player.email.toLowerCase();
+                let entry = standingsMap.get(email);
+                if (!entry) {
+                    entry = { email, name: player.name, totalScore: 0, matchesPlayed: 0, wins: 0, losses: 0 };
+                    standingsMap.set(email, entry);
+                }
+                entry.totalScore += score;
+                entry.matchesPlayed += 1;
+                if (isWin) entry.wins += 1; else entry.losses += 1;
+            };
+
+            players1.forEach(p => updateEntry(p, s1, team1Won));
+            players2.forEach(p => updateEntry(p, s2, !team1Won));
+        };
+
+        if (details.matches && Array.isArray(details.matches)) {
+            details.matches.forEach((m: any) => processMatch(m));
+        }
+        // Only fall back to embedded round matches if no completed matches were found in
+        // details.matches — mirrors the same guard used in parseLeagueDetails /
+        // parseMatchesForEmail, and prevents double-counting when both sources are populated.
+        if (completedMatchCount === 0 && details.rounds && Array.isArray(details.rounds)) {
+            details.rounds.forEach((round: any) => {
+                round.group?.forEach((group: any) => {
+                    group.match?.forEach((match: any) => processMatch(match));
+                });
+            });
+        }
+
+        return Array.from(standingsMap.values()).sort((a, b) => b.totalScore - a.totalScore);
     }
 
     withdrawFromPlayDay(leagueId: string, playDay: number, reason: string): Observable<boolean> {
