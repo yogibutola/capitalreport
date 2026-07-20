@@ -2,7 +2,7 @@
 
   <!-- Core Dashboard Interactive Area -->
   <div class="dashboard-main-grid">
-    
+
     <!-- Left Section: 3-column promo cards -->
     <div class="grid-left-cards">
 
@@ -14,26 +14,26 @@
         </div>
 
         @if (nextMatch; as match) {
-          <div class="card-info-body">
-            <p class="card-small-tag">Next Match</p>
-            <h3 class="card-main-heading">{{ formatMatchDate(match.date) }} · {{ match.time }}</h3>
-            <p class="card-extra-detail">vs {{ match.opponentTeamName || 'Opponents' }}</p>
-            @if (match.court && match.court !== 'TBD') {
-              <p class="card-extra-detail">Court {{ match.court }} · {{ match.leagueName }}</p>
-            }
-          </div>
-          <div class="card-action-footer">
-            <button class="card-action-btn-white">View Match</button>
-          </div>
+        <div class="card-info-body">
+          <p class="card-small-tag">Next Match</p>
+          <h3 class="card-main-heading">{{ formatMatchDate(match.date) }} · {{ match.time }}</h3>
+          <p class="card-extra-detail">vs {{ match.opponentTeamName || 'Opponents' }}</p>
+          @if (match.court && match.court !== 'TBD') {
+          <p class="card-extra-detail">Court {{ match.court }} · {{ match.leagueName }}</p>
+          }
+        </div>
+        <div class="card-action-footer">
+          <button class="card-action-btn-white">View Match</button>
+        </div>
         } @else {
-          <div class="card-info-body">
-            <p class="card-small-tag">Next Match</p>
-            <h3 class="card-main-heading">No upcoming matches</h3>
-            <p class="card-extra-detail">Check your leagues for newly assigned rounds.</p>
-          </div>
-          <div class="card-action-footer">
-            <button class="card-action-btn-white">My Dashboard</button>
-          </div>
+        <div class="card-info-body">
+          <p class="card-small-tag">Next Match</p>
+          <h3 class="card-main-heading">No upcoming matches</h3>
+          <p class="card-extra-detail">Check your leagues for newly assigned rounds.</p>
+        </div>
+        <div class="card-action-footer">
+          <button class="card-action-btn-white">My Dashboard</button>
+        </div>
         }
       </div>
 
@@ -47,15 +47,15 @@
         <div class="card-info-body">
           <p class="card-small-tag">My Stats</p>
           @if (lastFiveResults.length > 0) {
-            <h3 class="card-main-heading">Last {{ lastFiveResults.length }} Games · {{ lastFiveRecord }}</h3>
-            <div class="form-badges">
-              @for (result of lastFiveResults; track $index) {
-                <span class="form-badge" [class.win]="result === 'W'" [class.loss]="result === 'L'">{{ result }}</span>
-              }
-            </div>
+          <h3 class="card-main-heading">Last {{ lastFiveResults.length }} Games · {{ lastFiveRecord }}</h3>
+          <div class="form-badges">
+            @for (result of lastFiveResults; track $index) {
+            <span class="form-badge" [class.win]="result === 'W'" [class.loss]="result === 'L'">{{ result }}</span>
+            }
+          </div>
           } @else {
-            <h3 class="card-main-heading">No games played yet</h3>
-            <p class="card-extra-detail">Your recent results will appear here.</p>
+          <h3 class="card-main-heading">No games played yet</h3>
+          <p class="card-extra-detail">Your recent results will appear here.</p>
           }
         </div>
 
@@ -72,26 +72,26 @@
         </div>
 
         @if (latestAvailableLeague; as league) {
-          <div class="card-info-body">
-            <p class="card-small-tag">Join a New League</p>
-            <h3 class="card-main-heading">{{ league.name }}</h3>
-            <p class="card-extra-detail">{{ formatLeagueDates(league.startDate, league.endDate) }}</p>
-            @if (league.duration) {
-              <p class="card-extra-detail">{{ league.duration }}</p>
-            }
-          </div>
-          <div class="card-action-footer">
-            <button class="card-action-btn-white">Join League</button>
-          </div>
+        <div class="card-info-body">
+          <p class="card-small-tag">Join a New League</p>
+          <h3 class="card-main-heading">{{ league.name }}</h3>
+          <p class="card-extra-detail">{{ formatLeagueDates(league.startDate, league.endDate) }}</p>
+          @if (league.duration) {
+          <p class="card-extra-detail">{{ league.duration }}</p>
+          }
+        </div>
+        <div class="card-action-footer">
+          <button class="card-action-btn-white">Join League</button>
+        </div>
         } @else {
-          <div class="card-info-body">
-            <p class="card-small-tag">New Season</p>
-            <h3 class="card-main-heading">Join a New League</h3>
-            <p class="card-extra-detail">Open new possibilities in few clicks</p>
-          </div>
-          <div class="card-action-footer">
-            <button class="card-action-btn-white">View Leagues</button>
-          </div>
+        <div class="card-info-body">
+          <p class="card-small-tag">New Season</p>
+          <h3 class="card-main-heading">Join a New League</h3>
+          <p class="card-extra-detail">Open new possibilities in few clicks</p>
+        </div>
+        <div class="card-action-footer">
+          <button class="card-action-btn-white">View Leagues</button>
+        </div>
         }
       </div>
 
@@ -115,41 +115,46 @@
 
     </div>
 
-    <!-- Right Section: Sidebar Favorite Links -->
+    <!-- Right Section: Sidebar Events Card -->
     <div class="grid-right-sidebar">
-      <div class="favorite-links-card">
-        <h3 class="sidebar-card-title">My Favourite Links</h3>
-        
-        <ul class="favorite-links-list">
-          <li class="favorite-link-item" routerLink="/profile">
-            <span class="link-left-icon">👤</span>
-            <span class="link-label-text">Account Statement (Profile)</span>
-            <span class="link-right-arrow">❯</span>
-          </li>
-          <li class="favorite-link-item" routerLink="/matches/entry">
-            <span class="link-left-icon">🎾</span>
-            <span class="link-label-text">Enter Match Score</span>
-            <span class="link-right-arrow">❯</span>
-          </li>
-          <li class="favorite-link-item" routerLink="/league/slotting">
-            <span class="link-left-icon">📅</span>
-            <span class="link-label-text">View Daily Slots</span>
-            <span class="link-right-arrow">❯</span>
-          </li>
-          <li class="favorite-link-item" routerLink="/player">
-            <span class="link-left-icon">🏆</span>
-            <span class="link-label-text">My Leagues Dashboard</span>
-            <span class="link-right-arrow">❯</span>
-          </li>
-          <li class="favorite-link-item" onclick="alert('DinkLeague guidelines are governed by DUPR and club rules. Contact support for details.')">
-            <span class="link-left-icon">📚</span>
-            <span class="link-label-text">Guidelines & Rules</span>
-            <span class="link-right-arrow">❯</span>
-          </li>
-        </ul>
-        
+      <div class="events-card">
+        <h3 class="sidebar-card-title">Events</h3>
+
+        @if (upcomingEvents().length) {
+        <div class="events-list-body">
+          @for (item of upcomingEvents(); track item.event.event_id) {
+          <div class="event-item" routerLink="/groups">
+            <div class="event-date-chip">
+              <span class="event-date-day">{{ eventDay(item.event.date) }}</span>
+              <span class="event-date-month">{{ eventMonth(item.event.date) }}</span>
+            </div>
+            <div class="event-item-info">
+              <span class="event-item-title">{{ item.event.title }}</span>
+              <span class="event-item-sub">
+                {{ formatEventDate(item.event.date) }}
+                @if (item.event.time) { · {{ formatEventTime(item.event.time) }} }
+              </span>
+              @if (item.event.place) {
+              <span class="event-item-sub">📍 {{ item.event.place }}</span>
+              }
+              <span class="event-item-group">{{ item.groupName }}</span>
+            </div>
+            @if (inCount(item.event)) {
+            <span class="event-in-chip">{{ inCount(item.event) }} in</span>
+            }
+          </div>
+          }
+        </div>
+        } @else {
+        <div class="events-construction-body">
+          <div class="events-construction-icon">📅</div>
+          <h4 class="events-construction-heading">No Upcoming Events</h4>
+          <p class="events-construction-text">Events from your groups will show up here. Plan one with your group!</p>
+        </div>
+        }
+
         <div class="sidebar-card-footer">
-          <span class="add-edit-link" routerLink="/player/leagues">Add & Edit Links</span>
+          <button class="events-view-groups-btn" routerLink="/groups">View My Groups</button>
         </div>
       </div>
     </div>
@@ -167,14 +172,16 @@
         <div class="form-field-wrapper">
           <label class="field-label-text">First Name</label>
           <div class="input-field-container">
-            <input type="text" placeholder="Enter first name" [(ngModel)]="searchFirstName" name="searchFirstName" class="search-text-input" autocomplete="off"/>
+            <input type="text" placeholder="Enter first name" [(ngModel)]="searchFirstName" name="searchFirstName"
+              class="search-text-input" autocomplete="off" />
           </div>
         </div>
 
         <div class="form-field-wrapper">
           <label class="field-label-text">Last Name</label>
           <div class="input-field-container">
-            <input type="text" placeholder="Enter last name" [(ngModel)]="searchLastName" name="searchLastName" class="search-text-input" autocomplete="off"/>
+            <input type="text" placeholder="Enter last name" [(ngModel)]="searchLastName" name="searchLastName"
+              class="search-text-input" autocomplete="off" />
           </div>
         </div>
 
@@ -186,38 +193,39 @@
         </div>
 
         @if (hasSearched()) {
-          <div class="form-field-wrapper">
-            <label class="field-label-text">&nbsp;</label>
-            <button type="button" class="clear-search-btn" (click)="clearSearch()">Clear</button>
-          </div>
+        <div class="form-field-wrapper">
+          <label class="field-label-text">&nbsp;</label>
+          <button type="button" class="clear-search-btn" (click)="clearSearch()">Clear</button>
+        </div>
         }
       </form>
 
       @if (searchError()) {
-        <div class="alert alert-error">⚠ {{ searchError() }}</div>
+      <div class="alert alert-error">⚠ {{ searchError() }}</div>
       }
 
       @if (hasSearched() && !isSearching() && !searchError()) {
-        @if (searchResults().length === 0) {
-          <div class="search-empty-state">No players found matching "{{ searchFirstName }} {{ searchLastName }}"</div>
-        } @else {
-          <div class="search-results-header">{{ searchResults().length }} player{{ searchResults().length !== 1 ? 's' : '' }} found</div>
-          <ul class="search-results-list">
-            @for (player of searchResults(); track player.id) {
-              <li class="search-result-item">
-                <div class="player-avatar">{{ player.firstName[0] }}{{ player.lastName[0] }}</div>
-                <div class="player-info">
-                  <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
-                  <span class="player-email">{{ player.email }}</span>
-                </div>
-                <div class="player-rating-badge">
-                  <span class="rating-label">DUPR</span>
-                  <span class="rating-value">{{ player.dupr_rating | number:'1.1-2' }}</span>
-                </div>
-              </li>
-            }
-          </ul>
+      @if (searchResults().length === 0) {
+      <div class="search-empty-state">No players found matching "{{ searchFirstName }} {{ searchLastName }}"</div>
+      } @else {
+      <div class="search-results-header">{{ searchResults().length }} player{{ searchResults().length !== 1 ? 's' : ''
+        }} found</div>
+      <ul class="search-results-list">
+        @for (player of searchResults(); track player.id) {
+        <li class="search-result-item">
+          <div class="player-avatar">{{ player.firstName[0] }}{{ player.lastName[0] }}</div>
+          <div class="player-info">
+            <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
+            <span class="player-email">{{ player.email }}</span>
+          </div>
+          <div class="player-rating-badge">
+            <span class="rating-label">DUPR</span>
+            <span class="rating-value">{{ player.dupr_rating | number:'1.1-2' }}</span>
+          </div>
+        </li>
         }
+      </ul>
+      }
       }
     </div>
   </section>

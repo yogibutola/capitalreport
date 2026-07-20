@@ -16,6 +16,7 @@ import { AdminLoginComponent } from './admin/admin-login';
 import { ClubSignupComponent } from './admin/club-signup';
 import { HomeComponent } from './home/home';
 import { adminGuard } from './auth/admin.guard';
+import { MyGroupsComponent } from './groups/my-groups';
 
 export const routes: Routes = [
     { path: 'admin', component: AdminDashboardComponent, canActivate: [adminGuard] },
@@ -33,5 +34,6 @@ export const routes: Routes = [
     { path: 'matches/entry', component: MatchEntryComponent },
     { path: 'matches/history', component: MatchHistoryComponent },
     { path: 'profile', component: ProfileComponent },
+    { path: 'groups', component: MyGroupsComponent },
     { path: '', component: HomeComponent }
 ];

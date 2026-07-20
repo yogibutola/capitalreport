@@ -17,6 +17,7 @@ from app.api.v1.routers.pickleball import pb_league
 from app.api.v1.routers.pickleball import pb_player
 from app.api.v1.routers.pickleball import pb_authorization
 from app.api.v1.routers.pickleball import pb_quote
+from app.api.v1.routers.pickleball import pb_group
 
 app = FastAPI(title="Query Param Example")
 
@@ -41,6 +42,7 @@ app.include_router(pb_league.router, prefix="/api/v1")
 app.include_router(pb_player.router, prefix="/api/v1")
 app.include_router(pb_authorization.router, prefix="/api/v1")
 app.include_router(pb_quote.router, prefix="/api/v1")
+app.include_router(pb_group.router, prefix="/api/v1")
 app.include_router(generate_report.router, prefix="/api/v1")
 
 

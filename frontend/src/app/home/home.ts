@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal } from '@angular/core';
+import { Component, inject, computed, signal, effect } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { ThemeService } from '../theme.service';
 import { CommonModule } from '@angular/common';
@@ -6,6 +6,13 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { PlayerService, UpcomingMatch } from '../player/player';
 import { AuthService } from '../auth/auth';
+import { GroupsService, GroupEvent } from '../groups/groups.service';
+
+interface UpcomingGroupEvent {
+    groupId: string;
+    groupName: string;
+    event: GroupEvent;
+}
 
 interface PlayerResult {
     id: string;
@@ -30,8 +37,17 @@ export class HomeComponent {
     private playerService = inject(PlayerService);
     private router = inject(Router);
     private http = inject(HttpClient);
+    private groupsService = inject(GroupsService);
     authService = inject(AuthService);
     currentTheme = this.themeService.theme;
+
+    constructor() {
+        effect(() => {
+            if (this.authService.currentUser()) {
+                this.groupsService.loadGroupsForCurrentUser();
+            }
+        });
+    }
 
     // Player search state
     searchFirstName = '';
@@ -95,6 +111,44 @@ export class HomeComponent {
 
     goToPlayerDashboard() {
         this.router.navigate(['/player']);
+    }
+
+    upcomingEvents = computed<UpcomingGroupEvent[]>(() => {
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const items: UpcomingGroupEvent[] = [];
+        for (const group of this.groupsService.groups()) {
+            for (const event of group.events ?? []) {
+                if (event.date >= todayStr) {
+                    items.push({ groupId: group.group_id, groupName: group.name, event });
+                }
+            }
+        }
+        items.sort((a, b) =>
+            (a.event.date + (a.event.time ?? '')).localeCompare(b.event.date + (b.event.time ?? '')));
+        return items.slice(0, 3);
+    });
+
+    goToGroups() {
+        this.router.navigate(['/groups']);
+    }
+
+    formatEventDate(dateStr: string): string {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        if (!y || !m || !d) return dateStr;
+        return this.formatMatchDate(new Date(y, m - 1, d));
+    }
+
+    formatEventTime(time: string): string {
+        const [h, m] = time.split(':').map(Number);
+        if (isNaN(h) || isNaN(m)) return time;
+        const suffix = h >= 12 ? 'PM' : 'AM';
+        const hour12 = h % 12 === 0 ? 12 : h % 12;
+        return `${hour12}:${String(m).padStart(2, '0')} ${suffix}`;
+    }
+
+    inCount(event: GroupEvent): number {
+        return (event.votes ?? []).filter(v => v.vote === 'In').length;
     }
 
     formatMatchDate(date: Date): string {

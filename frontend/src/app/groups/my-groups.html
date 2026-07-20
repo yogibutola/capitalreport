@@ -1,0 +1,538 @@
+<div class="groups-page">
+
+  <!-- ════════════════════════════════════════
+       LEFT SIDEBAR — group list
+  ════════════════════════════════════════ -->
+  <aside class="groups-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title-row">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <h2 class="sidebar-title">My Groups</h2>
+      </div>
+      <button class="btn-create-group" (click)="openCreateGroupModal()" id="create-group-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New Group
+      </button>
+    </div>
+
+    <!-- Loading state -->
+    @if (groupsService.isLoading() && groupsService.groups().length === 0) {
+      <div class="sidebar-loading">
+        <div class="skeleton-group" *ngFor="let i of [1,2,3]"></div>
+      </div>
+    }
+
+    <!-- Empty state -->
+    @if (!groupsService.isLoading() && groupsService.groups().length === 0) {
+      <div class="sidebar-empty">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <p class="empty-text">No groups yet.</p>
+        <p class="empty-sub">Create one to get started!</p>
+      </div>
+    }
+
+    <!-- Group list -->
+    <ul class="group-list" *ngIf="groupsService.groups().length > 0">
+      <li
+        *ngFor="let group of groupsService.groups(); trackBy: trackByGroupId"
+        class="group-list-item"
+        [class.group-list-item--active]="groupsService.selectedGroup()?.group_id === group.group_id"
+        (click)="selectGroup(group)"
+        [id]="'group-item-' + group.group_id"
+      >
+        <div class="group-avatar" [attr.data-letter]="group.name[0]?.toUpperCase()">
+          {{ group.name[0]?.toUpperCase() }}
+        </div>
+        <div class="group-meta">
+          <span class="group-name">{{ group.name }}</span>
+          <span class="group-count">{{ group.members.length }} member{{ group.members.length !== 1 ? 's' : '' }}</span>
+        </div>
+        <div class="group-badge" *ngIf="group.events.length > 0">
+          {{ group.events.length }}
+        </div>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- ════════════════════════════════════════
+       RIGHT PANEL — group detail
+  ════════════════════════════════════════ -->
+  <main class="group-detail-panel">
+
+    <!-- No group selected -->
+    @if (!groupsService.selectedGroup()) {
+      <div class="detail-empty">
+        <div class="detail-empty-icon">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <h3>Select a group to get started</h3>
+        <p>Choose a group from the sidebar or create a new one.</p>
+        <button class="btn-primary" (click)="openCreateGroupModal()">Create Your First Group</button>
+      </div>
+    }
+
+    <!-- Group detail -->
+    @if (groupsService.selectedGroup(); as group) {
+      <!-- Header row -->
+      <div class="detail-header">
+        <div class="detail-header-left">
+          <div class="detail-avatar">{{ group.name[0]?.toUpperCase() }}</div>
+          <div>
+            <h1 class="detail-group-name">{{ group.name }}</h1>
+            <p class="detail-group-desc" *ngIf="group.description">{{ group.description }}</p>
+          </div>
+        </div>
+        <div class="detail-actions">
+          <button class="btn-action btn-add-player" (click)="openAddPlayerModal()" id="add-player-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/>
+            </svg>
+            Add Player
+          </button>
+          <button
+            class="btn-action btn-add-event"
+            (click)="openAddEventModal()"
+            id="add-event-btn"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+              <line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/>
+            </svg>
+            Add Event
+          </button>
+        </div>
+      </div>
+
+      <!-- Members strip -->
+      <div class="members-strip">
+        <div class="members-strip-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          </svg>
+          Members
+        </div>
+        <div class="members-avatars">
+          <div
+            *ngFor="let email of group.members"
+            class="member-chip"
+            [class.member-chip--me]="email === currentUserEmail()"
+            [title]="email"
+          >
+            {{ getEmailInitials(email) }}
+          </div>
+        </div>
+        <span class="members-count">{{ group.members.length }} member{{ group.members.length !== 1 ? 's' : '' }}</span>
+      </div>
+
+      <!-- Events row -->
+      @if (group.events.length > 0) {
+        <div class="events-section">
+          <div class="section-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            Events
+          </div>
+          <div class="events-scroll">
+            <button
+              *ngFor="let event of group.events; trackBy: trackByEventId"
+              class="event-chip"
+              [class.event-chip--active]="selectedEventId() === event.event_id"
+              (click)="selectEvent(event.event_id)"
+              [id]="'event-chip-' + event.event_id"
+            >
+              <span class="event-chip-icon">📅</span>
+              <span class="event-chip-title">{{ event.title }}</span>
+              <span class="event-chip-date">{{ formatDate(event.date) }}</span>
+              <span class="event-chip-msgs" *ngIf="event.messages.length > 0">{{ event.messages.length }}</span>
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Discussion area -->
+      <div class="discussion-section">
+        <div class="discussion-tabs">
+          <button
+            class="disc-tab"
+            [class.disc-tab--active]="activeTab() === 'group'"
+            (click)="activeTab.set('group')"
+            id="tab-group-chat"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            Group Chat
+            <span class="tab-count" *ngIf="group.messages.length > 0">{{ group.messages.length }}</span>
+          </button>
+          <button
+            class="disc-tab"
+            [class.disc-tab--active]="activeTab() === 'event'"
+            (click)="activeTab.set('event')"
+            [disabled]="!selectedEventId()"
+            id="tab-event-discussion"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            Event Discussion
+            @if (selectedEvent()) {
+              <span class="tab-event-name">— {{ selectedEvent()!.title }}</span>
+            } @else {
+              <span class="tab-event-hint">(select an event)</span>
+            }
+          </button>
+        </div>
+
+        <!-- Group chat -->
+        @if (activeTab() === 'group') {
+          <div class="message-feed" id="group-chat-feed">
+            @if (group.messages.length === 0) {
+              <div class="feed-empty">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <p>No messages yet. Be the first to say something!</p>
+              </div>
+            }
+            @for (msg of group.messages; track msg.message_id) {
+              <div class="message-bubble" [class.message-bubble--mine]="isMyMessage(msg.author_email)">
+                <div class="bubble-avatar" *ngIf="!isMyMessage(msg.author_email)">
+                  {{ getInitials(msg.author_name) }}
+                </div>
+                <div class="bubble-content">
+                  <div class="bubble-author" *ngIf="!isMyMessage(msg.author_email)">{{ msg.author_name }}</div>
+                  <div class="bubble-text">{{ msg.content }}</div>
+                  <div class="bubble-time">{{ formatTime(msg.timestamp) }}</div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="message-composer" id="group-message-composer">
+            <input
+              type="text"
+              class="composer-input"
+              placeholder="Message the group…"
+              [(ngModel)]="groupMessageText"
+              (keydown.enter)="sendGroupMessage()"
+              id="group-message-input"
+            />
+            <button
+              class="composer-send"
+              (click)="sendGroupMessage()"
+              [disabled]="!groupMessageText.trim()"
+              id="send-group-message-btn"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
+        }
+
+        <!-- Event discussion -->
+        @if (activeTab() === 'event') {
+          @if (!selectedEvent()) {
+            <div class="event-select-hint">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <p>Select an event from the bar above to view or join its discussion.</p>
+              @if (group.events.length === 0) {
+                <button class="btn-primary" (click)="openAddEventModal()">Add Your First Event</button>
+              }
+            </div>
+          }
+
+          @if (selectedEvent(); as event) {
+            <div class="event-discussion-header">
+              <div class="event-icon">📅</div>
+              <div>
+                <div class="event-disc-title">{{ event.title }}</div>
+                <div class="event-disc-date">
+                  {{ formatDate(event.date) }}
+                  @if (event.time) {
+                    <span class="event-disc-detail">🕐 {{ formatEventTime(event.time) }}</span>
+                  }
+                  @if (event.place) {
+                    <span class="event-disc-detail">📍 {{ event.place }}</span>
+                  }
+                </div>
+                @if (event.notes) {
+                  <div class="event-disc-notes">{{ event.notes }}</div>
+                }
+              </div>
+            </div>
+
+            <!-- Attendance voting -->
+            <div class="vote-section" id="event-vote-section">
+              <div class="vote-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                </svg>
+                Are you in?
+              </div>
+              <div class="vote-options">
+                @for (option of voteOptions; track option) {
+                  <button
+                    class="vote-btn"
+                    [class.vote-btn--selected]="myVote() === option"
+                    (click)="castVote(option)"
+                    [title]="votersFor(event, option)"
+                    [id]="'vote-btn-' + option"
+                  >
+                    <span class="vote-btn-label">{{ option }}</span>
+                    @if (voteCount(event, option) > 0) {
+                      <span class="vote-btn-count">{{ voteCount(event, option) }}</span>
+                    }
+                  </button>
+                }
+              </div>
+              @if (event.votes && event.votes.length > 0) {
+                <div class="vote-voters">
+                  @for (v of event.votes; track v.voter_email) {
+                    <span class="vote-voter-chip" [class.vote-voter-chip--me]="isMyMessage(v.voter_email)">
+                      {{ v.voter_name }} — {{ v.vote }}
+                    </span>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="message-feed" id="event-chat-feed">
+              @if (event.messages.length === 0) {
+                <div class="feed-empty">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <p>No discussion yet for this event. Start the conversation!</p>
+                </div>
+              }
+              @for (msg of event.messages; track msg.message_id) {
+                <div class="message-bubble" [class.message-bubble--mine]="isMyMessage(msg.author_email)">
+                  <div class="bubble-avatar" *ngIf="!isMyMessage(msg.author_email)">
+                    {{ getInitials(msg.author_name) }}
+                  </div>
+                  <div class="bubble-content">
+                    <div class="bubble-author" *ngIf="!isMyMessage(msg.author_email)">{{ msg.author_name }}</div>
+                    <div class="bubble-text">{{ msg.content }}</div>
+                    <div class="bubble-time">{{ formatTime(msg.timestamp) }}</div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div class="message-composer" id="event-message-composer">
+              <input
+                type="text"
+                class="composer-input"
+                [placeholder]="'Discuss ' + event.title + '…'"
+                [(ngModel)]="eventMessageText"
+                (keydown.enter)="sendEventMessage()"
+                id="event-message-input"
+              />
+              <button
+                class="composer-send"
+                (click)="sendEventMessage()"
+                [disabled]="!eventMessageText.trim()"
+                id="send-event-message-btn"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+              </button>
+            </div>
+          }
+        }
+      </div>
+    }
+  </main>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL — Create Group
+════════════════════════════════════════ -->
+@if (showCreateGroupModal()) {
+  <div class="modal-backdrop" (click)="closeModals()">
+    <div class="modal-card" (click)="$event.stopPropagation()" id="create-group-modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Create a New Group</h3>
+        <button class="modal-close" (click)="closeModals()" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="group-name-input">Group Name *</label>
+          <input
+            id="group-name-input"
+            class="form-input"
+            type="text"
+            placeholder="e.g. Weekend Warriors"
+            [(ngModel)]="newGroupName"
+            autofocus
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="group-desc-input">Description (optional)</label>
+          <textarea
+            id="group-desc-input"
+            class="form-input form-textarea"
+            placeholder="What's this group about?"
+            [(ngModel)]="newGroupDescription"
+            rows="3"
+          ></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeModals()">Cancel</button>
+        <button class="btn-primary" (click)="createGroup()" [disabled]="!newGroupName.trim()" id="confirm-create-group-btn">
+          Create Group
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ════════════════════════════════════════
+     MODAL — Add Event
+════════════════════════════════════════ -->
+@if (showAddEventModal()) {
+  <div class="modal-backdrop" (click)="closeModals()">
+    <div class="modal-card" (click)="$event.stopPropagation()" id="add-event-modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Add an Event</h3>
+        <button class="modal-close" (click)="closeModals()" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="event-title-input">Title (optional)</label>
+          <input
+            id="event-title-input"
+            class="form-input"
+            type="text"
+            placeholder="e.g. Saturday Round Robin"
+            [(ngModel)]="newEventTitle"
+            autofocus
+          />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="event-date-input">Date *</label>
+            <input
+              id="event-date-input"
+              class="form-input"
+              type="date"
+              [(ngModel)]="newEventDate"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="event-time-input">Time</label>
+            <input
+              id="event-time-input"
+              class="form-input"
+              type="time"
+              [(ngModel)]="newEventTime"
+            />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="event-place-input">Place</label>
+          <input
+            id="event-place-input"
+            class="form-input"
+            type="text"
+            placeholder="e.g. Riverside Courts, Court 3"
+            [(ngModel)]="newEventPlace"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="event-notes-input">Notes (optional)</label>
+          <textarea
+            id="event-notes-input"
+            class="form-input form-textarea"
+            placeholder="Anything the group should know?"
+            [(ngModel)]="newEventNotes"
+            rows="2"
+          ></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeModals()">Cancel</button>
+        <button
+          class="btn-primary"
+          (click)="createEvent()"
+          [disabled]="!newEventDate || isCreatingEvent()"
+          id="confirm-add-event-btn"
+        >
+          @if (isCreatingEvent()) {
+            <span class="spinner"></span> Creating…
+          } @else {
+            Add Event
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ════════════════════════════════════════
+     MODAL — Add Player
+════════════════════════════════════════ -->
+@if (showAddPlayerModal()) {
+  <div class="modal-backdrop" (click)="closeModals()">
+    <div class="modal-card" (click)="$event.stopPropagation()" id="add-player-modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Player to Group</h3>
+        <button class="modal-close" (click)="closeModals()" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="player-search-input">Search by name or email</label>
+          <input
+            id="player-search-input"
+            class="form-input"
+            type="text"
+            placeholder="Search players…"
+            [(ngModel)]="playerSearchQuery"
+            autofocus
+          />
+        </div>
+        @if (addPlayerError) {
+          <p class="form-error">{{ addPlayerError }}</p>
+        }
+        <div class="player-search-results" id="player-search-results">
+          @if (filteredPlayers().length === 0) {
+            <div class="search-empty">No players found.</div>
+          }
+          @for (player of filteredPlayers(); track player.email) {
+            <div class="player-result" (click)="addPlayer(player.email)" [id]="'player-result-' + player.email">
+              <div class="player-result-avatar">{{ getInitials(player.firstName + ' ' + player.lastName) }}</div>
+              <div class="player-result-info">
+                <span class="player-result-name">{{ player.firstName }} {{ player.lastName }}</span>
+                <span class="player-result-email">{{ player.email }}</span>
+              </div>
+              <div class="player-result-rating">{{ player.dupr_rating | number: '1.1-1' }}</div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}

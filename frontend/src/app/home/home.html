@@ -101,6 +101,47 @@
     </section>
     }
 
+    <!-- Upcoming Group Events Card (visible when the user's groups have upcoming events) -->
+    @if (authService.currentUser() && upcomingEvents().length) {
+    <section class="events-section fade-in-up" style="animation-delay: 0.4s;">
+        <div class="events-card" (click)="goToGroups()">
+            <div class="events-card-header">
+                <span class="events-badge">Upcoming Events</span>
+                <span class="events-cta">My Groups →</span>
+            </div>
+
+            <div class="events-list">
+                @for (item of upcomingEvents(); track item.event.event_id) {
+                <div class="event-row">
+                    <div class="event-datetime">
+                        <span class="event-date">{{ formatEventDate(item.event.date) }}</span>
+                        @if (item.event.time) {
+                        <span class="event-time">{{ formatEventTime(item.event.time) }}</span>
+                        }
+                    </div>
+
+                    <div class="event-separator"></div>
+
+                    <div class="event-info">
+                        <span class="event-title">{{ item.event.title }}</span>
+                        @if (item.event.place) {
+                        <span class="event-place">📍 {{ item.event.place }}</span>
+                        }
+                    </div>
+
+                    <div class="event-meta">
+                        <span class="event-group-tag">{{ item.groupName }}</span>
+                        @if (inCount(item.event)) {
+                        <span class="event-in-count">{{ inCount(item.event) }} in</span>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    </section>
+    }
+
     <!-- Features Grid -->
     <section class="features-section">
         <h2 class="section-title">Everything You Need to Run Your League</h2>
