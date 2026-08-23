@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -21,11 +23,8 @@ from app.api.v1.routers.pickleball import pb_group
 
 app = FastAPI(title="Query Param Example")
 
-origins = [
-    "http://localhost:4200",  # <--- YOUR FRONTEND ORIGIN
-    "http://127.0.0.1:4200",
-    "http://0.0.0.0:4200"
-]
+_default_origins = "http://localhost:4200,http://127.0.0.1:4200,http://0.0.0.0:4200"
+origins = [origin.strip() for origin in os.environ.get("CORS_ORIGINS", _default_origins).split(",") if origin.strip()]
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,0 +1,130 @@
+# Cloud Build pipeline: builds backend + frontend images, pushes to Artifact
+# Registry, deploys both to Cloud Run, then wires CORS/BACKEND_URL between them.
+#
+# One-time setup before the first run:
+#   gcloud artifacts repositories create ${_AR_REPO} \
+#     --repository-format=docker --location=${_REGION}
+#   gcloud secrets create capitalreport-mongo-uri --replication-policy=automatic
+#   gcloud secrets create capitalreport-google-api-key --replication-policy=automatic
+#   echo -n "<mongo uri>" | gcloud secrets versions add capitalreport-mongo-uri --data-file=-
+#   echo -n "<gemini api key>" | gcloud secrets versions add capitalreport-google-api-key --data-file=-
+#   # Grant the Cloud Build / Cloud Run service account access:
+#   gcloud secrets add-iam-policy-binding capitalreport-mongo-uri \
+#     --member=serviceAccount:<RUN_SA> --role=roles/secretmanager.secretAccessor
+#   gcloud secrets add-iam-policy-binding capitalreport-google-api-key \
+#     --member=serviceAccount:<RUN_SA> --role=roles/secretmanager.secretAccessor
+#   gcloud storage buckets add-iam-policy-binding gs://capitalreport_file_storage \
+#     --member=serviceAccount:<RUN_SA> --role=roles/storage.objectAdmin
+#
+# Trigger manually with:
+#   gcloud builds submit --config cloudbuild.yaml \
+#     --substitutions=_RUN_SA=<RUN_SA_EMAIL>
+# or wire this file up to a Cloud Build trigger on push to main.
+
+substitutions:
+  _REGION: us-central1
+  _AR_REPO: capitalreport
+  _BACKEND_SERVICE: capitalreport-api
+  _FRONTEND_SERVICE: capitalreport-frontend
+  _RUN_SA: "" # e.g. capitalreport-run@${PROJECT_ID}.iam.gserviceaccount.com — leave blank to use the default compute SA
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+
+timeout: 1800s
+
+steps:
+  # --- Backend ---
+  - id: build-backend
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/backend:${BUILD_ID}
+      - -f
+      - Dockerfile
+      - .
+
+  - id: push-backend
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/backend:${BUILD_ID}
+
+  - id: deploy-backend
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        SA_FLAG=""
+        if [ -n "${_RUN_SA}" ]; then SA_FLAG="--service-account=${_RUN_SA}"; fi
+        gcloud run deploy ${_BACKEND_SERVICE} \
+          --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/backend:${BUILD_ID} \
+          --region=${_REGION} \
+          --platform=managed \
+          --allow-unauthenticated \
+          $$SA_FLAG \
+          --memory=2Gi \
+          --cpu=2 \
+          --timeout=300 \
+          --set-env-vars="GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${_REGION},GOOGLE_GENAI_USE_VERTEXAI=0" \
+          --set-secrets="MONGO_URI=capitalreport-mongo-uri:latest,GOOGLE_API_KEY=capitalreport-google-api-key:latest,GEMINI_API_KEY=capitalreport-google-api-key:latest"
+        gcloud run services describe ${_BACKEND_SERVICE} --region=${_REGION} \
+          --format='value(status.url)' > /workspace/backend_url.txt
+        cat /workspace/backend_url.txt
+
+  # --- Frontend ---
+  - id: build-frontend
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/frontend:${BUILD_ID}
+      - -f
+      - frontend/Dockerfile
+      - frontend
+
+  - id: push-frontend
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/frontend:${BUILD_ID}
+
+  - id: deploy-frontend
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        BACKEND_URL=$(cat /workspace/backend_url.txt)
+        SA_FLAG=""
+        if [ -n "${_RUN_SA}" ]; then SA_FLAG="--service-account=${_RUN_SA}"; fi
+        gcloud run deploy ${_FRONTEND_SERVICE} \
+          --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/frontend:${BUILD_ID} \
+          --region=${_REGION} \
+          --platform=managed \
+          --allow-unauthenticated \
+          $$SA_FLAG \
+          --memory=512Mi \
+          --cpu=1 \
+          --set-env-vars="BACKEND_URL=$$BACKEND_URL"
+        gcloud run services describe ${_FRONTEND_SERVICE} --region=${_REGION} \
+          --format='value(status.url)' > /workspace/frontend_url.txt
+        cat /workspace/frontend_url.txt
+
+  # --- Close the loop: let the backend's CORS allow the frontend's origin ---
+  - id: update-backend-cors
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        FRONTEND_URL=$(cat /workspace/frontend_url.txt)
+        gcloud run services update ${_BACKEND_SERVICE} \
+          --region=${_REGION} \
+          --update-env-vars="CORS_ORIGINS=$$FRONTEND_URL"

@@ -48,6 +48,7 @@ COPY --from=builder /app/app /app/app
 RUN addgroup --system app && adduser --system --ingroup app app && chown -R app:app /app
 USER app
 
+ENV PORT=8080
 EXPOSE 8080
 
-CMD ["gunicorn", "app.main:app", "--bind", "0.0.0.0:8000", "-k", "uvicorn.workers.UvicornWorker", "--workers", "1",  "--timeout", "190"]
+CMD ["sh", "-c", "exec gunicorn app.main:app --bind 0.0.0.0:${PORT:-8080} -k uvicorn.workers.UvicornWorker --workers 1 --timeout 190"]

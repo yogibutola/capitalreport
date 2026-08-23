@@ -30,8 +30,9 @@ RUN npm ci --omit=dev
 # Adjust the path 'pickleball-league-app' based on your 'dist' folder structure found in angular.json/output
 COPY --from=builder /app/dist ./dist
 
-# Expose the port the app runs on (default 4000)
-EXPOSE 4000
+# Expose the port the app runs on (default 8080 for Cloud Run)
+ENV PORT=8080
+EXPOSE 8080
 
 # Start the server
 # Using the direct node command as typically defined in package.json for SSR

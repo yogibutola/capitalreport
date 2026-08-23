@@ -4,6 +4,7 @@ from pymongo.synchronous.collection import Collection
 from pymongo.errors import BulkWriteError, DuplicateKeyError
 
 import logging
+import os
 
 logging.basicConfig(
     level=logging.INFO,  # Only output messages at INFO level and above
@@ -11,9 +12,10 @@ logging.basicConfig(
 )
 
 class MongoDBStore:
-    def __init__(self, mongo_uri="mongodb://localhost:27017/?directConnection=true", db_name="document_embeddings"):
-        uri = "mongodb+srv://yogender_db_user:egyFPoU9emubk13N@cluster0.ggoh6bt.mongodb.net/?appName=Cluster0"
-        # self.client = MongoClient(mongo_uri)
+    def __init__(self, mongo_uri=None, db_name="document_embeddings"):
+        uri = mongo_uri or os.getenv("MONGO_URI")
+        if not uri:
+            raise RuntimeError("MONGO_URI environment variable must be set")
         self.client = MongoClient(uri, server_api=ServerApi('1'))
         self.db = self.client[db_name]
         self.logger = logging.getLogger(__name__)

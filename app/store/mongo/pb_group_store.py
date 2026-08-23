@@ -3,6 +3,7 @@ from pymongo.server_api import ServerApi
 from bson import ObjectId
 import uuid
 import logging
+import os
 from datetime import datetime, timezone
 
 logging.basicConfig(
@@ -14,10 +15,11 @@ logging.basicConfig(
 class PBGroupStore:
     """MongoDB store for player groups, events, and discussions."""
 
-    MONGO_URI = "mongodb+srv://yogender_db_user:egyFPoU9emubk13N@cluster0.ggoh6bt.mongodb.net/?appName=Cluster0"
-
-    def __init__(self, db_name: str = "pickleball"):
-        self.client = MongoClient(self.MONGO_URI, server_api=ServerApi('1'))
+    def __init__(self, mongo_uri=None, db_name: str = "pickleball"):
+        uri = mongo_uri or os.getenv("MONGO_URI")
+        if not uri:
+            raise RuntimeError("MONGO_URI environment variable must be set")
+        self.client = MongoClient(uri, server_api=ServerApi('1'))
         self.db = self.client[db_name]
         self.logger = logging.getLogger(__name__)
 

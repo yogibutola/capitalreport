@@ -3,6 +3,7 @@ from pymongo.server_api import ServerApi
 from pymongo.synchronous.collection import Collection
 
 import logging
+import os
 
 from app.vo.pb.league import League
 
@@ -12,9 +13,10 @@ logging.basicConfig(
 )
 
 class PBMongoDBStore:
-    def __init__(self, mongo_uri="mongodb://localhost:27017/?directConnection=true", db_name="pickleball"):
-        uri = "mongodb+srv://yogender_db_user:egyFPoU9emubk13N@cluster0.ggoh6bt.mongodb.net/?appName=Cluster0"
-        # self.client = MongoClient(mongo_uri)
+    def __init__(self, mongo_uri=None, db_name="pickleball"):
+        uri = mongo_uri or os.getenv("MONGO_URI")
+        if not uri:
+            raise RuntimeError("MONGO_URI environment variable must be set")
         self.client = MongoClient(uri, server_api=ServerApi('1'))
         self.db = self.client[db_name]
         self.logger = logging.getLogger(__name__)

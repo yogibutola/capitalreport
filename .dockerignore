@@ -1,0 +1,44 @@
+# Virtual environments
+.venv
+venv
+
+# Git
+.git
+.gitignore
+
+# Byte-compiled / cache
+__pycache__
+*.pyc
+*.pyd
+*.egg
+*.egg-info
+
+# Secrets / local env
+.env
+credentials.json
+
+# Editors / OS
+.idea
+.vscode
+.DS_Store
+Thumbs.db
+
+# Frontend (built separately via frontend/Dockerfile)
+frontend/node_modules
+frontend/dist
+frontend/.angular
+
+# Tests / local scratch scripts
+tests
+test_*.py
+verify_*.py
+debug_*.py
+
+# Docs
+README.md
+CLAUDE.md
+
+# Docker files (avoid self-inclusion)
+docker-compose*.yml
+Dockerfile*
+.dockerignore
