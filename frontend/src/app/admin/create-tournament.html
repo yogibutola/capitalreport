@@ -1,0 +1,121 @@
+<div class="container" style="padding-top: var(--space-lg); padding-bottom: var(--space-xl);">
+    <div class="flex-center" style="justify-content: space-between; margin-bottom: var(--space-lg);">
+        <h2 class="text-gradient">Create New Tournament</h2>
+        <a routerLink="/admin" class="btn btn-secondary">Back</a>
+    </div>
+
+    <div class="card" style="max-width: 800px; margin: 0 auto;">
+        <form #f="ngForm" (ngSubmit)="onSubmit(f)" (input)="clearServerErrors()" novalidate>
+            <app-form-summary [form]="f" [attempted]="submitAttempted" [labels]="{
+                    name: 'Tournament name',
+                    startDate: 'Start date',
+                    poolSize: 'Pool size',
+                    advancersPerPool: 'Advancers per pool'
+                }" />
+            <app-form-banner [message]="formError" />
+
+            <!-- Basic Info -->
+            <h3
+                style="margin-bottom: var(--space-md); border-bottom: 1px solid var(--card-border); padding-bottom: var(--space-sm);">
+                Basic Info</h3>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="field-name" style="display: block; margin-bottom: var(--space-xs);">Tournament
+                        Name</label>
+                    <input id="field-name" type="text" [(ngModel)]="name" name="name" #nameCtrl="ngModel" class="input-field"
+                        placeholder="e.g. Fall Open 2026" required minlength="3" aria-describedby="err-name"
+                        [appInvalid]="nameCtrl" [appInvalidServer]="fieldErrors['tournament_name']"
+                        [appInvalidForce]="submitAttempted">
+                    <app-field-error id="err-name" label="Tournament name" [control]="nameCtrl"
+                        [serverError]="fieldErrors['tournament_name']" [forceShow]="submitAttempted" />
+                </div>
+
+                <div class="form-group">
+                    <label for="field-startDate" style="display: block; margin-bottom: var(--space-xs);">Start Date</label>
+                    <input id="field-startDate" type="date" [(ngModel)]="startDate" name="startDate" #startDateCtrl="ngModel"
+                        class="input-field" required aria-describedby="err-startDate"
+                        [appInvalid]="startDateCtrl" [appInvalidServer]="fieldErrors['start_date']"
+                        [appInvalidForce]="submitAttempted">
+                    <app-field-error id="err-startDate" label="Start date" [control]="startDateCtrl"
+                        [serverError]="fieldErrors['start_date']" [forceShow]="submitAttempted" />
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="field-endDate" style="display: block; margin-bottom: var(--space-xs);">End Date
+                        (optional)</label>
+                    <input id="field-endDate" type="date" [(ngModel)]="endDate" name="endDate" class="input-field">
+                </div>
+                <div class="form-group">
+                    <label for="field-location" style="display: block; margin-bottom: var(--space-xs);">Location /
+                        Venue</label>
+                    <input id="field-location" type="text" [(ngModel)]="location" name="location" class="input-field"
+                        placeholder="Leave blank to use your club address">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="field-description" style="display: block; margin-bottom: var(--space-xs);">Description
+                    (optional)</label>
+                <input id="field-description" type="text" [(ngModel)]="description" name="description"
+                    class="input-field" placeholder="Short description">
+            </div>
+
+            <!-- Format Config -->
+            <h3
+                style="margin-top: var(--space-lg); margin-bottom: var(--space-md); border-bottom: 1px solid var(--card-border); padding-bottom: var(--space-sm);">
+                Format Configuration</h3>
+            <div class="grid-3">
+                <div class="form-group">
+                    <label for="field-format" style="display: block; margin-bottom: var(--space-xs);">Match Format</label>
+                    <select id="field-format" [(ngModel)]="format" name="format" class="input-field" required>
+                        <option value="doubles">Doubles</option>
+                        <option value="singles">Singles</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="field-poolSize" style="display: block; margin-bottom: var(--space-xs);">Pool Size</label>
+                    <input id="field-poolSize" type="number" [(ngModel)]="poolSize" name="poolSize" #poolSizeCtrl="ngModel"
+                        class="input-field" min="2" required aria-describedby="err-poolSize poolSize-help"
+                        [appInvalid]="poolSizeCtrl" [appInvalidForce]="submitAttempted">
+                    <small id="poolSize-help" class="input-hint">Players per round-robin pool</small>
+                    <app-field-error id="err-poolSize" label="Pool size" [control]="poolSizeCtrl"
+                        [forceShow]="submitAttempted" />
+                </div>
+
+                <div class="form-group">
+                    <label for="field-advancersPerPool" style="display: block; margin-bottom: var(--space-xs);">Advance /
+                        Pool</label>
+                    <input id="field-advancersPerPool" type="number" [(ngModel)]="advancersPerPool"
+                        name="advancersPerPool" #advancersCtrl="ngModel" class="input-field" min="1" required
+                        aria-describedby="err-advancers advancers-help"
+                        [appInvalid]="advancersCtrl" [appInvalidForce]="submitAttempted">
+                    <small id="advancers-help" class="input-hint">Qualify for the knockout bracket</small>
+                    <app-field-error id="err-advancers" label="Advancers per pool" [control]="advancersCtrl"
+                        [forceShow]="submitAttempted" />
+                </div>
+            </div>
+
+            <button type="submit" class="btn" style="width: 100%; margin-top: var(--space-lg);" [disabled]="submitting">
+                {{ submitting ? 'Creating…' : 'Create Tournament' }}
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-md);
+    }
+
+    .grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: var(--space-md);
+    }
+
+</style>

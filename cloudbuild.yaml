@@ -2,23 +2,18 @@
 # Registry, deploys both to Cloud Run, then wires CORS/BACKEND_URL between them.
 #
 # One-time setup before the first run:
-#   gcloud artifacts repositories create ${_AR_REPO} \
-#     --repository-format=docker --location=${_REGION}
+#   gcloud artifacts repositories create ${_AR_REPO} --repository-format=docker --location=${_REGION}
 #   gcloud secrets create capitalreport-mongo-uri --replication-policy=automatic
 #   gcloud secrets create capitalreport-google-api-key --replication-policy=automatic
 #   echo -n "<mongo uri>" | gcloud secrets versions add capitalreport-mongo-uri --data-file=-
 #   echo -n "<gemini api key>" | gcloud secrets versions add capitalreport-google-api-key --data-file=-
 #   # Grant the Cloud Build / Cloud Run service account access:
-#   gcloud secrets add-iam-policy-binding capitalreport-mongo-uri \
-#     --member=serviceAccount:<RUN_SA> --role=roles/secretmanager.secretAccessor
-#   gcloud secrets add-iam-policy-binding capitalreport-google-api-key \
-#     --member=serviceAccount:<RUN_SA> --role=roles/secretmanager.secretAccessor
-#   gcloud storage buckets add-iam-policy-binding gs://capitalreport_file_storage \
-#     --member=serviceAccount:<RUN_SA> --role=roles/storage.objectAdmin
+#   gcloud secrets add-iam-policy-binding capitalreport-mongo-uri --member=serviceAccount:<RUN_SA> --role=roles/secretmanager.secretAccessor
+#   gcloud secrets add-iam-policy-binding capitalreport-google-api-key --member=serviceAccount:<RUN_SA> --role=roles/secretmanager.secretAccessor
+#   gcloud storage buckets add-iam-policy-binding gs://capitalreport_file_storage --member=serviceAccount:<RUN_SA> --role=roles/storage.objectAdmin
 #
 # Trigger manually with:
-#   gcloud builds submit --config cloudbuild.yaml \
-#     --substitutions=_RUN_SA=<RUN_SA_EMAIL>
+#   gcloud builds submit --config cloudbuild.yaml --substitutions=_RUN_SA=<RUN_SA_EMAIL>
 # or wire this file up to a Cloud Build trigger on push to main.
 
 substitutions:

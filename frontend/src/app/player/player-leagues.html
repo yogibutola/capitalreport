@@ -25,6 +25,8 @@
                     <span class="league-status" [class]="'status-' + league.status">{{ league.status }}</span>
                 </div>
                 <div style="margin-top: var(--space-md); color: var(--color-text-muted);">
+                    @if (league.clubName) { <p>🏛️ {{ league.clubName }}</p> }
+                    @if (league.location) { <p>📍 {{ league.location }}</p> }
                     <p>Starts: {{ league.startDate | date }}</p>
                     <p>Ends: {{ league.endDate | date }}</p>
                 </div>
@@ -55,6 +57,8 @@
                 <thead>
                     <tr>
                         <th>League Name</th>
+                        <th>Club</th>
+                        <th>Location</th>
                         <th>Status</th>
                         <th>Start Date</th>
                         <th>End Date</th>
@@ -69,6 +73,8 @@
                                 <span class="league-name">{{ league.name }}</span>
                             </div>
                         </td>
+                        <td>{{ league.clubName || '—' }}</td>
+                        <td>{{ league.location || '—' }}</td>
                         <td>
                             <span class="status-badge" [class]="'status-' + league.status">
                                 {{ league.status }}

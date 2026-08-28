@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GroupsService, Group, GroupEvent, VoteOption, VOTE_OPTIONS } from './groups.service';
 import { AuthService } from '../auth/auth';
+import { ToastService } from '../shared/toast.service';
 
 @Component({
   selector: 'app-my-groups',
@@ -14,6 +15,7 @@ import { AuthService } from '../auth/auth';
 export class MyGroupsComponent implements OnInit {
   groupsService = inject(GroupsService);
   authService = inject(AuthService);
+  private toast = inject(ToastService);
 
   // Modal state
   showCreateGroupModal = signal(false);
@@ -88,11 +90,17 @@ export class MyGroupsComponent implements OnInit {
   createGroup() {
     if (!this.newGroupName.trim()) return;
     this.groupsService.createGroup(this.newGroupName.trim(), this.newGroupDescription.trim())
-      .subscribe(group => {
-        if (group) {
-          this.showCreateGroupModal.set(false);
-          this.groupsService.selectGroup(group.group_id);
-        }
+      .subscribe({
+        next: group => {
+          if (group) {
+            this.showCreateGroupModal.set(false);
+            this.groupsService.selectGroup(group.group_id);
+            this.toast.success('Group created.');
+          } else {
+            this.toast.error("We couldn't create the group. Please try again.");
+          }
+        },
+        error: () => this.toast.error("We couldn't create the group. Please try again."),
       });
   }
 
@@ -106,12 +114,18 @@ export class MyGroupsComponent implements OnInit {
     const g = this.groupsService.selectedGroup();
     if (!g) return;
     this.addPlayerError = '';
-    this.groupsService.addMember(g.group_id, email).subscribe(ok => {
-      if (!ok) {
-        this.addPlayerError = 'Failed to add player. Please try again.';
-      } else {
-        this.showAddPlayerModal.set(false);
-      }
+    this.groupsService.addMember(g.group_id, email).subscribe({
+      next: ok => {
+        if (ok) {
+          this.showAddPlayerModal.set(false);
+          this.toast.success('Player added to the group.');
+        } else {
+          this.addPlayerError = "We couldn't add that player. Please try again.";
+        }
+      },
+      error: () => {
+        this.addPlayerError = "We couldn't add that player. Please try again.";
+      },
     });
   }
 
@@ -134,13 +148,22 @@ export class MyGroupsComponent implements OnInit {
       time: this.newEventTime || undefined,
       place: this.newEventPlace.trim() || undefined,
       notes: this.newEventNotes.trim() || undefined
-    }).subscribe(event => {
-      this.isCreatingEvent.set(false);
-      if (event) {
-        this.showAddEventModal.set(false);
-        this.activeTab.set('event');
-        this.selectedEventId.set(event.event_id);
-      }
+    }).subscribe({
+      next: event => {
+        this.isCreatingEvent.set(false);
+        if (event) {
+          this.showAddEventModal.set(false);
+          this.activeTab.set('event');
+          this.selectedEventId.set(event.event_id);
+          this.toast.success('Event added.');
+        } else {
+          this.toast.error("We couldn't add the event. Please try again.");
+        }
+      },
+      error: () => {
+        this.isCreatingEvent.set(false);
+        this.toast.error("We couldn't add the event. Please try again.");
+      },
     });
   }
 

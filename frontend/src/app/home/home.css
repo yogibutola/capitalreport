@@ -757,12 +757,12 @@
 
 .player-search-error {
     text-align: center;
-    color: #f87171;
+    color: HSL(var(--danger-text));
     font-size: 0.95rem;
     padding: var(--space-md);
-    background: rgba(248, 113, 113, 0.08);
+    background: HSL(var(--danger-surface));
     border-radius: 10px;
-    border: 1px solid rgba(248, 113, 113, 0.2);
+    border: 1px solid HSL(var(--danger-border));
     max-width: 600px;
     margin: 0 auto;
 }

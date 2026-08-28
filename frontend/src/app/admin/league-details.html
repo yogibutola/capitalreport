@@ -39,8 +39,13 @@
 
     <!-- Error State -->
     @if (error(); as errorMsg) {
-    <div class="card" style="border-left: 4px solid var(--color-error);">
-        <p style="color: var(--color-error);">{{ errorMsg }}</p>
+    <div class="form-banner" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <span>{{ errorMsg }}</span>
     </div>
     }
 
@@ -54,6 +59,20 @@
                 <h3 style="margin: 0; font-size: 1.1rem; color: var(--color-accent);">League Information</h3>
 
                 <div class="flex-center" style="gap: var(--space-md); flex-wrap: wrap;">
+                    @if (league.club_name) {
+                    <div class="info-item" style="flex-direction: row; align-items: baseline; gap: 8px;">
+                        <label style="margin: 0;">Club:</label>
+                        <span>{{ league.club_name }}</span>
+                    </div>
+                    }
+
+                    @if (league.location) {
+                    <div class="info-item" style="flex-direction: row; align-items: baseline; gap: 8px;">
+                        <label style="margin: 0;">Location:</label>
+                        <span>{{ league.location }}</span>
+                    </div>
+                    }
+
                     @if (league.league_start_date) {
                     <div class="info-item" style="flex-direction: row; align-items: baseline; gap: 8px;">
                         <label style="margin: 0;">Start:</label>

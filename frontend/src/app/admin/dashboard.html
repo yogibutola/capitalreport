@@ -3,7 +3,7 @@
   <!-- Admin Header Banner -->
   <div class="admin-banner">
     <div>
-      <h1 class="text-gradient" style="margin:0; font-size: 2rem;">Admin Dashboard</h1>
+      <h1 class="text-gradient" style="margin:0; font-size: 2rem;">Dashboard</h1>
       <p style="color: var(--color-text-muted); margin: 4px 0 0 0;">Manage leagues, players, and operations</p>
     </div>
     <div class="admin-banner-stats">
@@ -16,7 +16,6 @@
         <span class="admin-stat-label">Active</span>
       </div>
     </div>
-    <a routerLink="/league" class="btn btn-secondary">View as Player</a>
   </div>
 
   <!-- Cards Grid -->
@@ -51,6 +50,12 @@
               {{ league.player_ids.length }} players
               @if (league.league_duration) { · {{ league.league_duration }} weeks }
             </span>
+            @if (league.club_name || league.location) {
+            <span class="admin-league-meta">
+              @if (league.club_name) { 🏛️ {{ league.club_name }} }
+              @if (league.location) { · 📍 {{ league.location }} }
+            </span>
+            }
           </div>
           <div (click)="$event.stopPropagation()">
             <button class="btn btn-secondary btn-danger-outline" style="padding: 4px 10px; font-size: 0.75rem;"
@@ -66,22 +71,53 @@
       </div>
     </div>
 
-    <!-- Gameplay Operations Card -->
+    <!-- Tournaments Card -->
     <div class="card admin-card">
       <div class="admin-card-header">
         <div class="admin-card-title-row">
-          <span class="admin-card-icon">⚙️</span>
+          <span class="admin-card-icon">🎾</span>
           <div>
-            <h3 style="margin:0;">Gameplay Operations</h3>
-            <span style="font-size: 0.8rem; color: var(--color-text-muted);">Daily match management and slotting</span>
+            <h3 style="margin:0;">Tournaments</h3>
+            <span style="font-size: 0.8rem; color: var(--color-text-muted);">Round-robin pools + knockout bracket</span>
           </div>
         </div>
+        <button class="btn" routerLink="/admin/create-tournament" style="white-space: nowrap;">+ New Tournament</button>
       </div>
-      <div class="flex-col gap-sm">
-        <button class="btn" (click)="triggerSlotting()">Trigger Daily Slotting</button>
-        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0; line-height: 1.5;">
-          Re-sorts players into groups based on current ratings. Run once per play day after all scores are entered.
+
+      <div class="league-list">
+        @for (tournament of tournaments(); track tournament.tournament_id) {
+        <div class="admin-league-item" [routerLink]="['/admin/tournament', tournament.tournament_id]">
+          <div class="admin-league-left">
+            <div class="admin-league-name-row">
+              <span class="admin-league-name">{{ tournament.tournament_name }}</span>
+              <span class="admin-league-status"
+                    [class.status-active]="tournament.tournament_status === 'active'"
+                    [class.status-pending]="tournament.tournament_status !== 'active'">
+                {{ tournament.tournament_status }}
+              </span>
+            </div>
+            <span class="admin-league-meta">
+              {{ tournament.player_count }} players
+              @if (tournament.tournament_start_date) { · {{ tournament.tournament_start_date }} }
+            </span>
+            @if (tournament.club_name || tournament.location) {
+            <span class="admin-league-meta">
+              @if (tournament.club_name) { 🏛️ {{ tournament.club_name }} }
+              @if (tournament.location) { · 📍 {{ tournament.location }} }
+            </span>
+            }
+          </div>
+          <div (click)="$event.stopPropagation()">
+            <button class="btn btn-secondary btn-danger-outline" style="padding: 4px 10px; font-size: 0.75rem;"
+              (click)="deleteTournament($event, tournament.tournament_id)">Delete</button>
+          </div>
+        </div>
+        }
+        @if (tournaments().length === 0) {
+        <p style="color: var(--color-text-muted); text-align: center; padding: var(--space-md);">
+          No tournaments yet. Create one above.
         </p>
+        }
       </div>
     </div>
 

@@ -4,20 +4,34 @@
         <p style="text-align: center; color: var(--color-text-muted); margin-bottom: var(--space-lg);">Please sign in to
             manage your league.</p>
 
-        <form (ngSubmit)="onLogin()">
+        <form #f="ngForm" (ngSubmit)="onLogin(f)" (input)="clearServerErrors()" novalidate>
+            <app-form-summary [form]="f" [attempted]="submitAttempted()"
+                [labels]="{ email: 'Admin email', password: 'Password' }" />
+            <app-form-banner [message]="formError()" />
+
             <div class="form-group">
-                <label style="display: block; margin-bottom: var(--space-xs);">Admin Email</label>
-                <input type="email" [(ngModel)]="email" name="email" class="input-field" placeholder="Enter admin email"
-                    required>
+                <label for="field-email" style="display: block; margin-bottom: var(--space-xs);">Admin Email</label>
+                <input id="field-email" type="email" [(ngModel)]="email" name="email" #emailCtrl="ngModel"
+                    class="input-field" placeholder="admin@club.com" required email
+                    aria-describedby="err-email"
+                    [appInvalid]="emailCtrl" [appInvalidServer]="fieldErrors()['email']" [appInvalidForce]="submitAttempted()">
+                <app-field-error id="err-email" label="Admin email" [control]="emailCtrl"
+                    [serverError]="fieldErrors()['email']" [forceShow]="submitAttempted()" />
             </div>
 
             <div class="form-group">
-                <label style="display: block; margin-bottom: var(--space-xs);">Password</label>
-                <input type="password" [(ngModel)]="password" name="password" class="input-field"
-                    placeholder="Enter password" required>
+                <label for="field-password" style="display: block; margin-bottom: var(--space-xs);">Password</label>
+                <input id="field-password" type="password" [(ngModel)]="password" name="password" #passwordCtrl="ngModel"
+                    class="input-field" placeholder="Enter password" required
+                    aria-describedby="err-password"
+                    [appInvalid]="passwordCtrl" [appInvalidServer]="fieldErrors()['password']" [appInvalidForce]="submitAttempted()">
+                <app-field-error id="err-password" label="Password" [control]="passwordCtrl"
+                    [serverError]="fieldErrors()['password']" [forceShow]="submitAttempted()" />
             </div>
 
-            <button type="submit" class="btn" style="width: 100%;">Access Dashboard</button>
+            <button type="submit" class="btn" style="width: 100%;" [disabled]="isSubmitting()">
+                {{ isSubmitting() ? 'Signing in…' : 'Access Dashboard' }}
+            </button>
         </form>
 
         <div style="margin-top: var(--space-md); text-align: center; font-size: 0.9rem;">

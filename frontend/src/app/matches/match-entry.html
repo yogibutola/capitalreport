@@ -8,7 +8,10 @@
             <h2 class="text-gradient">Enter Match Score</h2>
         </div>
 
-        <form (ngSubmit)="onSubmit()">
+        <form (ngSubmit)="onSubmit()" novalidate>
+            @if (submitAttempted) {
+            <app-error-list [errors]="errors" />
+            }
             <!-- Match Info Card -->
             <div class="card detail-card">
                 <div class="info-section">
@@ -53,7 +56,9 @@
 
                         <!-- Partner Selection -->
                         <div class="player-row player-select-row">
-                            <select class="player-select" [(ngModel)]="partnerId" name="partner" required>
+                            <select class="player-select" [(ngModel)]="partnerId" name="partner" required
+                                aria-label="Select partner"
+                                [class.is-invalid]="submitAttempted && partnerInvalid">
                                 <option value="" disabled>Select Partner</option>
                                 @for (player of players(); track player.id) {
                                 @if (player.id !== currentUserId) {
@@ -69,7 +74,8 @@
                     <div class="score-input-section">
                         <label class="score-label">Our Score</label>
                         <input type="number" class="score-input" [(ngModel)]="myScore" name="myScore" placeholder="0"
-                            min="0" required (keydown)="preventNonIntegerInput($event)">
+                            min="0" required (keydown)="preventNonIntegerInput($event)"
+                            [class.is-invalid]="submitAttempted && myScoreInvalid">
                     </div>
                 </div>
 
@@ -88,7 +94,9 @@
                     <div class="players-list">
                         <!-- Opponent 1 Selection -->
                         <div class="player-row player-select-row">
-                            <select class="player-select" [(ngModel)]="opponent1Id" name="opp1" required>
+                            <select class="player-select" [(ngModel)]="opponent1Id" name="opp1" required
+                                aria-label="Select opponent 1"
+                                [class.is-invalid]="submitAttempted && opponent1Invalid">
                                 <option value="" disabled>Select Opponent 1</option>
                                 @for (player of players(); track player.id) {
                                 <option [value]="player.id">{{ player.name }} ({{ player.dupr_rating.toFixed(1) }})
@@ -99,7 +107,9 @@
 
                         <!-- Opponent 2 Selection -->
                         <div class="player-row player-select-row">
-                            <select class="player-select" [(ngModel)]="opponent2Id" name="opp2" required>
+                            <select class="player-select" [(ngModel)]="opponent2Id" name="opp2" required
+                                aria-label="Select opponent 2"
+                                [class.is-invalid]="submitAttempted && opponent2Invalid">
                                 <option value="" disabled>Select Opponent 2</option>
                                 @for (player of players(); track player.id) {
                                 <option [value]="player.id">{{ player.name }} ({{ player.dupr_rating.toFixed(1) }})
@@ -113,14 +123,15 @@
                     <div class="score-input-section">
                         <label class="score-label">Their Score</label>
                         <input type="number" class="score-input" [(ngModel)]="opponentScore" name="opponentScore"
-                            placeholder="0" min="0" required (keydown)="preventNonIntegerInput($event)">
+                            placeholder="0" min="0" required (keydown)="preventNonIntegerInput($event)"
+                            [class.is-invalid]="submitAttempted && opponentScoreInvalid">
                     </div>
                 </div>
             </div>
 
             <!-- Action Buttons -->
             <div class="action-section">
-                <button type="submit" class="btn" [disabled]="!isFormValid()">Submit Score</button>
+                <button type="submit" class="btn">Submit Score</button>
                 <a routerLink="/player" class="btn btn-secondary">Cancel</a>
             </div>
         </form>

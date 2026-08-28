@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PlayerService, UpcomingMatch, PlayerStanding } from './player';
 import { AuthService } from '../auth/auth';
+import { ToastService } from '../shared/toast.service';
 
 @Component({
     selector: 'app-player-dashboard',
@@ -16,6 +17,7 @@ export class PlayerDashboardComponent {
     authService = inject(AuthService);
     router = inject(Router);
     route = inject(ActivatedRoute);
+    private toast = inject(ToastService);
 
     constructor() {
         // Allow deep-linking to a specific section (e.g. from the Leagues page)
@@ -35,6 +37,7 @@ export class PlayerDashboardComponent {
     activeSection = signal<'matches' | 'stats' | 'standings' | 'league-details'>('matches');
     selectedRound = signal<string>('');
     editingMatchId = signal<string | null>(null);
+    scoreError = signal<string | null>(null);
 
     // Collapsible section state (all open by default)
     upcomingExpanded = signal(true);
@@ -224,6 +227,7 @@ export class PlayerDashboardComponent {
 
     setEditingMatch(id: string | null) {
         this.editingMatchId.set(id);
+        this.scoreError.set(null);
         this.tempScore1.set('');
         this.tempScore2.set('');
     }
@@ -231,14 +235,19 @@ export class PlayerDashboardComponent {
     submitScore(match: UpcomingMatch, s1?: string, s2?: string) {
         const val1 = s1 !== undefined ? s1 : this.tempScore1();
         const val2 = s2 !== undefined ? s2 : this.tempScore2();
-        
+
         const score1 = parseInt(val1, 10);
         const score2 = parseInt(val2, 10);
 
-        if (isNaN(score1) || isNaN(score2)) {
-            alert('Please enter valid numbers for scores.');
+        if (isNaN(score1) || isNaN(score2) || score1 < 0 || score2 < 0) {
+            this.scoreError.set('Enter both scores as whole numbers (0 or more).');
             return;
         }
+        if (score1 === score2) {
+            this.scoreError.set('The two scores can’t be equal — a match needs a winner.');
+            return;
+        }
+        this.scoreError.set(null);
 
         this.playerService.updateMatchScore(
             match.leagueId,
@@ -249,12 +258,13 @@ export class PlayerDashboardComponent {
             match.opponentTeamName
         ).subscribe(success => {
             if (success) {
-                console.log('Score updated successfully');
                 this.editingMatchId.set(null);
+                this.scoreError.set(null);
                 this.tempScore1.set('');
                 this.tempScore2.set('');
+                this.toast.success('Score saved.');
             } else {
-                alert('Failed to update score. Please try again.');
+                this.scoreError.set("We couldn't save that score. Please try again.");
             }
         });
     }
@@ -295,8 +305,10 @@ export class PlayerDashboardComponent {
         const reason = prompt(`Please enter a reason for withdrawing from Play Day ${playDay}:`);
         if (reason !== null && reason.trim() !== '') {
             this.playerService.withdrawFromPlayDay(leagueId, playDay, reason.trim()).subscribe(success => {
-                if (!success) {
-                    alert('Failed to withdraw. Please try again.');
+                if (success) {
+                    this.toast.success(`You've been withdrawn from Play Day ${playDay}.`);
+                } else {
+                    this.toast.error("We couldn't process that withdrawal. Please try again.");
                 }
             });
         }

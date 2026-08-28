@@ -5,13 +5,15 @@ import { AuthService } from './auth/auth';
 import { ThemeService } from './theme.service';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { PlayerService } from './player/player';
+import { ToastHostComponent } from './shared/toast-host';
+import { ConfirmHostComponent } from './shared/confirm-host';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, CommonModule, RouterLink, RouterLinkActive, ToastHostComponent, ConfirmHostComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -23,7 +25,7 @@ export class App {
   private http = inject(HttpClient);
   protected playerService = inject(PlayerService);
 
-  protected readonly title = signal('DinkLeague');
+  protected readonly title = signal('The League');
   currentUser = this.authService.currentUser;
 
   // AI-generated pickleball quote shown in the header, refreshed on each login.
@@ -38,6 +40,8 @@ export class App {
     ),
     { initialValue: this.router.url === '/' }
   );
+
+  isAdmin = () => this.currentUser()?.role === 'admin';
 
   private lastQuotedUser: string | null = null;
 
@@ -80,6 +84,6 @@ export class App {
 
   logout() {
     this.authService.logout();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']);
   }
 }

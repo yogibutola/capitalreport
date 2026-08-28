@@ -1,0 +1,101 @@
+<div class="container" style="padding-top: var(--space-lg); padding-bottom: var(--space-xl);">
+    <div class="flex-center" style="justify-content: space-between; margin-bottom: var(--space-lg);">
+        <h2 class="text-gradient">{{ tournament()?.tournament_name || 'Tournament' }}</h2>
+        <a routerLink="/admin" class="btn btn-secondary">Back</a>
+    </div>
+
+    @if (loading()) {
+    <p style="color: var(--color-text-muted);">Loading…</p>
+    } @else if (error()) {
+    <div class="form-banner" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <span>{{ error() }}</span>
+    </div>
+    } @else if (tournament(); as t) {
+
+    <div class="card" style="margin-bottom: var(--space-lg);">
+        <p style="margin: 0; color: var(--color-text-muted);">
+            {{ t.match_format }} · {{ t.tournament_start_date }}@if (t.tournament_end_date) { – {{ t.tournament_end_date
+            }} }
+            @if (t.club_name) { · 🏛️ {{ t.club_name }} }
+            @if (t.location) { · 📍 {{ t.location }} }
+        </p>
+    </div>
+
+    <h3 class="text-gradient" style="margin-bottom: var(--space-md);">Pools</h3>
+    <div class="pool-grid">
+        @for (pool of t.pools; track pool.pool_id) {
+        <div class="card">
+            <h4 style="margin: 0 0 var(--space-sm) 0;">{{ pool.pool_name }}</h4>
+            <ol style="margin: 0 0 var(--space-sm) 0; padding-left: 1.2rem;">
+                @for (p of pool.players; track playerName(p)) {
+                <li>{{ playerName(p) }}
+                    <span style="color: var(--color-accent); font-size: 0.8rem;">
+                        @if (p.dupr_rating != null) { ({{ p.dupr_rating.toFixed(2) }}) }
+                    </span>
+                </li>
+                }
+            </ol>
+            <span style="font-size: 0.8rem; color: var(--color-text-muted);">
+                {{ pool.matches.length }} round-robin match(es)
+            </span>
+        </div>
+        }
+        @if (t.pools.length === 0) {
+        <p style="color: var(--color-text-muted);">No pools generated (no players registered).</p>
+        }
+    </div>
+
+    <h3 class="text-gradient" style="margin: var(--space-lg) 0 var(--space-md) 0;">Knockout Bracket</h3>
+    @if (t.knockout.length === 0) {
+    <p style="color: var(--color-text-muted);">Not enough qualifiers for a knockout stage.</p>
+    } @else {
+    <div class="bracket">
+        @for (round of t.knockout; track round.round_id) {
+        <div class="bracket-round">
+            <h4 style="margin: 0 0 var(--space-sm) 0;">{{ round.round_name }}</h4>
+            @for (m of round.matches; track m.match_id) {
+            <div class="card bracket-match">
+                <span>{{ m.slot_one_label }}</span>
+                <span style="color: var(--color-text-muted); font-size: 0.75rem;">vs</span>
+                <span>{{ m.slot_two_label }}</span>
+            </div>
+            }
+        </div>
+        }
+    </div>
+    }
+
+    }
+</div>
+
+<style>
+    .pool-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: var(--space-md);
+    }
+
+    .bracket {
+        display: flex;
+        gap: var(--space-lg);
+        overflow-x: auto;
+        padding-bottom: var(--space-sm);
+    }
+
+    .bracket-round {
+        min-width: 200px;
+    }
+
+    .bracket-match {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin-bottom: var(--space-sm);
+        padding: var(--space-sm);
+    }
+</style>

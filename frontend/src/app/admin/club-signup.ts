@@ -1,25 +1,31 @@
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, inject, signal } from '@angular/core';
+import { FormsModule, NgForm } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { CommonModule } from '@angular/common'; // Import CommonModule for ngIf, ngClass etc.
 import { AuthService } from '../auth/auth';
+import { FORM_ERROR_UI, ParsedHttpError } from '../shared/form-error-ui';
 
 @Component({
     selector: 'app-club-signup',
     standalone: true,
-    imports: [FormsModule, RouterLink, CommonModule],
+    imports: [FormsModule, RouterLink, ...FORM_ERROR_UI],
     templateUrl: './club-signup.html',
     styleUrl: '../auth/signup.css' // Reuse signup styles
 })
 export class ClubSignupComponent {
+    private authService = inject(AuthService);
+    private router = inject(Router);
+
     clubName = '';
     email = '';
     password = '';
     address = '';
     phone = '';
-    isSubmitting = false;
+    isSubmitting = signal(false);
+    submitAttempted = signal(false);
+    formError = signal<string | null>(null);
+    fieldErrors = signal<Record<string, string>>({});
 
-    // Password Validation State
+    // Password requirements (positive checklist, not error messages)
     passwordFocus = false;
 
     get hasMinLength() { return this.password.length >= 8; }
@@ -31,39 +37,32 @@ export class ClubSignupComponent {
         return this.hasMinLength && this.hasUpperCase && this.hasNumber && this.hasSpecialChar;
     }
 
-    constructor(private authService: AuthService, private router: Router) { }
-
-    onSignup() {
-        if (this.isFormValid() && !this.isSubmitting) {
-            this.isSubmitting = true;
-            this.authService.signupClubObservable(
-                this.clubName,
-                this.email,
-                this.password,
-                this.address,
-                this.phone
-            ).subscribe({
-                next: (success) => {
-                    if (success) {
-                        this.router.navigate(['/admin']);
-                    }
-                    this.isSubmitting = false;
-                },
-                error: (err) => {
-                    console.error('Club signup failed:', err);
-                    this.isSubmitting = false;
-                }
-            });
-        }
+    clearServerErrors() {
+        this.formError.set(null);
+        this.fieldErrors.set({});
     }
 
-    isFormValid(): boolean {
-        return !!(
-            this.clubName &&
-            this.email &&
-            this.isPasswordValid &&
-            this.address &&
-            this.phone
-        );
+    onSignup(form: NgForm) {
+        this.submitAttempted.set(true);
+        this.clearServerErrors();
+        if (this.isSubmitting() || form.invalid || !this.isPasswordValid) return;
+
+        this.isSubmitting.set(true);
+        this.authService
+            .signupClubObservable(this.clubName, this.email, this.password, this.address, this.phone)
+            .subscribe({
+                next: (success) => {
+                    this.isSubmitting.set(false);
+                    if (success) this.router.navigate(['/admin']);
+                },
+                error: (err: ParsedHttpError) => {
+                    this.isSubmitting.set(false);
+                    const fieldErrors = { ...err.fieldErrors };
+                    this.fieldErrors.set(fieldErrors);
+                    this.formError.set(Object.keys(fieldErrors).length
+                        ? 'Please correct the highlighted fields and try again.'
+                        : err.message);
+                }
+            });
     }
 }

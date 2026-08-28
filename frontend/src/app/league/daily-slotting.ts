@@ -5,6 +5,8 @@ import { AdminService } from '../admin/admin';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
+import { ToastService } from '../shared/toast.service';
+import { parseHttpError } from '../shared/http-error';
 
 interface MatchSlot {
   id: string;
@@ -28,6 +30,7 @@ export class DailySlottingComponent {
   private adminService = inject(AdminService);
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
+  private toast = inject(ToastService);
 
   leagueId = signal<string | null>(null);
   league = computed(() => {
@@ -354,12 +357,8 @@ export class DailySlottingComponent {
     };
 
     this.leagueService.saveRoundData(payload).subscribe({
-      next: (res) => console.log('Slotting saved successfully!'),
-      error: (err) => {
-        console.error('Error saving slotting:', err);
-        console.error('Error saving slotting:', JSON.stringify(err.error));
-        console.log('Error saving slotting: ' + JSON.stringify(err.error));
-      }
+      next: () => this.toast.success('Slotting saved.'),
+      error: (err) => this.toast.error(parseHttpError(err).message)
     });
   }
 
@@ -427,8 +426,8 @@ export class DailySlottingComponent {
     };
 
     this.leagueService.saveRoundData(payload).subscribe({
-      next: () => console.log(`Round ${roundId} saved successfully.`),
-      error: (err) => console.error(`Error saving round ${roundId}:`, err)
+      next: () => this.toast.success(`Round ${roundId} saved.`),
+      error: (err) => this.toast.error(parseHttpError(err).message)
     });
   }
 

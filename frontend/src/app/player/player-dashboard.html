@@ -96,7 +96,8 @@
               <div class="team-info-row">
                 <span class="team-name">{{ match.myTeamName || 'My Team' }}</span>
                 @if (editingMatchId() === match.id) {
-                  <input type="number" class="score-input-inline" placeholder="0"
+                  <input type="number" class="score-input-inline" placeholder="0" aria-label="My team score"
+                         [class.is-invalid]="scoreError()"
                          [value]="tempScore1()"
                          (input)="tempScore1.set($any($event.target).value)"
                          (click)="$event.stopPropagation()">
@@ -115,7 +116,8 @@
               <div class="team-info-row">
                 <span class="team-name">{{ match.opponentTeamName || 'Opponents' }}</span>
                 @if (editingMatchId() === match.id) {
-                  <input type="number" class="score-input-inline" placeholder="0"
+                  <input type="number" class="score-input-inline" placeholder="0" aria-label="Opponent score"
+                         [class.is-invalid]="scoreError()"
                          [value]="tempScore2()"
                          (input)="tempScore2.set($any($event.target).value)"
                          (click)="$event.stopPropagation()">
@@ -142,6 +144,17 @@
               }
             </div>
           </div>
+
+          @if (editingMatchId() === match.id && scoreError()) {
+            <p class="field-error" role="alert" style="justify-content: flex-end;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span>{{ scoreError() }}</span>
+            </p>
+          }
         </div>
         }
       </div>

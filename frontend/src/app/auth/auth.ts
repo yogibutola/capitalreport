@@ -1,8 +1,9 @@
 import { Injectable, signal, PLATFORM_ID, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
-import { Observable, of } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { tap, catchError, map } from 'rxjs/operators';
+import { parseHttpError } from '../shared/http-error';
 
 export interface User {
   id: string;
@@ -48,20 +49,11 @@ export class AuthService {
     }
   }
 
-  login(email: string, password: string): boolean {
-    // Current sync login method (mock)
-    // In a real app, this might be used if session is already valid
-    return false;
-  }
-
   signinObservable(email: string, password: string): Observable<boolean> {
     const payload = { email, password };
-    console.log('Sending signin request:', payload);
 
     return this.http.post<any>('api/v1/signin', payload).pipe(
       tap((response) => {
-        console.log('Signin successful:', response);
-
         const user: User = {
           id: response.id || crypto.randomUUID(),
           firstName: response.firstName || '',
@@ -81,94 +73,15 @@ export class AuthService {
       }),
       map(() => true),
       catchError((err) => {
-        console.error('Signin error:', err);
-        let errorMessage = 'Login failed. Please check your credentials.';
-        if (err.error?.detail) {
-          if (typeof err.error.detail === 'string') {
-            errorMessage = err.error.detail;
-          } else if (Array.isArray(err.error.detail)) {
-            errorMessage = err.error.detail.map((e: any) => e.msg || JSON.stringify(e)).join(', ');
-          }
+        const parsed = parseHttpError(err);
+        // 401 here = bad credentials, not an expired session. Give the form
+        // something actionable rather than the raw "Unauthorized".
+        if (parsed.kind === 'auth' && !Object.keys(parsed.fieldErrors).length) {
+          parsed.message = 'Email or password is incorrect. Please try again.';
         }
-        alert('Error during signin: ' + errorMessage);
-        return of(false);
+        return throwError(() => parsed);
       })
     );
-  }
-
-  signup(firstName: string, lastName: string, email: string, password: string, duprRating: number) {
-    // Generate username from first and last name
-    const username = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`;
-
-    // Prepare payload for backend
-    const signupPayload = {
-      firstName: firstName,
-      lastName: lastName,
-      userName: username,
-      email: email,
-      password: password.slice(0, 72), // Truncate to 72 bytes for bcrypt
-      dupr_rating: duprRating,
-      role: 'player' // Default role for new signups
-    };
-
-    console.log('Sending signup request:', signupPayload);
-
-    // Call backend API
-    this.http.post<any>('api/v1/signup', signupPayload).subscribe({
-      next: (response) => {
-        console.log('Signup successful:', response);
-
-        // Create user object from response
-        const user: User = {
-          id: response.id || crypto.randomUUID(),
-          firstName: firstName,
-          lastName: lastName,
-          userName: username,
-          email,
-          dupr_rating: duprRating,
-          role: response.role || 'player',
-          token: response.token
-        };
-
-        // Update current user
-        this.currentUser.set(user);
-
-        // Persist to localStorage
-        if (isPlatformBrowser(this.platformId)) {
-          localStorage.setItem('pickleball_user', JSON.stringify(user));
-        }
-      },
-      error: (err) => {
-        console.error('Signup error:', err);
-
-        // Handle error detail which might be an array of objects
-        let errorMessage = 'Unknown error occurred';
-
-        if (err.error?.detail) {
-          if (Array.isArray(err.error.detail)) {
-            // If detail is an array of error objects, extract field names and messages
-            errorMessage = err.error.detail
-              .map((e: any) => {
-                const msg = e.msg || e.message || 'Error';
-                // Extract field name from loc array (e.g., ["body", "field_name"])
-                const field = e.loc && e.loc.length > 0 ? e.loc[e.loc.length - 1] : null;
-                return field ? `${field}: ${msg}` : msg;
-              })
-              .join(', ');
-          } else if (typeof err.error.detail === 'string') {
-            errorMessage = err.error.detail;
-          } else if (typeof err.error.detail === 'object') {
-            errorMessage = JSON.stringify(err.error.detail);
-          }
-        } else if (err.statusText) {
-          errorMessage = err.statusText;
-        }
-
-        alert('Error during signup: ' + errorMessage);
-      }
-    });
-
-    return true;
   }
 
   getToken(): string | undefined {
@@ -192,12 +105,8 @@ export class AuthService {
       dupr_rating: duprRating
     };
 
-    console.log('Sending signup request:', signupPayload);
-
     return this.http.post<any>('api/v1/signup', signupPayload).pipe(
       tap((response) => {
-        console.log('Signup successful:', response);
-
         const user: User = {
           id: response.id || crypto.randomUUID(),
           firstName: firstName,
@@ -216,35 +125,7 @@ export class AuthService {
         }
       }),
       map(() => true),
-      catchError((err) => {
-        console.error('Signup error:', err);
-
-        // Handle error detail which might be an array of objects
-        let errorMessage = 'Unknown error occurred';
-
-        if (err.error?.detail) {
-          if (Array.isArray(err.error.detail)) {
-            // If detail is an array of error objects, extract field names and messages
-            errorMessage = err.error.detail
-              .map((e: any) => {
-                const msg = e.msg || e.message || 'Error';
-                // Extract field name from loc array (e.g., ["body", "field_name"])
-                const field = e.loc && e.loc.length > 0 ? e.loc[e.loc.length - 1] : null;
-                return field ? `${field}: ${msg}` : msg;
-              })
-              .join(', ');
-          } else if (typeof err.error.detail === 'string') {
-            errorMessage = err.error.detail;
-          } else if (typeof err.error.detail === 'object') {
-            errorMessage = JSON.stringify(err.error.detail);
-          }
-        } else if (err.statusText) {
-          errorMessage = err.statusText;
-        }
-
-        alert('Error during signup: ' + errorMessage);
-        return of(false);
-      })
+      catchError((err) => throwError(() => parseHttpError(err)))
     );
   }
 
@@ -258,12 +139,8 @@ export class AuthService {
       phone
     };
 
-    console.log('Sending club signup request:', payload);
-
     return this.http.post<any>('api/v1/signup/club', payload).pipe(
       tap((response) => {
-        console.log('Club signup successful:', response);
-
         const user: User = {
           id: response.id || crypto.randomUUID(),
           firstName: clubName, // Map clubName to firstName as per requirement
@@ -282,22 +159,7 @@ export class AuthService {
         }
       }),
       map(() => true),
-      catchError((err) => {
-        console.error('Club signup error:', err);
-        let errorMessage = 'Signup failed.';
-
-        if (err.error?.detail) {
-          if (typeof err.error.detail === 'string') {
-            errorMessage = err.error.detail;
-          } else if (Array.isArray(err.error.detail)) {
-            errorMessage = err.error.detail.map((e: any) => e.msg || JSON.stringify(e)).join(', ');
-          } else if (typeof err.error.detail === 'object') {
-            errorMessage = JSON.stringify(err.error.detail);
-          }
-        }
-        alert('Error during club signup: ' + errorMessage);
-        return of(false);
-      })
+      catchError((err) => throwError(() => parseHttpError(err)))
     );
   }
 

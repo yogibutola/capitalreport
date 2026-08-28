@@ -23,8 +23,16 @@ def get_pb_league_service() -> PBLeagueService:
 
 @router.get("/all_leagues", status_code=status.HTTP_200_OK)
 def get_all_leagues(pb_league_service: PBLeagueService = Depends(get_pb_league_service)):
-    """ Get all leagues."""
+    """ Get all leagues (public discovery, across all clubs)."""
     return pb_league_service.get_all_leagues()
+
+
+@router.get("/my_leagues", status_code=status.HTTP_200_OK)
+def get_my_leagues(pb_league_service: PBLeagueService = Depends(get_pb_league_service),
+                   payload: dict = Depends(get_current_admin)):
+    """ Get the leagues created by the authenticated admin's club. (Admin only)"""
+    club_id = payload.get("sub")
+    return pb_league_service.get_leagues_by_club(club_id)
 
 
 @router.get("/league/{status}", status_code=status.HTTP_200_OK)
@@ -56,10 +64,11 @@ def get_matches_by_player_email(email_id: str,
 ################################################### POST METHODS ###################################################
 
 @router.post("/league", status_code=status.HTTP_201_CREATED, response_model=LeagueResponse)
-def create_league(league: League, 
+def create_league(league: League,
                   pb_league_service: PBLeagueService = Depends(get_pb_league_service),
                   payload: dict = Depends(get_current_admin)):
     """Create a new league. (Admin only)"""
+    league.club_id = payload.get("sub")
     pb_league_service.save_league_details(league)
     league_response = LeagueResponse(league_id=league.league_id, league_name=league.league_name)
     return league_response

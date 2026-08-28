@@ -8,6 +8,8 @@ import { MatchHistoryComponent } from './matches/match-history';
 import { ProfileComponent } from './stats/profile';
 import { DashboardComponent as AdminDashboardComponent } from './admin/dashboard';
 import { CreateLeagueComponent } from './admin/create-league';
+import { CreateTournamentComponent } from './admin/create-tournament';
+import { TournamentDetailsComponent } from './admin/tournament-details';
 import { PlayerDashboardComponent } from './player/player-dashboard';
 import { PlayerLeaguesComponent } from './player/player-leagues';
 import { MatchDetailComponent } from './player/match-detail';
@@ -23,6 +25,8 @@ export const routes: Routes = [
     { path: 'admin/login', component: AdminLoginComponent },
     { path: 'admin/signup', component: ClubSignupComponent },
     { path: 'admin/create-league', component: CreateLeagueComponent, canActivate: [adminGuard] },
+    { path: 'admin/create-tournament', component: CreateTournamentComponent, canActivate: [adminGuard] },
+    { path: 'admin/tournament/:tournament_id', component: TournamentDetailsComponent, canActivate: [adminGuard] },
     { path: 'admin/league/:league_id', component: LeagueDetailsComponent, canActivate: [adminGuard] },
     { path: 'login', component: LoginComponent },
     { path: 'signup', component: SignupComponent },

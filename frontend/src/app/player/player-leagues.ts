@@ -2,6 +2,9 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PlayerService } from './player';
+import { ToastService } from '../shared/toast.service';
+import { ConfirmService } from '../shared/confirm.service';
+import { parseHttpError } from '../shared/http-error';
 
 @Component({
     selector: 'app-player-leagues',
@@ -14,6 +17,8 @@ export class PlayerLeaguesComponent implements OnInit {
     playerService = inject(PlayerService);
     router = inject(Router);
     route = inject(ActivatedRoute);
+    private toast = inject(ToastService);
+    private confirm = inject(ConfirmService);
 
     playerLeagues = this.playerService.getLeagues;
     availableLeagues = this.playerService.getAvailableLeagues;
@@ -32,27 +37,40 @@ export class PlayerLeaguesComponent implements OnInit {
         this.router.navigate(['/player'], { queryParams: { section: 'league-details' } });
     }
 
-    register(leagueId: string) {
-        if (confirm('Are you sure you want to register for this league?')) {
-            this.playerService.registerForLeague(leagueId).subscribe(success => {
-                if (success) {
-                    console.log('Successfully registered!');
-                } else {
-                    console.log('Registration failed. Please try again or contact support.');
-                }
-            });
-        }
+    async register(leagueId: string) {
+        const confirmed = await this.confirm.ask({
+            title: 'Register for this league?',
+            message:
+                'You will be added to the player roster and included in the scheduling for the next round.',
+            confirmLabel: 'Register',
+            cancelLabel: 'Not Now',
+            tone: 'primary',
+        });
+        if (!confirmed) return;
+
+        this.playerService.registerForLeague(leagueId).subscribe(success => {
+            if (success) {
+                this.toast.success("You're registered for this league.");
+            } else {
+                this.toast.error("We couldn't complete your registration. Please try again or contact support.");
+            }
+        });
     }
 
-    unregister(leagueId: string, leagueName: string) {
-        if (confirm(`Are you sure you want to unregister from "${leagueName}"? This cannot be undone.`)) {
-            this.playerService.unregisterFromLeague(leagueId).subscribe({
-                error: (err) => {
-                    const detail = err.error?.detail || err.message || `HTTP ${err.status}`;
-                    alert(`Failed to unregister: ${detail}`);
-                }
-            });
-        }
+    async unregister(leagueId: string, leagueName: string) {
+        const confirmed = await this.confirm.ask({
+            title: `Unregister from ${leagueName}?`,
+            message:
+                'You will be removed from the roster and your current group placement. Rejoining later starts you over from scratch. This cannot be undone.',
+            confirmLabel: 'Unregister',
+            cancelLabel: 'Stay Registered',
+        });
+        if (!confirmed) return;
+
+        this.playerService.unregisterFromLeague(leagueId).subscribe({
+            next: () => this.toast.success(`You've been unregistered from "${leagueName}".`),
+            error: (err) => this.toast.error(parseHttpError(err).message)
+        });
     }
 
     formatDate(date: Date): string {

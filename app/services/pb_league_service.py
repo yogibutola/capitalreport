@@ -39,10 +39,20 @@ class PBLeagueService:
         return "Team match stats"
 
     def save_league_details(self, league_details: League):
+        # Stamp the owning club's name and location onto the league so league
+        # listings can show who runs it and where, without a second lookup.
+        if league_details.club_id and not (league_details.club_name and league_details.location):
+            club = PBPlayerStore().find_player_by_email(league_details.club_id)
+            if club:
+                league_details.club_name = league_details.club_name or club.get("clubName") or club.get("firstName")
+                league_details.location = league_details.location or club.get("address")
         self.pb_league_store.store_new_league_details(league_details)
 
     def get_all_leagues(self) -> list[dict]:
         return self.pb_league_store.get_all_leagues()
+
+    def get_leagues_by_club(self, club_id: str) -> list[dict]:
+        return self.pb_league_store.get_leagues_by_club(club_id)
 
     def get_league_by_status(self, league_status: str):
         return self.pb_league_store.get_league_by_status(league_status)
@@ -135,7 +145,9 @@ class PBLeagueService:
             "league_type": league_doc.get("league_type", "PB"),
             "league_status": league_doc.get("league_status") or league_doc.get("status"),
             "league_start_date": league_doc.get("league_start_date"),
-            "league_end_date": league_doc.get("league_end_date")
+            "league_end_date": league_doc.get("league_end_date"),
+            "club_name": league_doc.get("club_name"),
+            "location": league_doc.get("location")
         }
         pb_player_store.bulk_update_players_league_details([email], league_info)
 

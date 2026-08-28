@@ -73,6 +73,8 @@ export interface LeagueDetailsPayload {
   league_id: string | number;
   league_name: string;
   league_description: string;
+  club_name?: string;
+  location?: string;
   league_status: 'active' | 'pending';
   league_start_date: string;
   league_end_date: string;

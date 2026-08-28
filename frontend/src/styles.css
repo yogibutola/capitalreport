@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Chivo+Mono:wght@400;700;900&family=Manrope:wght@400;600;800&display=swap');
 
 :root {
-  /* ─── DinkLeague HDFC Banking Style Core Palette ─── */
+  /* ─── The League HDFC Banking Style Core Palette ─── */
   /* #001233  Deep Navy Blue Brand Background */
   --color-brand-dark: 220 100% 7%;
   /* #00205b  HDFC Royal Navy Blue Primary */
@@ -12,7 +12,7 @@
   /* #eab308  Gold / Amber highlight */
   --color-brand-gold: 45 93% 47%;
   
-  /* Standard colors mapped to DinkLeague branding */
+  /* Standard colors mapped to The League branding */
   --color-court-green: 220 100% 12%;
   --color-rally-green: 224 75% 44%;
   --color-ace-lime: 260 70% 60%;
@@ -61,6 +61,14 @@
   --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   --card-border: rgba(255, 255, 255, 0.08);
   --input-bg: rgba(0, 0, 0, 0.3);
+
+  /* Feedback surfaces */
+  --danger-text: 0 91% 76%;
+  --danger-surface: 0 45% 15%;
+  --danger-border: 0 55% 38%;
+  --success-text: 142 62% 62%;
+  --success-surface: 142 32% 14%;
+  --success-border: 142 35% 32%;
 }
 
 /* Default Theme (Light — Clean Corporate Blue) */
@@ -75,6 +83,14 @@
   --card-shadow: 0 8px 24px rgba(0, 32, 91, 0.06), 0 2px 8px rgba(0, 32, 91, 0.04);
   --card-border: #e2e8f0;
   --input-bg: rgba(255, 255, 255, 1);
+
+  /* Feedback surfaces */
+  --danger-text: 0 74% 42%;
+  --danger-surface: 0 86% 97%;
+  --danger-border: 0 76% 84%;
+  --success-text: 142 64% 28%;
+  --success-surface: 142 62% 96%;
+  --success-border: 142 45% 80%;
 }
 
 body {
@@ -218,6 +234,359 @@ h1, h2, h3, h4, h5, h6, .app-title {
   outline: none;
   border-color: HSL(var(--color-brand-accent));
   box-shadow: 0 0 0 3px rgba(27, 73, 194, 0.15);
+}
+
+/* ─── Form validation & error feedback ─── */
+
+/* Invalid field: red border + ring, still readable while editing.
+   Works for the shared .input-field and for component-local input classes. */
+input.is-invalid,
+select.is-invalid,
+textarea.is-invalid,
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: HSL(var(--danger-border));
+  background-color: HSL(var(--danger-surface) / 0.35);
+}
+
+input.is-invalid:focus,
+select.is-invalid:focus,
+textarea.is-invalid:focus,
+input[aria-invalid="true"]:focus,
+select[aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus {
+  border-color: HSL(var(--danger-text));
+  box-shadow: 0 0 0 3px HSL(var(--danger-text) / 0.18);
+}
+
+/* Inline message under (or above) a field */
+.field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin-top: var(--space-xs);
+  color: HSL(var(--danger-text));
+  font-size: 0.82rem;
+  line-height: 1.35;
+  font-family: 'Manrope', sans-serif;
+}
+
+.field-error svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin-top: 0.12rem;
+}
+
+/* Neutral helper text under a field (replaces ad-hoc inline <small>) */
+.input-hint {
+  display: block;
+  margin-top: var(--space-xs);
+  color: HSL(var(--color-text-muted));
+  font-size: 0.8rem;
+}
+
+/* Summary box at the top of a form, listing every invalid field */
+.form-summary {
+  border: 1px solid HSL(var(--danger-border));
+  background-color: HSL(var(--danger-surface));
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.form-summary__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 var(--space-sm);
+  color: HSL(var(--danger-text));
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.form-summary__title svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.form-summary__list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: HSL(var(--danger-text));
+  font-size: 0.86rem;
+}
+
+.form-summary__list li {
+  margin-bottom: 0.2rem;
+}
+
+.form-summary__link {
+  color: inherit;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* Inline banner for form-level / server errors that aren't tied to one field */
+.form-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  border: 1px solid HSL(var(--danger-border));
+  background-color: HSL(var(--danger-surface));
+  color: HSL(var(--danger-text));
+}
+
+.form-banner svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 0.1rem;
+}
+
+.form-banner--success {
+  border-color: HSL(var(--success-border));
+  background-color: HSL(var(--success-surface));
+  color: HSL(var(--success-text));
+}
+
+/* ─── Toast notifications (system-wide errors) ─── */
+.toast-host {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + var(--space-md));
+  right: var(--space-md);
+  left: var(--space-md);
+  z-index: 4000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  pointer-events: none;
+}
+
+@media (min-width: 640px) {
+  .toast-host {
+    left: auto;
+    align-items: flex-end;
+    max-width: 400px;
+  }
+}
+
+.toast {
+  pointer-events: auto;
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  box-shadow: var(--card-shadow);
+  border: 1px solid HSL(var(--danger-border));
+  background-color: HSL(var(--color-bg-card));
+  color: HSL(var(--color-text-main));
+  font-size: 0.88rem;
+  line-height: 1.4;
+  animation: toastIn 0.25s ease-out;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.toast__icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 0.1rem;
+  color: HSL(var(--danger-text));
+}
+
+.toast--success {
+  border-color: HSL(var(--success-border));
+}
+
+.toast--success .toast__icon {
+  color: HSL(var(--success-text));
+}
+
+.toast__body {
+  flex: 1;
+}
+
+.toast__close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: HSL(var(--color-text-muted));
+  cursor: pointer;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.toast__close:hover {
+  color: HSL(var(--color-text-main));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
+}
+
+/* ─── Confirm dialog (destructive / significant actions) ─── */
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 4500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  background: rgba(3, 7, 18, 0.6);
+  animation: confirmFade 0.15s ease-out;
+}
+
+.confirm-dialog {
+  width: 100%;
+  max-width: 420px;
+  padding: var(--space-xl);
+  text-align: center;
+  background-color: HSL(var(--color-bg-card));
+  border: 1px solid HSL(var(--color-text-muted) / 0.18);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  animation: confirmPop 0.18s ease-out;
+}
+
+.confirm-dialog__icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: HSL(var(--danger-surface));
+  color: HSL(var(--danger-text));
+}
+
+.confirm-dialog__icon--primary {
+  background-color: HSL(var(--color-primary) / 0.14);
+  color: HSL(var(--color-primary));
+}
+
+.confirm-dialog__icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.confirm-dialog__title {
+  margin: 0 0 var(--space-sm);
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.3;
+  color: HSL(var(--color-text-main));
+}
+
+.confirm-dialog__message {
+  margin: 0 0 var(--space-xl);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: HSL(var(--color-text-muted));
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-sm);
+}
+
+@media (min-width: 480px) {
+  .confirm-dialog__actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+.confirm-dialog__btn {
+  flex: 1;
+  min-height: 46px;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.confirm-dialog__btn:active {
+  transform: translateY(1px);
+}
+
+.confirm-dialog__btn:focus-visible {
+  outline: 2px solid HSL(var(--color-primary));
+  outline-offset: 2px;
+}
+
+.confirm-dialog__btn--cancel {
+  background-color: transparent;
+  border-color: HSL(var(--color-text-muted) / 0.4);
+  color: HSL(var(--color-text-main));
+}
+
+.confirm-dialog__btn--cancel:hover {
+  background-color: HSL(var(--color-text-muted) / 0.12);
+}
+
+.confirm-dialog__btn--danger {
+  background-color: HSL(var(--color-error));
+  color: #fff;
+}
+
+.confirm-dialog__btn--danger:hover {
+  background-color: HSL(0 74% 48%);
+}
+
+.confirm-dialog__btn--primary {
+  background-color: HSL(var(--color-primary));
+  color: #fff;
+}
+
+.confirm-dialog__btn--primary:hover {
+  background-color: HSL(var(--color-primary-dark));
+}
+
+@keyframes confirmFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes confirmPop {
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confirm-backdrop,
+  .confirm-dialog { animation: none; }
 }
 
 .text-gradient {

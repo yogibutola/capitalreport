@@ -7,6 +7,8 @@ import { LeagueDetailsPayload, LeagueRoundPayload, LeagueService, Player, RoundI
 interface LeagueDetails {
     league_id: string;
     league_name: string;
+    club_name?: string;
+    location?: string;
     league_status: 'active' | 'pending';
     league_start_date: string;
     league_end_date: string;
@@ -104,6 +106,8 @@ export class LeagueDetailsComponent {
                 const details: LeagueDetails = {
                     league_id: data.league_id as string,
                     league_name: data.league_name,
+                    club_name: data.club_name,
+                    location: data.location,
                     league_status: data.league_status,
                     league_start_date: data.league_start_date,
                     league_end_date: data.league_end_date,

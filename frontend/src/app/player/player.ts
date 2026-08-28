@@ -20,6 +20,8 @@ export interface PlayerLeague {
     startDate: Date;
     endDate: Date;
     duration?: string;
+    clubName?: string;
+    location?: string;
     withdrawals?: PlayerWithdrawal[];
 }
 
@@ -177,7 +179,9 @@ export class PlayerService {
                     name: l.league_name || l.name || 'Unknown League',
                     status: (l.status || l.league_status || 'active').toLowerCase(),
                     startDate: new Date(l.startDate || l.league_start_date || new Date()),
-                    endDate: new Date(l.endDate || l.league_end_date || new Date())
+                    endDate: new Date(l.endDate || l.league_end_date || new Date()),
+                    clubName: l.club_name || l.clubName,
+                    location: l.location
                 }));
             }),
             catchError(err => {
@@ -511,7 +515,9 @@ export class PlayerService {
                     status: (l.status || l.league_status || 'active').toLowerCase(),
                     startDate: new Date(l.startDate || l.league_start_date || new Date()),
                     endDate: new Date(l.endDate || l.league_end_date || new Date()),
-                    duration: l.duration || l.league_duration || undefined
+                    duration: l.duration || l.league_duration || undefined,
+                    clubName: l.club_name || l.clubName,
+                    location: l.location
                 }));
             }),
             catchError(err => {

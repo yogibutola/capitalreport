@@ -40,7 +40,9 @@ class PBLeagueStore:
             "league_type": "PB",  # Default type
             "league_status": league_details.league_status,
             "league_start_date": league_details.league_start_date,
-            "league_end_date": league_details.league_end_date
+            "league_end_date": league_details.league_end_date,
+            "club_name": league_details.club_name,
+            "location": league_details.location
         }
         league_details.league_id = league.inserted_id
         pb_player_store = PBPlayerStore()
@@ -59,10 +61,25 @@ class PBLeagueStore:
 
     def get_all_leagues(self) -> list[dict]:
         collection = self.get_league_collection()
-        leagues = list(collection.find({}, {"league_name": 1, "league_status": 1, "status": 1, "_id": 1}))
-        return [
-            {"league_name": league["league_name"], "league_status": league.get("league_status") or league.get("status"),
-             "league_id": str(league.get("_id"))} for league in leagues]
+        leagues = list(collection.find({}, {"league_name": 1, "league_status": 1, "status": 1, "_id": 1,
+                                            "club_name": 1, "location": 1}))
+        return [self._league_summary(league) for league in leagues]
+
+    def get_leagues_by_club(self, club_id: str) -> list[dict]:
+        collection = self.get_league_collection()
+        leagues = list(collection.find({"club_id": club_id}, {"league_name": 1, "league_status": 1, "status": 1, "_id": 1,
+                                                              "club_name": 1, "location": 1}))
+        return [self._league_summary(league) for league in leagues]
+
+    @staticmethod
+    def _league_summary(league: dict) -> dict:
+        return {
+            "league_name": league["league_name"],
+            "league_status": league.get("league_status") or league.get("status"),
+            "league_id": str(league.get("_id")),
+            "club_name": league.get("club_name"),
+            "location": league.get("location"),
+        }
 
     def get_league_by_status(self, status: str):
         collection = self.get_league_collection()

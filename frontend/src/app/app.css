@@ -169,26 +169,6 @@
     gap: 16px;
 }
 
-.support-link {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #cbd5e1;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: color var(--transition-fast);
-}
-
-.support-link:hover {
-    color: #ffffff;
-}
-
-.utility-divider {
-    color: rgba(255, 255, 255, 0.2);
-    font-size: 0.85rem;
-}
-
 .icon-utility-btn {
     background: none;
     border: none;
@@ -443,18 +423,6 @@
 
 [data-theme="light"] .header-welcome-sub {
     color: #64748b;
-}
-
-[data-theme="light"] .support-link {
-    color: #475569;
-}
-
-[data-theme="light"] .support-link:hover {
-    color: #16a34a;
-}
-
-[data-theme="light"] .utility-divider {
-    color: #cbd5e1;
 }
 
 [data-theme="light"] .icon-utility-btn {

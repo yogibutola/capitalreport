@@ -1,6 +1,10 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable, catchError, throwError } from 'rxjs';
 import { LeagueService } from '../league/league';
+import { ToastService } from '../shared/toast.service';
+import { ConfirmService } from '../shared/confirm.service';
+import { parseHttpError } from '../shared/http-error';
 
 export interface League {
   league_id: string; // Internal ID string, will map to int 0 for backend
@@ -8,6 +12,8 @@ export interface League {
   league_description: string;
   league_status: 'active' | 'pending';
   league_start_date: Date;
+  club_name?: string;
+  location?: string;
   // New fields
   league_duration: number; // Internal number
   group_size: number;
@@ -20,6 +26,8 @@ export interface League {
 })
 export class AdminService {
   private http = inject(HttpClient);
+  private toast = inject(ToastService);
+  private confirm = inject(ConfirmService);
   leagueService = inject(LeagueService);
 
   // Leagues signal
@@ -30,7 +38,7 @@ export class AdminService {
   }
 
   fetchLeagues() {
-    this.http.get<any[]>('/api/v1/all_leagues').subscribe({
+    this.http.get<any[]>('/api/v1/my_leagues').subscribe({
       next: (data) => {
         const mappedLeagues: League[] = data.map(l => ({
           league_id: String(l.league_id),
@@ -38,6 +46,8 @@ export class AdminService {
           league_description: l.league_description,
           league_status: l.league_status || 'active',
           league_start_date: new Date(l.league_start_date),
+          club_name: l.club_name,
+          location: l.location,
           league_duration: Number(l.league_duration),
           group_size: l.group_size,
           match_format: l.match_format,
@@ -51,7 +61,7 @@ export class AdminService {
     });
   }
 
-  createLeague(data: Omit<League, 'league_id' | 'league_status'>) {
+  createLeague(data: Omit<League, 'league_id' | 'league_status'>): Observable<unknown> {
     const newLeague: League = {
       league_id: crypto.randomUUID(),
       league_status: 'pending',
@@ -87,6 +97,7 @@ export class AdminService {
       league_id: 0, // Backend identifies league by name or generates ID
       league_name: newLeague.league_name,
       league_description: newLeague.league_description,
+      location: newLeague.location,
       league_start_date: formattedStartDate,
       league_end_date: formattedEndDate,
       league_duration: String(newLeague.league_duration),
@@ -103,33 +114,36 @@ export class AdminService {
       }))
     };
 
-    // API Call
-    console.log('Sending payload:', backendPayload);
-    this.http.post('/api/v1/league', backendPayload).subscribe({
-      next: (response) => console.log('League created successfully', response),
-      error: (err) => {
-        console.error('Error creating league', err);
-        console.log('Error creating league: ' + (err.error?.detail));
-        console.log('Error creating league: ' + (err.statusText));
-        console.log('Error creating league: ' + (JSON.stringify(err.error)));
-
-      }
-    });
+    // API Call — caller subscribes and handles success/error UI.
+    return this.http.post('/api/v1/league', backendPayload).pipe(
+      catchError((err) => {
+        // Roll back the optimistic insert so the list matches reality.
+        this.leagues.update(current => current.filter(l => l.league_id !== newLeague.league_id));
+        return throwError(() => parseHttpError(err));
+      })
+    );
   }
 
-  deleteLeague(leagueId: string) {
-    if (confirm('Are you sure you want to delete this league? This action cannot be undone.')) {
-      this.leagueService.deleteLeague(leagueId).subscribe({
-        next: () => {
-          this.leagues.update(current => current.filter(l => l.league_id !== leagueId));
-          console.log('League deleted successfully.');
-        },
-        error: (err) => {
-          console.error('Error deleting league', err);
-          console.log('Failed to delete league: ' + (err.error?.detail || err.statusText));
-        }
-      });
-    }
+  async deleteLeague(leagueId: string) {
+    const name = this.leagues().find(l => l.league_id === leagueId)?.league_name;
+    const confirmed = await this.confirm.ask({
+      title: name ? `Delete ${name}?` : 'Delete this league?',
+      message:
+        'This permanently removes the league along with its groups, schedule, and every recorded match result. This cannot be undone.',
+      confirmLabel: 'Delete League',
+      cancelLabel: 'Keep League',
+    });
+    if (!confirmed) return;
+
+    this.leagueService.deleteLeague(leagueId).subscribe({
+      next: () => {
+        this.leagues.update(current => current.filter(l => l.league_id !== leagueId));
+        this.toast.success('League deleted.');
+      },
+      error: (err) => {
+        this.toast.error(parseHttpError(err).message);
+      }
+    });
   }
 
   triggerSlotting() {

@@ -2,53 +2,103 @@
     <div class="card" style="width: 100%; max-width: 500px;">
         <h2 class="text-gradient" style="text-align: center; margin-bottom: var(--space-lg);">Join the League</h2>
 
-        <form (ngSubmit)="onSignup()">
+        <form #f="ngForm" (ngSubmit)="onSignup(f)" (input)="clearServerErrors()" novalidate>
+            <app-form-summary [form]="f" [attempted]="submitAttempted()" [labels]="{
+                    firstName: 'First name',
+                    lastName: 'Last name',
+                    email: 'Email',
+                    password: 'Password',
+                    dupr_rating: 'DUPR rating'
+                }" />
+            <app-form-banner [message]="formError()" />
+
             <!-- Name Fields -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
                 <div class="form-group">
-                    <label style="display: block; margin-bottom: var(--space-xs);">First Name</label>
-                    <input type="text" [(ngModel)]="firstName" name="firstName" class="input-field"
-                        placeholder="First name" required>
+                    <label for="field-firstName" style="display: block; margin-bottom: var(--space-xs);">First Name</label>
+                    <input id="field-firstName" type="text" [(ngModel)]="firstName" name="firstName" #firstNameCtrl="ngModel"
+                        class="input-field" placeholder="First name" required aria-describedby="err-firstName"
+                        [appInvalid]="firstNameCtrl" [appInvalidServer]="fieldErrors()['firstName']"
+                        [appInvalidForce]="submitAttempted()">
+                    <app-field-error id="err-firstName" label="First name" [control]="firstNameCtrl"
+                        [serverError]="fieldErrors()['firstName']" [forceShow]="submitAttempted()" />
                 </div>
 
                 <div class="form-group">
-                    <label style="display: block; margin-bottom: var(--space-xs);">Last Name</label>
-                    <input type="text" [(ngModel)]="lastName" name="lastName" class="input-field"
-                        placeholder="Last name" required>
+                    <label for="field-lastName" style="display: block; margin-bottom: var(--space-xs);">Last Name</label>
+                    <input id="field-lastName" type="text" [(ngModel)]="lastName" name="lastName" #lastNameCtrl="ngModel"
+                        class="input-field" placeholder="Last name" required aria-describedby="err-lastName"
+                        [appInvalid]="lastNameCtrl" [appInvalidServer]="fieldErrors()['lastName']"
+                        [appInvalidForce]="submitAttempted()">
+                    <app-field-error id="err-lastName" label="Last name" [control]="lastNameCtrl"
+                        [serverError]="fieldErrors()['lastName']" [forceShow]="submitAttempted()" />
                 </div>
             </div>
 
             <div class="form-group">
-                <label style="display: block; margin-bottom: var(--space-xs);">Email</label>
-                <input type="email" [(ngModel)]="email" name="email" class="input-field" placeholder="Enter your email"
-                    required>
+                <label for="field-email" style="display: block; margin-bottom: var(--space-xs);">Email</label>
+                <input id="field-email" type="email" [(ngModel)]="email" name="email" #emailCtrl="ngModel" class="input-field"
+                    placeholder="you@example.com" required email aria-describedby="err-email"
+                    [appInvalid]="emailCtrl" [appInvalidServer]="fieldErrors()['email']" [appInvalidForce]="submitAttempted()">
+                <app-field-error id="err-email" label="Email" [control]="emailCtrl"
+                    [serverError]="fieldErrors()['email']" [forceShow]="submitAttempted()" />
             </div>
 
             <div class="form-group">
-                <label style="display: block; margin-bottom: var(--space-xs);">Password</label>
-                <input type="password" [(ngModel)]="password" name="password" class="input-field"
-                    placeholder="Create password" maxlength="72" required>
-                <small
-                    style="color: var(--color-text-muted); font-size: 0.8rem; margin-top: var(--space-xs); display: block;">
-                    Maximum 72 characters
-                </small>
+                <label for="field-password" style="display: block; margin-bottom: var(--space-xs);">Password</label>
+                <input id="field-password" type="password" [(ngModel)]="password" name="password" #passwordCtrl="ngModel"
+                    class="input-field" placeholder="Create password" maxlength="72" required
+                    aria-describedby="err-password password-help"
+                    (focus)="passwordFocus = true" (blur)="passwordFocus = false"
+                    [appInvalid]="passwordCtrl"
+                    [appInvalidServer]="fieldErrors()['password'] || (submitAttempted() && !isPasswordValid ? ' ' : null)"
+                    [appInvalidForce]="submitAttempted()">
+                <small id="password-help" class="input-hint">Maximum 72 characters</small>
+
+                <app-field-error id="err-password" label="Password" [control]="passwordCtrl"
+                    [serverError]="fieldErrors()['password']
+                        || (submitAttempted() && !isPasswordValid ? 'Password doesn’t meet all the requirements below yet.' : null)"
+                    [forceShow]="submitAttempted()" />
+
+                <!-- Password requirements checklist -->
+                @if (password || passwordFocus) {
+                <div class="validation-checklist">
+                    <div [class.valid]="hasMinLength" [class.invalid]="!hasMinLength">
+                        <span class="icon">{{ hasMinLength ? '✓' : '○' }}</span> At least 8 characters
+                    </div>
+                    <div [class.valid]="hasUpperCase" [class.invalid]="!hasUpperCase">
+                        <span class="icon">{{ hasUpperCase ? '✓' : '○' }}</span> One uppercase letter (A-Z)
+                    </div>
+                    <div [class.valid]="hasNumber" [class.invalid]="!hasNumber">
+                        <span class="icon">{{ hasNumber ? '✓' : '○' }}</span> One number (0-9)
+                    </div>
+                    <div [class.valid]="hasSpecialChar" [class.invalid]="!hasSpecialChar">
+                        <span class="icon">{{ hasSpecialChar ? '✓' : '○' }}</span> One special character (&#64;#$)
+                    </div>
+                </div>
+                }
             </div>
 
             <div class="form-group">
-                <label style="display: block; margin-bottom: var(--space-xs);">
+                <label for="field-dupr_rating" style="display: block; margin-bottom: var(--space-xs);">
                     DUPR Rating
                     <span style="color: var(--color-text-muted); font-size: 0.85rem; font-weight: normal;">(Precise
                         rating, e.g., 4.52)</span>
                 </label>
-                <input type="number" [(ngModel)]="dupr_rating" name="dupr_rating" class="input-field"
-                    placeholder="e.g., 4.52" step="0.01" min="1" max="8" required>
-                <small
-                    style="color: var(--color-text-muted); font-size: 0.8rem; margin-top: var(--space-xs); display: block;">
-                    Enter your precise DUPR rating (1.00 - 8.00)
-                </small>
+                <input id="field-dupr_rating" type="number" [(ngModel)]="dupr_rating" name="dupr_rating"
+                    #duprCtrl="ngModel" class="input-field" placeholder="e.g., 4.52" step="0.01" min="1" max="8"
+                    required aria-describedby="err-dupr dupr-help"
+                    [appInvalid]="duprCtrl" [appInvalidServer]="fieldErrors()['dupr_rating']"
+                    [appInvalidForce]="submitAttempted()">
+                <small id="dupr-help" class="input-hint">Enter your precise DUPR rating (1.00 – 8.00)</small>
+                <app-field-error id="err-dupr" label="DUPR rating" [control]="duprCtrl"
+                    [serverError]="fieldErrors()['dupr_rating']" [forceShow]="submitAttempted()"
+                    [messages]="{ min: 'DUPR rating must be between 1.00 and 8.00.', max: 'DUPR rating must be between 1.00 and 8.00.' }" />
             </div>
 
-            <button type="submit" class="btn" style="width: 100%; margin-top: var(--space-sm);">Sign Up</button>
+            <button type="submit" class="btn" style="width: 100%; margin-top: var(--space-sm);" [disabled]="isSubmitting()">
+                {{ isSubmitting() ? 'Creating account…' : 'Sign Up' }}
+            </button>
         </form>
 
         <div style="margin-top: var(--space-md); text-align: center; font-size: 0.9rem;">
@@ -57,3 +107,38 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* Inline styles for password validation specific to this component */
+    .validation-checklist {
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        background: HSL(var(--color-bg-dark) / 0.4);
+        padding: 0.75rem;
+        border-radius: 8px;
+    }
+
+    .validation-checklist div {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+        transition: color 0.2s;
+    }
+
+    .validation-checklist div.valid {
+        color: HSL(var(--success-text));
+    }
+
+    .validation-checklist div.invalid {
+        color: var(--color-text-muted);
+    }
+
+    .icon {
+        font-weight: bold;
+        display: inline-block;
+        width: 1.2em;
+        text-align: center;
+    }
+</style>

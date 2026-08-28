@@ -61,7 +61,11 @@ export class HomeComponent {
     searchPlayers(): void {
         const first = this.searchFirstName.trim().toLowerCase();
         const last = this.searchLastName.trim().toLowerCase();
-        if (!first && !last) return;
+        if (!first && !last) {
+            this.searchError.set('Enter a first or last name to search.');
+            this.hasSearched.set(false);
+            return;
+        }
 
         this.isSearching.set(true);
         this.searchError.set(null);
@@ -80,7 +84,7 @@ export class HomeComponent {
                 this.isSearching.set(false);
             },
             error: () => {
-                this.searchError.set('Unable to fetch players. Please try again.');
+                this.searchError.set("We couldn't load the player list just now. Please try again in a moment.");
                 this.isSearching.set(false);
             }
         });
@@ -101,6 +105,11 @@ export class HomeComponent {
         this.searchResults.set([]);
         this.hasSearched.set(false);
         this.searchError.set(null);
+    }
+
+    onSearchInput(): void {
+        // Clear the "enter a name" prompt as soon as the user starts typing.
+        if (this.searchError()) this.searchError.set(null);
     }
 
     nextMatch = computed<UpcomingMatch | null>(() => {

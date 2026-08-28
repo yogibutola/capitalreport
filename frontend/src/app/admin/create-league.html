@@ -5,72 +5,87 @@
     </div>
 
     <div class="card" style="max-width: 800px; margin: 0 auto;">
-        <form (ngSubmit)="onSubmit()">
+        <form #f="ngForm" (ngSubmit)="onSubmit(f)" (input)="clearServerErrors()" novalidate>
+            <app-form-summary [form]="f" [attempted]="submitAttempted" [labels]="{
+                    name: 'League name',
+                    startDate: 'Start date',
+                    duration: 'Duration (weeks)',
+                    groupSize: 'Group size',
+                    format: 'Match format'
+                }" />
+            <app-form-banner [message]="formError" />
 
             <!-- Basic Info -->
             <h3
-                style="margin-bottom: var(--space-md); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: var(--space-sm);">
+                style="margin-bottom: var(--space-md); border-bottom: 1px solid var(--card-border); padding-bottom: var(--space-sm);">
                 Basic Info</h3>
             <div class="grid-2">
                 <div class="form-group">
-                    <label style="display: block; margin-bottom: var(--space-xs);">League Name</label>
-                    <input type="text" [(ngModel)]="name" name="name" class="input-field" placeholder="e.g. Summer 2025"
-                        required>
+                    <label for="field-name" style="display: block; margin-bottom: var(--space-xs);">League Name</label>
+                    <input id="field-name" type="text" [(ngModel)]="name" name="name" #nameCtrl="ngModel" class="input-field"
+                        placeholder="e.g. Summer 2025" required minlength="3" aria-describedby="err-name"
+                        [appInvalid]="nameCtrl" [appInvalidServer]="fieldErrors['league_name'] || fieldErrors['name']"
+                        [appInvalidForce]="submitAttempted">
+                    <app-field-error id="err-name" label="League name" [control]="nameCtrl"
+                        [serverError]="fieldErrors['league_name'] || fieldErrors['name']"
+                        [forceShow]="submitAttempted" />
                 </div>
 
                 <div class="form-group">
-                    <label style="display: block; margin-bottom: var(--space-xs);">Start Date</label>
-                    <input type="date" [(ngModel)]="startDate" name="startDate" class="input-field" required>
+                    <label for="field-startDate" style="display: block; margin-bottom: var(--space-xs);">Start Date</label>
+                    <input id="field-startDate" type="date" [(ngModel)]="startDate" name="startDate" #startDateCtrl="ngModel"
+                        class="input-field" required aria-describedby="err-startDate"
+                        [appInvalid]="startDateCtrl" [appInvalidServer]="fieldErrors['league_start_date']"
+                        [appInvalidForce]="submitAttempted">
+                    <app-field-error id="err-startDate" label="Start date" [control]="startDateCtrl"
+                        [serverError]="fieldErrors['league_start_date']" [forceShow]="submitAttempted" />
                 </div>
+            </div>
+
+            <div class="form-group">
+                <label for="field-location" style="display: block; margin-bottom: var(--space-xs);">Location / Venue</label>
+                <input id="field-location" type="text" [(ngModel)]="location" name="location" class="input-field"
+                    placeholder="Leave blank to use your club address">
             </div>
 
             <!-- Rules Config -->
             <h3
-                style="margin-top: var(--space-lg); margin-bottom: var(--space-md); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: var(--space-sm);">
+                style="margin-top: var(--space-lg); margin-bottom: var(--space-md); border-bottom: 1px solid var(--card-border); padding-bottom: var(--space-sm);">
                 Rules Configuration</h3>
             <div class="grid-3">
                 <div class="form-group">
-                    <label style="display: block; margin-bottom: var(--space-xs);">Duration (Weeks)</label>
-                    <input type="number" [(ngModel)]="durationWeeks" name="duration" class="input-field" min="1"
-                        required>
+                    <label for="field-duration" style="display: block; margin-bottom: var(--space-xs);">Duration
+                        (Weeks)</label>
+                    <input id="field-duration" type="number" [(ngModel)]="durationWeeks" name="duration"
+                        #durationCtrl="ngModel" class="input-field" min="1" required aria-describedby="err-duration"
+                        [appInvalid]="durationCtrl" [appInvalidForce]="submitAttempted">
+                    <app-field-error id="err-duration" label="Duration (weeks)" [control]="durationCtrl"
+                        [forceShow]="submitAttempted" />
                 </div>
 
                 <div class="form-group">
-                    <label style="display: block; margin-bottom: var(--space-xs);">Group Size</label>
-                    <input type="number" [(ngModel)]="groupSize" name="groupSize" class="input-field" min="2" required>
-                    <small style="color: var(--color-text-muted); font-size: 0.8rem;">Players per court</small>
+                    <label for="field-groupSize" style="display: block; margin-bottom: var(--space-xs);">Group Size</label>
+                    <input id="field-groupSize" type="number" [(ngModel)]="groupSize" name="groupSize"
+                        #groupSizeCtrl="ngModel" class="input-field" min="2" required aria-describedby="err-groupSize groupSize-help"
+                        [appInvalid]="groupSizeCtrl" [appInvalidForce]="submitAttempted">
+                    <small id="groupSize-help" class="input-hint">Players per court</small>
+                    <app-field-error id="err-groupSize" label="Group size" [control]="groupSizeCtrl"
+                        [forceShow]="submitAttempted" />
                 </div>
 
                 <div class="form-group">
-                    <label style="display: block; margin-bottom: var(--space-xs);">Match Format</label>
-                    <select [(ngModel)]="format" name="format" class="input-field" required>
+                    <label for="field-format" style="display: block; margin-bottom: var(--space-xs);">Match Format</label>
+                    <select id="field-format" [(ngModel)]="format" name="format" class="input-field" required>
                         <option value="round-robin">Individual Round Robin</option>
                         <option value="other">Other</option>
                     </select>
-                    <small style="color: var(--color-text-muted); font-size: 0.8rem;">4 games per round</small>
+                    <small class="input-hint">4 games per round</small>
                 </div>
             </div>
 
-            <!-- Player Selection -->
-            <h3
-                style="margin-top: var(--space-lg); margin-bottom: var(--space-md); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: var(--space-sm);">
-                Select Players</h3>
-            <div class="player-list-container">
-                @for (player of allPlayers(); track player.id) {
-                <label class="player-item" [class.selected]="selectedPlayerIds.has(player.id)">
-                    <input type="checkbox" [checked]="selectedPlayerIds.has(player.id)"
-                        (change)="togglePlayer(player.id)" style="display: none;">
-                    <span>{{ player.name }}</span>
-                    <span style="font-size: 0.8rem; color: var(--color-accent);">{{ player.dupr_rating.toFixed(2)
-                        }}</span>
-                </label>
-                }
-            </div>
-            <p style="text-align: right; color: var(--color-text-muted); margin-top: var(--space-xs);">
-                {{ selectedPlayerIds.size }} players selected
-            </p>
-
-            <button type="submit" class="btn" style="width: 100%; margin-top: var(--space-lg);">Create League</button>
+            <button type="submit" class="btn" style="width: 100%; margin-top: var(--space-lg);" [disabled]="isSubmitting">
+                {{ isSubmitting ? 'Creating…' : 'Create League' }}
+            </button>
         </form>
     </div>
 </div>
@@ -88,37 +103,4 @@
         gap: var(--space-md);
     }
 
-    .player-list-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: var(--space-sm);
-        max-height: 300px;
-        overflow-y: auto;
-        padding: var(--space-sm);
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: var(--radius-md);
-    }
-
-    .player-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: var(--space-sm);
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: var(--radius-sm);
-        cursor: pointer;
-        transition: all 0.2s;
-        border: 1px solid transparent;
-    }
-
-    .player-item:hover {
-        background: rgba(255, 255, 255, 0.1);
-    }
-
-    .player-item.selected {
-        background: rgba(var(--color-primary), 0.2);
-        /* Fallback */
-        background: HSL(var(--color-primary) / 0.2);
-        border-color: HSL(var(--color-primary));
-    }
 </style>

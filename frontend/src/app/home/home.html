@@ -2,7 +2,7 @@
     <!-- Hero Section -->
     <section class="hero-section">
         <div class="hero-content fade-in-up">
-            <h1 class="hero-title text-gradient">Elevate Your Game with DinkLeague</h1>
+            <h1 class="hero-title text-gradient">Elevate Your Game with The League</h1>
             <p class="hero-subtitle">
                 The ultimate platform for league management, automated slotting, and real-time player statistics.
             </p>
@@ -193,10 +193,10 @@
             <div class="player-search-header">
                 <span class="player-search-icon">🔍</span>
                 <h2 class="player-search-title">Find a Player</h2>
-                <p class="player-search-subtitle">Search for any player in the DinkLeague community by first and last name.</p>
+                <p class="player-search-subtitle">Search for any player in The League community by first and last name.</p>
             </div>
 
-            <form class="player-search-form" (ngSubmit)="searchPlayers()">
+            <form class="player-search-form" (ngSubmit)="searchPlayers()" (input)="onSearchInput()">
                 <div class="player-search-fields">
                     <input
                         type="text"
@@ -205,6 +205,8 @@
                         [(ngModel)]="searchFirstName"
                         name="playerFirstName"
                         autocomplete="off"
+                        aria-label="First name"
+                        [class.is-invalid]="!!searchError() && !hasSearched()"
                     />
                     <input
                         type="text"
@@ -213,6 +215,8 @@
                         [(ngModel)]="searchLastName"
                         name="playerLastName"
                         autocomplete="off"
+                        aria-label="Last name"
+                        [class.is-invalid]="!!searchError() && !hasSearched()"
                     />
                 </div>
                 <div class="player-search-actions">
@@ -228,7 +232,14 @@
 
             <!-- Error state -->
             @if (searchError()) {
-                <div class="player-search-error">⚠ {{ searchError() }}</div>
+                <div class="player-search-error" role="alert" aria-live="assertive">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"
+                        style="width:16px;height:16px;flex-shrink:0;vertical-align:-2px;margin-right:6px;">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>{{ searchError() }}
+                </div>
             }
 
             <!-- Results -->
@@ -270,7 +281,7 @@
     <!-- Multi-Language Banner -->
     <section class="multilang-banner-section">
         <div class="banner-container">
-            <img src="/assets/images/pickleball_footer_banner_v3.png" alt="DinkLeague — Pickleball in many languages"
+            <img src="/assets/images/pickleball_footer_banner_v3.png" alt="The League — Pickleball in many languages"
                 class="multilang-banner">
         </div>
     </section>

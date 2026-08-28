@@ -11,6 +11,8 @@ class PlayerLeague(BaseModel):
     league_status: Optional[str] = Field(None, description="Status of the player in the league")
     league_start_date: Optional[str] = Field(None, description="Start date of the league")
     league_end_date: Optional[str] = Field(None, description="End date of the league")
+    club_name: Optional[str] = Field(None, description="Name of the club that runs the league")
+    location: Optional[str] = Field(None, description="Where the league is played")
     rounds: List[dict] = Field(default_factory=list, description="List of rounds in the league")
 
 
