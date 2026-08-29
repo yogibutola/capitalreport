@@ -1,0 +1,363 @@
+<div class="container" style="padding-top: var(--space-lg); max-width: 720px;">
+  <div class="flex-center" style="justify-content: space-between; margin-bottom: var(--space-lg);">
+    <h2 class="text-gradient">{{ isClub() ? 'Club Profile' : 'My Profile' }}</h2>
+    <a routerLink="/league" class="btn btn-secondary">Back</a>
+  </div>
+
+  @if (loading()) {
+  <div class="card">Loading your profile…</div>
+  } @else {
+
+  <!-- ============ Profile / Club information ============ -->
+  <div class="card" style="margin-bottom: var(--space-lg);">
+    <div class="flex-center" style="justify-content: space-between; gap: var(--space-md);">
+      <h3 style="margin: 0;">{{ isClub() ? 'Club Information' : 'Profile Information' }}</h3>
+      @if (!editing()) {
+      <button type="button" class="btn btn-secondary" (click)="startEdit()">Edit</button>
+      }
+    </div>
+
+    <!-- ---- View mode ---- -->
+    @if (!editing()) {
+      @if (isClub()) {
+      <dl class="profile-view">
+        <div><dt>Club Name</dt><dd>{{ clubName || firstName || '—' }}</dd></div>
+        <div><dt>Email</dt><dd>{{ email }}</dd></div>
+        <div><dt>Address</dt><dd>{{ address || '—' }}</dd></div>
+        <div><dt>Phone</dt><dd>{{ phone || '—' }}</dd></div>
+      </dl>
+      } @else {
+      <dl class="profile-view">
+        <div><dt>Name</dt><dd>{{ firstName }} {{ lastName }}</dd></div>
+        <div><dt>Email</dt><dd>{{ email }}</dd></div>
+        <div><dt>Age</dt><dd>{{ age ?? '—' }}</dd></div>
+        <div><dt>DUPR Rating</dt><dd>{{ dupr_rating ?? '—' }}</dd></div>
+        <div><dt>State</dt><dd>{{ state || '—' }}</dd></div>
+        <div><dt>City</dt><dd>{{ city || '—' }}</dd></div>
+      </dl>
+      }
+    }
+
+    <!-- ---- Edit mode ---- -->
+    @if (editing()) {
+    <form #pf="ngForm" (ngSubmit)="saveProfile(pf)" (input)="clearProfileErrors()" novalidate
+      style="margin-top: var(--space-md);">
+      <p style="color: var(--color-text-muted); margin-top: 0;">
+        Changing your email signs you in again automatically.
+      </p>
+
+      <app-form-summary [form]="pf" [attempted]="profileAttempted()" [labels]="{
+              firstName: 'First name',
+              lastName: 'Last name',
+              email: 'Email',
+              age: 'Age',
+              dupr_rating: 'DUPR rating',
+              state: 'State',
+              city: 'City',
+              clubName: 'Club name',
+              address: 'Address',
+              phone: 'Phone'
+            }" />
+      <app-form-banner [message]="profileError()" />
+
+      @if (isClub()) {
+      <!-- ===== Club edit fields ===== -->
+      <div class="form-group">
+        <label for="field-clubName" style="display:block; margin-bottom: var(--space-xs);">Club Name</label>
+        <input id="field-clubName" type="text" name="clubName" [(ngModel)]="clubName" #clubNameCtrl="ngModel"
+          class="input-field" maxlength="120" required aria-describedby="err-clubName"
+          [appInvalid]="clubNameCtrl" [appInvalidServer]="profileFieldErrors()['clubName']"
+          [appInvalidForce]="profileAttempted()">
+        <app-field-error id="err-clubName" label="Club name" [control]="clubNameCtrl"
+          [serverError]="profileFieldErrors()['clubName']" [forceShow]="profileAttempted()" />
+      </div>
+
+      <div class="form-group">
+        <label for="field-email" style="display:block; margin-bottom: var(--space-xs);">Email</label>
+        <input id="field-email" type="email" name="email" [(ngModel)]="email" #emailCtrl="ngModel"
+          class="input-field" required email aria-describedby="err-email"
+          [appInvalid]="emailCtrl" [appInvalidServer]="profileFieldErrors()['email']"
+          [appInvalidForce]="profileAttempted()">
+        <app-field-error id="err-email" label="Email" [control]="emailCtrl"
+          [serverError]="profileFieldErrors()['email']" [forceShow]="profileAttempted()" />
+      </div>
+
+      <div class="form-group">
+        <label for="field-address" style="display:block; margin-bottom: var(--space-xs);">Address</label>
+        <input id="field-address" type="text" name="address" [(ngModel)]="address" #addressCtrl="ngModel"
+          class="input-field" maxlength="200" placeholder="Club address" aria-describedby="err-address"
+          [appInvalid]="addressCtrl" [appInvalidServer]="profileFieldErrors()['address']"
+          [appInvalidForce]="profileAttempted()">
+        <app-field-error id="err-address" label="Address" [control]="addressCtrl"
+          [serverError]="profileFieldErrors()['address']" [forceShow]="profileAttempted()" />
+      </div>
+
+      <div class="form-group">
+        <label for="field-phone" style="display:block; margin-bottom: var(--space-xs);">Phone</label>
+        <input id="field-phone" type="tel" name="phone" [(ngModel)]="phone" #phoneCtrl="ngModel"
+          class="input-field" maxlength="40" placeholder="Club phone number" aria-describedby="err-phone"
+          [appInvalid]="phoneCtrl" [appInvalidServer]="profileFieldErrors()['phone']"
+          [appInvalidForce]="profileAttempted()">
+        <app-field-error id="err-phone" label="Phone" [control]="phoneCtrl"
+          [serverError]="profileFieldErrors()['phone']" [forceShow]="profileAttempted()" />
+      </div>
+      } @else {
+      <!-- ===== Player edit fields ===== -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
+        <div class="form-group">
+          <label for="field-firstName" style="display:block; margin-bottom: var(--space-xs);">First Name</label>
+          <input id="field-firstName" type="text" name="firstName" [(ngModel)]="firstName" #firstNameCtrl="ngModel"
+            class="input-field" required aria-describedby="err-firstName"
+            [appInvalid]="firstNameCtrl" [appInvalidServer]="profileFieldErrors()['firstName']"
+            [appInvalidForce]="profileAttempted()">
+          <app-field-error id="err-firstName" label="First name" [control]="firstNameCtrl"
+            [serverError]="profileFieldErrors()['firstName']" [forceShow]="profileAttempted()" />
+        </div>
+
+        <div class="form-group">
+          <label for="field-lastName" style="display:block; margin-bottom: var(--space-xs);">Last Name</label>
+          <input id="field-lastName" type="text" name="lastName" [(ngModel)]="lastName" #lastNameCtrl="ngModel"
+            class="input-field" required aria-describedby="err-lastName"
+            [appInvalid]="lastNameCtrl" [appInvalidServer]="profileFieldErrors()['lastName']"
+            [appInvalidForce]="profileAttempted()">
+          <app-field-error id="err-lastName" label="Last name" [control]="lastNameCtrl"
+            [serverError]="profileFieldErrors()['lastName']" [forceShow]="profileAttempted()" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="field-email" style="display:block; margin-bottom: var(--space-xs);">Email</label>
+        <input id="field-email" type="email" name="email" [(ngModel)]="email" #emailCtrl="ngModel"
+          class="input-field" required email aria-describedby="err-email"
+          [appInvalid]="emailCtrl" [appInvalidServer]="profileFieldErrors()['email']"
+          [appInvalidForce]="profileAttempted()">
+        <app-field-error id="err-email" label="Email" [control]="emailCtrl"
+          [serverError]="profileFieldErrors()['email']" [forceShow]="profileAttempted()" />
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
+        <div class="form-group">
+          <label for="field-age" style="display:block; margin-bottom: var(--space-xs);">Age</label>
+          <input id="field-age" type="number" name="age" [(ngModel)]="age" #ageCtrl="ngModel"
+            class="input-field" min="13" max="120" step="1" placeholder="e.g., 34" aria-describedby="err-age"
+            [appInvalid]="ageCtrl" [appInvalidServer]="profileFieldErrors()['age']"
+            [appInvalidForce]="profileAttempted()">
+          <app-field-error id="err-age" label="Age" [control]="ageCtrl"
+            [serverError]="profileFieldErrors()['age']" [forceShow]="profileAttempted()"
+            [messages]="{ min: 'Age must be between 13 and 120.', max: 'Age must be between 13 and 120.' }" />
+        </div>
+
+        <div class="form-group">
+          <label for="field-dupr_rating" style="display:block; margin-bottom: var(--space-xs);">DUPR Rating</label>
+          <input id="field-dupr_rating" type="number" name="dupr_rating" [(ngModel)]="dupr_rating" #duprCtrl="ngModel"
+            class="input-field" min="0" max="8" step="0.01" placeholder="e.g., 4.52" aria-describedby="err-dupr"
+            [appInvalid]="duprCtrl" [appInvalidServer]="profileFieldErrors()['dupr_rating']"
+            [appInvalidForce]="profileAttempted()">
+          <app-field-error id="err-dupr" label="DUPR rating" [control]="duprCtrl"
+            [serverError]="profileFieldErrors()['dupr_rating']" [forceShow]="profileAttempted()"
+            [messages]="{ min: 'DUPR rating must be between 0.00 and 8.00.', max: 'DUPR rating must be between 0.00 and 8.00.' }" />
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
+        <div class="form-group">
+          <label for="field-state" style="display:block; margin-bottom: var(--space-xs);">State</label>
+          <input id="field-state" type="text" name="state" [(ngModel)]="state" #stateCtrl="ngModel"
+            class="input-field" maxlength="100" placeholder="e.g., California" aria-describedby="err-state"
+            [appInvalid]="stateCtrl" [appInvalidServer]="profileFieldErrors()['state']"
+            [appInvalidForce]="profileAttempted()">
+          <app-field-error id="err-state" label="State" [control]="stateCtrl"
+            [serverError]="profileFieldErrors()['state']" [forceShow]="profileAttempted()" />
+        </div>
+
+        <div class="form-group">
+          <label for="field-city" style="display:block; margin-bottom: var(--space-xs);">City</label>
+          <input id="field-city" type="text" name="city" [(ngModel)]="city" #cityCtrl="ngModel"
+            class="input-field" maxlength="100" placeholder="e.g., Palo Alto" aria-describedby="err-city"
+            [appInvalid]="cityCtrl" [appInvalidServer]="profileFieldErrors()['city']"
+            [appInvalidForce]="profileAttempted()">
+          <app-field-error id="err-city" label="City" [control]="cityCtrl"
+            [serverError]="profileFieldErrors()['city']" [forceShow]="profileAttempted()" />
+        </div>
+      </div>
+      }
+
+      <div class="flex-center" style="gap: var(--space-md); margin-top: var(--space-sm);">
+        <button type="submit" class="btn" style="flex: 1;" [disabled]="savingProfile()">
+          {{ savingProfile() ? 'Saving…' : 'Save Changes' }}
+        </button>
+        <button type="button" class="btn btn-secondary" style="flex: 1;" (click)="cancelEdit()"
+          [disabled]="savingProfile()">
+          Cancel
+        </button>
+      </div>
+    </form>
+    }
+  </div>
+
+  <!-- ============ Change password (collapsible) ============ -->
+  <div class="card">
+    <button type="button" class="collapsible-toggle" (click)="togglePassword()"
+      [attr.aria-expanded]="passwordOpen()" aria-controls="change-password-panel">
+      <span>Change Password</span>
+      <svg class="chevron" [class.open]="passwordOpen()" width="18" height="18" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </button>
+
+    @if (passwordOpen()) {
+    <div id="change-password-panel" style="margin-top: var(--space-md);">
+      <form #pw="ngForm" (ngSubmit)="changePassword(pw)" (input)="clearPasswordErrors()" novalidate>
+        <app-form-banner [message]="passwordError()" />
+
+        <div class="form-group">
+          <label for="field-currentPassword" style="display:block; margin-bottom: var(--space-xs);">Current Password</label>
+          <input id="field-currentPassword" type="password" name="currentPassword" [(ngModel)]="currentPassword"
+            #currentCtrl="ngModel" class="input-field" required maxlength="72" autocomplete="current-password"
+            aria-describedby="err-currentPassword"
+            [appInvalid]="currentCtrl" [appInvalidServer]="passwordFieldErrors()['current_password']"
+            [appInvalidForce]="passwordAttempted()">
+          <app-field-error id="err-currentPassword" label="Current password" [control]="currentCtrl"
+            [serverError]="passwordFieldErrors()['current_password']" [forceShow]="passwordAttempted()" />
+        </div>
+
+        <div class="form-group">
+          <label for="field-newPassword" style="display:block; margin-bottom: var(--space-xs);">New Password</label>
+          <input id="field-newPassword" type="password" name="newPassword" [(ngModel)]="newPassword"
+            #newCtrl="ngModel" class="input-field" required maxlength="72" autocomplete="new-password"
+            (focus)="passwordFocus = true" (blur)="passwordFocus = false"
+            aria-describedby="err-newPassword"
+            [appInvalid]="newCtrl"
+            [appInvalidServer]="passwordFieldErrors()['new_password'] || (passwordAttempted() && !isNewPasswordValid ? ' ' : null)"
+            [appInvalidForce]="passwordAttempted()">
+          <app-field-error id="err-newPassword" label="New password" [control]="newCtrl"
+            [serverError]="passwordFieldErrors()['new_password']
+                || (passwordAttempted() && !isNewPasswordValid ? 'Password doesn’t meet all the requirements below yet.' : null)"
+            [forceShow]="passwordAttempted()" />
+
+          @if (newPassword || passwordFocus) {
+          <div class="validation-checklist">
+            <div [class.valid]="hasMinLength">
+              <span class="icon">{{ hasMinLength ? '✓' : '○' }}</span> At least 8 characters
+            </div>
+            <div [class.valid]="hasUpperCase">
+              <span class="icon">{{ hasUpperCase ? '✓' : '○' }}</span> One uppercase letter (A-Z)
+            </div>
+            <div [class.valid]="hasNumber">
+              <span class="icon">{{ hasNumber ? '✓' : '○' }}</span> One number (0-9)
+            </div>
+            <div [class.valid]="hasSpecialChar">
+              <span class="icon">{{ hasSpecialChar ? '✓' : '○' }}</span> One special character (&#64;#$)
+            </div>
+          </div>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="field-confirmPassword" style="display:block; margin-bottom: var(--space-xs);">Confirm New Password</label>
+          <input id="field-confirmPassword" type="password" name="confirmPassword" [(ngModel)]="confirmPassword"
+            #confirmCtrl="ngModel" class="input-field" required maxlength="72" autocomplete="new-password"
+            aria-describedby="err-confirmPassword"
+            [appInvalid]="confirmCtrl"
+            [appInvalidServer]="passwordAttempted() && !passwordsMatch ? ' ' : null"
+            [appInvalidForce]="passwordAttempted()">
+          <app-field-error id="err-confirmPassword" label="Confirm password" [control]="confirmCtrl"
+            [serverError]="passwordAttempted() && confirmPassword && !passwordsMatch ? 'Passwords don’t match.' : null"
+            [forceShow]="passwordAttempted()" />
+        </div>
+
+        <div class="flex-center" style="gap: var(--space-md); margin-top: var(--space-sm);">
+          <button type="submit" class="btn" style="flex: 1;" [disabled]="savingPassword()">
+            {{ savingPassword() ? 'Updating…' : 'Change Password' }}
+          </button>
+          <button type="button" class="btn btn-secondary" style="flex: 1;" (click)="togglePassword()"
+            [disabled]="savingPassword()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+    }
+  </div>
+  }
+</div>
+
+<style>
+  .profile-view {
+    margin: var(--space-md) 0 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-md);
+  }
+
+  .profile-view > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .profile-view dt {
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+  }
+
+  .profile-view dd {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+
+  .collapsible-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 1.17rem;
+    font-weight: 700;
+    color: inherit;
+  }
+
+  .collapsible-toggle .chevron {
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .collapsible-toggle .chevron.open {
+    transform: rotate(180deg);
+  }
+
+  .validation-checklist {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    background: HSL(var(--color-bg-dark) / 0.4);
+    padding: 0.75rem;
+    border-radius: 8px;
+  }
+
+  .validation-checklist div {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+    transition: color 0.2s;
+  }
+
+  .validation-checklist div.valid {
+    color: HSL(var(--success-text));
+  }
+
+  .icon {
+    font-weight: bold;
+    display: inline-block;
+    width: 1.2em;
+    text-align: center;
+  }
+</style>

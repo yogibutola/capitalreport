@@ -2,7 +2,16 @@ import bcrypt
 from fastapi import HTTPException, status
 
 from app.store.mongo.pb_player_store import PBPlayerStore
-from app.vo.pb.player import PlayerSignup, Player, PlayerResponse, PlayerLogin, ClubSignup
+from app.vo.pb.player import (
+    PlayerSignup,
+    Player,
+    PlayerResponse,
+    PlayerLogin,
+    ClubSignup,
+    ChangePasswordRequest,
+    ProfileResponse,
+    ProfileUpdateRequest,
+)
 from app.utils.security import create_access_token
 
 
@@ -66,6 +75,136 @@ class PBPlayerService:
             leagues=player_data.get('leagues', [])
         )
 
+
+    def change_password(self, email: str, req: ChangePasswordRequest) -> None:
+        """
+        Change an authenticated user's password.
+
+        Raises:
+            HTTPException 404: If the user no longer exists
+            HTTPException 400: If the current password is wrong or unchanged
+        """
+        player = self.pb_player_store.find_player_by_email(email)
+        if not player:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+
+        if not self.verify_password(req.current_password, player.get('password', '')):
+            # 400 (not 401) on purpose - a 401 makes the frontend auth interceptor
+            # force a logout mid-form. 400 maps to parseHttpError kind 'validation'.
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is incorrect"
+            )
+
+        if req.current_password == req.new_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="New password must be different from the current password"
+            )
+
+        self.pb_player_store.update_player_password(email, self.hash_password(req.new_password))
+
+    @staticmethod
+    def _to_profile_response(player: dict, token: str | None = None) -> ProfileResponse:
+        return ProfileResponse(
+            id=str(player.get('_id')),
+            firstName=player.get('firstName', ''),
+            lastName=player.get('lastName', ''),
+            email=player['email'],
+            age=player.get('age'),
+            dupr_rating=player.get('dupr_rating'),
+            state=player.get('state'),
+            city=player.get('city'),
+            clubName=player.get('clubName'),
+            address=player.get('address'),
+            phone=player.get('phone'),
+            role=player.get('role', 'player'),
+            token=token,
+        )
+
+    def get_profile(self, email: str) -> ProfileResponse:
+        """Return the authenticated user's profile."""
+        player = self.pb_player_store.find_player_by_email(email)
+        if not player:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        return self._to_profile_response(player)
+
+    def update_profile(self, email: str, req: ProfileUpdateRequest) -> ProfileResponse:
+        """
+        Apply a partial update to the authenticated user's profile.
+
+        Raises:
+            HTTPException 404: If the user no longer exists
+            HTTPException 400: If a required name field is blanked out
+            HTTPException 409: If the new email is already taken by someone else
+        """
+        player = self.pb_player_store.find_player_by_email(email)
+        if not player:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+        is_club = player.get("role") == "admin"
+        updates = req.model_dump(exclude_unset=True)
+
+        # Keep only the fields that make sense for this account type.
+        player_only = {"firstName", "lastName", "age", "dupr_rating", "state", "city"}
+        club_only = {"clubName", "address", "phone"}
+        for key in (club_only if not is_club else player_only):
+            updates.pop(key, None)
+
+        if is_club:
+            if "clubName" in updates:
+                if updates["clubName"] is None or not str(updates["clubName"]).strip():
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Club name cannot be empty",
+                    )
+                updates["clubName"] = str(updates["clubName"]).strip()
+                # The header greets the club by firstName; keep it in sync.
+                updates["firstName"] = updates["clubName"]
+            for key in ("address", "phone"):
+                if key in updates and updates[key] is not None:
+                    updates[key] = str(updates[key]).strip() or None
+        else:
+            for key in ("firstName", "lastName"):
+                if key in updates:
+                    if updates[key] is None or not str(updates[key]).strip():
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="First and last name cannot be empty",
+                        )
+                    updates[key] = str(updates[key]).strip()
+
+            for key in ("state", "city"):
+                if key in updates and updates[key] is not None:
+                    updates[key] = str(updates[key]).strip() or None
+
+            # dupr_rating is not clearable from the profile form; drop an explicit null.
+            if "dupr_rating" in updates and updates["dupr_rating"] is None:
+                updates.pop("dupr_rating")
+
+        new_token = None
+        new_email = updates.get("email")
+        if new_email and new_email.lower() != email.lower():
+            if self.pb_player_store.find_player_by_email(new_email):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Email {new_email} is already in use",
+                )
+            updates["email"] = new_email.lower()
+            # The JWT 'sub' is the email, so a change invalidates the current token.
+            new_token = create_access_token(
+                data={"sub": new_email.lower(), "role": player.get("role", "player")}
+            )
+        else:
+            updates.pop("email", None)
+
+        updated = self.pb_player_store.update_player_profile(email, updates)
+        if not updated:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        return self._to_profile_response(updated, token=new_token)
 
     def register_club(self, club_signup: "ClubSignup") -> PlayerResponse:
         """

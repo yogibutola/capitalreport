@@ -39,7 +39,15 @@ export class LoginComponent {
       finalize(() => this.zone.run(() => this.isSubmitting.set(false)))
     ).subscribe({
       next: (success) => {
-        if (success) this.router.navigate(['/league']);
+        if (!success) return;
+        if (this.authService.isAdmin()) {
+          this.authService.logout();
+          this.formError.set(
+            'This login is for players. Please use the club administrator sign-in instead.'
+          );
+          return;
+        }
+        this.router.navigate(['/league']);
       },
       error: (err: ParsedHttpError) => {
         this.zone.run(() => {

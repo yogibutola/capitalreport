@@ -13,7 +13,8 @@
 #   gcloud storage buckets add-iam-policy-binding gs://capitalreport_file_storage --member=serviceAccount:<RUN_SA> --role=roles/storage.objectAdmin
 #
 # Trigger manually with:
-#   gcloud builds submit --config cloudbuild.yaml --substitutions=_RUN_SA=<RUN_SA_EMAIL>
+# gcloud builds submit --config cloudbuild.yaml
+# or  gcloud builds submit --config cloudbuild.yaml --substitutions=_RUN_SA=<RUN_SA_EMAIL>
 # or wire this file up to a Cloud Build trigger on push to main.
 
 substitutions:

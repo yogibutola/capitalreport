@@ -12,9 +12,52 @@ export interface User {
   userName: string;
   email: string;
   dupr_rating: number;
+  age?: number | null;
+  state?: string | null;
+  city?: string | null;
+  clubName?: string | null;
+  address?: string | null;
+  phone?: string | null;
   role?: 'player' | 'admin';
   token?: string;
 }
+
+export interface Profile {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  age: number | null;
+  dupr_rating: number | null;
+  state: string | null;
+  city: string | null;
+  clubName: string | null;
+  address: string | null;
+  phone: string | null;
+  role: 'player' | 'admin';
+  token?: string | null;
+}
+
+/** Fields a player may edit. */
+export interface PlayerProfileUpdate {
+  firstName: string;
+  lastName: string;
+  email: string;
+  age: number | null;
+  dupr_rating: number | null;
+  state: string | null;
+  city: string | null;
+}
+
+/** Fields a club (admin) may edit. */
+export interface ClubProfileUpdate {
+  clubName: string;
+  email: string;
+  address: string | null;
+  phone: string | null;
+}
+
+export type ProfileUpdate = PlayerProfileUpdate | ClubProfileUpdate;
 
 @Injectable({
   providedIn: 'root'
@@ -161,6 +204,62 @@ export class AuthService {
       map(() => true),
       catchError((err) => throwError(() => parseHttpError(err)))
     );
+  }
+
+  /** Load the authenticated user's full profile from the backend. */
+  getProfile(): Observable<Profile> {
+    return this.http.get<Profile>('api/v1/profile').pipe(
+      catchError((err) => throwError(() => parseHttpError(err)))
+    );
+  }
+
+  /** Persist profile edits, then sync the cached session with the result. */
+  updateProfile(data: ProfileUpdate): Observable<Profile> {
+    return this.http.put<Profile>('api/v1/profile', data).pipe(
+      tap((profile) => this.applyProfile(profile)),
+      catchError((err) => throwError(() => parseHttpError(err)))
+    );
+  }
+
+  /** Change the signed-in user's password. */
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    return this.http
+      .post<unknown>('api/v1/change-password', {
+        current_password: currentPassword,
+        new_password: newPassword,
+      })
+      .pipe(
+        map(() => undefined),
+        catchError((err) => throwError(() => parseHttpError(err)))
+      );
+  }
+
+  /** Merge a fresh profile into the current session + localStorage. */
+  private applyProfile(profile: Profile): void {
+    const current = this.currentUser();
+    if (!current) return;
+
+    const updated: User = {
+      ...current,
+      firstName: profile.firstName ?? current.firstName,
+      lastName: profile.lastName ?? current.lastName,
+      email: profile.email ?? current.email,
+      dupr_rating: profile.dupr_rating ?? current.dupr_rating,
+      age: profile.age ?? null,
+      state: profile.state ?? null,
+      city: profile.city ?? null,
+      clubName: profile.clubName ?? null,
+      address: profile.address ?? null,
+      phone: profile.phone ?? null,
+      role: profile.role ?? current.role,
+      // Backend only returns a token when the email changed and the old one is stale.
+      token: profile.token || current.token,
+    };
+
+    this.currentUser.set(updated);
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('pickleball_user', JSON.stringify(updated));
+    }
   }
 
   logout() {

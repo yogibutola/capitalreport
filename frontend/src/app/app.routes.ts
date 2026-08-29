@@ -6,6 +6,7 @@ import { DailySlottingComponent } from './league/daily-slotting';
 import { MatchEntryComponent } from './matches/match-entry';
 import { MatchHistoryComponent } from './matches/match-history';
 import { ProfileComponent } from './stats/profile';
+import { AccountProfileComponent } from './account/profile';
 import { DashboardComponent as AdminDashboardComponent } from './admin/dashboard';
 import { CreateLeagueComponent } from './admin/create-league';
 import { CreateTournamentComponent } from './admin/create-tournament';
@@ -37,7 +38,8 @@ export const routes: Routes = [
     { path: 'league/slotting', component: DailySlottingComponent },
     { path: 'matches/entry', component: MatchEntryComponent },
     { path: 'matches/history', component: MatchHistoryComponent },
-    { path: 'profile', component: ProfileComponent },
+    { path: 'profile', component: AccountProfileComponent },
+    { path: 'stats', component: ProfileComponent },
     { path: 'groups', component: MyGroupsComponent },
     { path: '', component: HomeComponent }
 ];

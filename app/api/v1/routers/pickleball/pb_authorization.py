@@ -1,9 +1,18 @@
 from fastapi import status, APIRouter, Depends, HTTPException
 
+from app.api.v1.deps import get_current_player
 from app.services.pb_player_service import PBPlayerService
 
 from app.store.mongo.pb_player_store import PBPlayerStore
-from app.vo.pb.player import PlayerSignup, PlayerResponse, PlayerLogin, ClubSignup
+from app.vo.pb.player import (
+    PlayerSignup,
+    PlayerResponse,
+    PlayerLogin,
+    ClubSignup,
+    ChangePasswordRequest,
+    ProfileResponse,
+    ProfileUpdateRequest,
+)
 
 router = APIRouter(tags=["Authorization"])
 
@@ -95,4 +104,73 @@ def signin_player(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to sign in: {str(e)}"
+        )
+
+
+@router.get("/profile", status_code=status.HTTP_200_OK, response_model=ProfileResponse)
+def get_profile(
+        payload: dict = Depends(get_current_player),
+        pb_player_service: PBPlayerService = Depends(get_pb_player_service)
+):
+    """Return the authenticated user's profile."""
+    try:
+        return pb_player_service.get_profile(payload.get("sub"))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to load profile: {str(e)}"
+        )
+
+
+@router.put("/profile", status_code=status.HTTP_200_OK, response_model=ProfileResponse)
+def update_profile(
+        req: ProfileUpdateRequest,
+        payload: dict = Depends(get_current_player),
+        pb_player_service: PBPlayerService = Depends(get_pb_player_service)
+):
+    """
+    Update the authenticated user's profile (name, age, email, DUPR rating, state, city).
+
+    Raises:
+        HTTPException 400: If a required name field is blanked out
+        HTTPException 401: If the token is missing or invalid
+        HTTPException 409: If the new email is already in use
+        HTTPException 422: If a field fails validation
+    """
+    try:
+        return pb_player_service.update_profile(payload.get("sub"), req)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update profile: {str(e)}"
+        )
+
+
+@router.post("/change-password", status_code=status.HTTP_200_OK)
+def change_password(
+        req: ChangePasswordRequest,
+        payload: dict = Depends(get_current_player),
+        pb_player_service: PBPlayerService = Depends(get_pb_player_service)
+):
+    """
+    Change the authenticated user's password.
+
+    Raises:
+        HTTPException 400: If the current password is wrong or unchanged
+        HTTPException 401: If the token is missing or invalid
+        HTTPException 422: If the new password fails complexity rules
+    """
+    try:
+        pb_player_service.change_password(payload.get("sub"), req)
+        return {"message": "Password updated successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to change password: {str(e)}"
         )

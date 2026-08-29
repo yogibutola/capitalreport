@@ -73,11 +73,14 @@
         <a class="nav-tab-link" routerLink="/player" routerLinkActive="active">Player Page</a>
         <a class="nav-tab-link" routerLink="/player/leagues" routerLinkActive="active">Leagues</a>
         <a class="nav-tab-link" routerLink="/matches/history" routerLinkActive="active">Matches</a>
-        <a class="nav-tab-link" routerLink="/profile" routerLinkActive="active">Stats</a>
+        <a class="nav-tab-link" routerLink="/stats" routerLinkActive="active">Stats</a>
         <a class="nav-tab-link" routerLink="/groups" routerLinkActive="active">My Groups</a>
+        <a class="nav-tab-link" routerLink="/profile" routerLinkActive="active">Profile</a>
         }
-        <a class="nav-tab-link" routerLink="/admin" routerLinkActive="active"
-          *ngIf="currentUser()?.role === 'admin'">Manage</a>
+        @if (isAdmin()) {
+        <a class="nav-tab-link" routerLink="/admin" routerLinkActive="active">Manage</a>
+        <a class="nav-tab-link" routerLink="/profile" routerLinkActive="active">Club Profile</a>
+        }
       </nav>
 
       <div class="quick-theme-switch" (click)="toggleTheme()">
@@ -133,7 +136,7 @@
       </span>
       <span class="mobile-nav-label">Leagues</span>
     </a>
-    <a class="mobile-nav-item" routerLink="/profile" routerLinkActive="mobile-nav-item--active">
+    <a class="mobile-nav-item" routerLink="/stats" routerLinkActive="mobile-nav-item--active">
       <span class="mobile-nav-icon">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round">

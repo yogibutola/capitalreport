@@ -1,4 +1,4 @@
-from pymongo import MongoClient
+from pymongo import MongoClient, ReturnDocument
 from pymongo.server_api import ServerApi
 from pymongo.synchronous.collection import Collection
 
@@ -81,6 +81,37 @@ class PBPlayerStore:
             {"$pull": {"leagues": {"league_id": league_id}}}
         )
         self.logger.info(f"Removed league {league_id} from player {email}")
+
+    def update_player_password(self, email: str, hashed_password: str) -> None:
+        """Set a new (already hashed) password for the player with this email."""
+        collection = self.get_players_collection()
+        collection.update_one(
+            {"email": email.lower()},
+            {"$set": {"password": hashed_password}}
+        )
+        self.logger.info(f"Password updated for player {email.lower()}")
+
+    def update_player_profile(self, email: str, updates: dict) -> dict | None:
+        """Apply a partial profile update and return the player document after the change.
+
+        ``updates`` is trusted to contain only editable, already-validated fields.
+        """
+        collection = self.get_players_collection()
+        if not updates:
+            return collection.find_one({"email": email.lower()})
+
+        if updates.get("email"):
+            updates["email"] = updates["email"].lower()
+
+        updated = collection.find_one_and_update(
+            {"email": email.lower()},
+            {"$set": updates},
+            return_document=ReturnDocument.AFTER,
+        )
+        if updated:
+            updated["_id"] = str(updated["_id"])
+            self.logger.info(f"Profile updated for player {email.lower()}")
+        return updated
 
     def get_league_by_player_email(self, email_id: str):
         collection = self.get_players_collection()
