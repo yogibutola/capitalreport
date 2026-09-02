@@ -13,6 +13,7 @@ import { CreateTournamentComponent } from './admin/create-tournament';
 import { TournamentDetailsComponent } from './admin/tournament-details';
 import { PlayerDashboardComponent } from './player/player-dashboard';
 import { PlayerLeaguesComponent } from './player/player-leagues';
+import { PlayerTournamentsComponent } from './player/player-tournaments';
 import { MatchDetailComponent } from './player/match-detail';
 import { LeagueDetailsComponent } from './admin/league-details';
 import { AdminLoginComponent } from './admin/admin-login';
@@ -33,6 +34,8 @@ export const routes: Routes = [
     { path: 'signup', component: SignupComponent },
     { path: 'player', component: PlayerDashboardComponent },
     { path: 'player/leagues', component: PlayerLeaguesComponent },
+    { path: 'player/tournaments', component: PlayerTournamentsComponent },
+    { path: 'player/tournament/:tournament_id', component: TournamentDetailsComponent },
     { path: 'player/match/:id', component: MatchDetailComponent },
     { path: 'league', component: DashboardComponent },
     { path: 'league/slotting', component: DailySlottingComponent },

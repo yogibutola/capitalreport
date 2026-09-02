@@ -22,8 +22,18 @@ export class CreateTournamentComponent {
   startDate = '';
   endDate = '';
   format: 'doubles' | 'singles' = 'doubles';
+  duprMin: number | null = null;
+  duprMax: number | null = null;
   poolSize = 4;
   advancersPerPool = 2;
+
+  get duprRangeInvalid(): boolean {
+    return (
+      this.duprMin != null &&
+      this.duprMax != null &&
+      this.duprMax < this.duprMin
+    );
+  }
 
   submitting = false;
   submitAttempted = false;
@@ -39,7 +49,10 @@ export class CreateTournamentComponent {
     this.submitAttempted = true;
     this.clearServerErrors();
     if (this.submitting) return;
-    if (form.invalid) {
+    if (form.invalid || this.duprRangeInvalid) {
+      if (this.duprRangeInvalid) {
+        this.fieldErrors = { dupr_max: 'Max rating must be at least the min rating.' };
+      }
       return;
     }
 
@@ -52,6 +65,8 @@ export class CreateTournamentComponent {
         start_date: new Date(this.startDate),
         end_date: this.endDate ? new Date(this.endDate) : undefined,
         match_format: this.format,
+        dupr_min: this.duprMin,
+        dupr_max: this.duprMax,
         pool_size: this.poolSize,
         advancers_per_pool: this.advancersPerPool,
         player_ids: [],

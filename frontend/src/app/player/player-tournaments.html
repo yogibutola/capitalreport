@@ -1,0 +1,156 @@
+<div class="tournaments-container">
+    <header class="tournaments-header">
+        <h1 class="text-gradient">Tournaments</h1>
+        <a routerLink="/player" class="btn btn-secondary">← Back to Dashboard</a>
+    </header>
+
+    <nav class="tournaments-tabs">
+        <button class="nav-pill-btn" [class.active]="activeTab() === 'my'" (click)="activeTab.set('my')">
+            🎾 My Tournaments
+        </button>
+        <button class="nav-pill-btn" [class.active]="activeTab() === 'available'" (click)="activeTab.set('available')">
+            🔍 Available Tournaments
+        </button>
+    </nav>
+
+    <!-- ── MY TOURNAMENTS ── -->
+    @if (activeTab() === 'my') {
+    <section class="tournaments-section">
+        @if (myTournaments().length > 0) {
+        <div class="tournaments-grid">
+            @for (tournament of myTournaments(); track tournament.tournament_id) {
+            <div class="tournament-card card" (click)="viewTournament(tournament.tournament_id)">
+                <div class="tournament-card-header">
+                    <h3 class="tournament-name">{{ tournament.tournament_name }}</h3>
+                    <span class="tournament-status" [class]="'status-' + tournament.tournament_status">
+                        {{ tournament.tournament_status }}
+                    </span>
+                </div>
+                <div class="tournament-card-body">
+                    @if (tournament.match_format) {
+                    <p><span class="format-badge">{{ tournament.match_format }}</span>
+                        @if (duprRange(tournament)) { <span class="dupr-badge">{{ duprRange(tournament) }}</span> }
+                    </p>
+                    }
+                    @if (tournament.club_name) { <p>🏛️ {{ tournament.club_name }}</p> }
+                    @if (tournament.location) { <p>📍 {{ tournament.location }}</p> }
+                    <p>👥 {{ tournament.player_count }} players</p>
+                    <p>Starts: {{ formatDate(tournament.tournament_start_date) }}</p>
+                    @if (tournament.tournament_end_date) {
+                    <p>Ends: {{ formatDate(tournament.tournament_end_date) }}</p>
+                    }
+                </div>
+                <div class="tournament-card-footer">
+                    <span class="view-details">View Details →</span>
+                    <button class="btn btn-secondary btn-xs btn-danger-outline"
+                        (click)="$event.stopPropagation(); withdraw(tournament.tournament_id, tournament.tournament_name)">
+                        Withdraw
+                    </button>
+                </div>
+            </div>
+            }
+        </div>
+        } @else {
+        <div class="card empty-tournaments">
+            <p>You haven't joined any tournaments yet. Check the <strong>Available Tournaments</strong> tab to register.</p>
+        </div>
+        }
+    </section>
+    }
+
+    <!-- ── AVAILABLE TOURNAMENTS ── -->
+    @if (activeTab() === 'available') {
+    <section class="tournaments-section">
+        @if (availableTournaments().length > 0) {
+        <div class="tournaments-grid">
+            @for (tournament of availableTournaments(); track tournament.tournament_id) {
+            <div class="tournament-card card">
+                <div class="tournament-card-header">
+                    <h3 class="tournament-name">{{ tournament.tournament_name }}</h3>
+                    <span class="tournament-status" [class]="'status-' + tournament.tournament_status">
+                        {{ tournament.tournament_status }}
+                    </span>
+                </div>
+                <div class="tournament-card-body">
+                    @if (tournament.match_format) {
+                    <p><span class="format-badge">{{ tournament.match_format }}</span>
+                        @if (duprRange(tournament)) { <span class="dupr-badge">{{ duprRange(tournament) }}</span> }
+                    </p>
+                    }
+                    @if (tournament.club_name) { <p>🏛️ {{ tournament.club_name }}</p> }
+                    @if (tournament.location) { <p>📍 {{ tournament.location }}</p> }
+                    <p>👥 {{ tournament.player_count }} players</p>
+                    <p>Starts: {{ formatDate(tournament.tournament_start_date) }}</p>
+                    @if (tournament.tournament_end_date) {
+                    <p>Ends: {{ formatDate(tournament.tournament_end_date) }}</p>
+                    }
+                </div>
+                <div class="tournament-card-footer">
+                    <a class="view-details" [routerLink]="['/player/tournament', tournament.tournament_id]"
+                        (click)="$event.stopPropagation()">View Details →</a>
+                    @if (tournament.tournament_status === 'pending') {
+                    @if (registeringId() === tournament.tournament_id) {
+                    <button class="btn btn-secondary btn-xs" (click)="cancelPanel()">Cancel</button>
+                    } @else {
+                    <button class="btn btn-primary btn-xs" (click)="startRegister(tournament)">Register</button>
+                    }
+                    } @else {
+                    <span class="registration-closed">Registration closed</span>
+                    }
+                </div>
+
+                @if (registeringId() === tournament.tournament_id) {
+                <div class="register-panel">
+                    <p class="register-panel-title">Doubles registration</p>
+                    <label class="register-radio">
+                        <input type="radio" name="pm-{{ tournament.tournament_id }}"
+                            [checked]="partnerMode() === 'looking'" (change)="partnerMode.set('looking')" />
+                        I'm looking for a partner
+                    </label>
+                    <label class="register-radio">
+                        <input type="radio" name="pm-{{ tournament.tournament_id }}"
+                            [checked]="partnerMode() === 'have'" (change)="partnerMode.set('have')" />
+                        I have a partner
+                    </label>
+
+                    @if (partnerMode() === 'have') {
+                    <div class="register-partner">
+                        @if (!inviteMode()) {
+                        <select class="input-field" [(ngModel)]="partnerId" name="pid-{{ tournament.tournament_id }}">
+                            <option value="">Select partner…</option>
+                            @for (p of partnerOptions(); track p.id) {
+                            <option [value]="p.email">{{ p.name }} ({{ p.dupr_rating.toFixed(1) }})</option>
+                            }
+                        </select>
+                        <button type="button" class="link-btn" (click)="inviteMode.set(true)">
+                            Partner not listed? Invite by email
+                        </button>
+                        } @else {
+                        <input class="input-field" [(ngModel)]="inviteName" name="in-{{ tournament.tournament_id }}"
+                            placeholder="Partner's name" />
+                        <input class="input-field" type="email" [(ngModel)]="inviteEmail"
+                            name="ie-{{ tournament.tournament_id }}" placeholder="Partner's email" />
+                        <button type="button" class="link-btn" (click)="inviteMode.set(false)">
+                            ← Pick from the player list instead
+                        </button>
+                        }
+                    </div>
+                    }
+
+                    <button class="btn btn-primary btn-xs" [disabled]="submitting()"
+                        (click)="submitDoubles(tournament.tournament_id)">
+                        {{ submitting() ? 'Registering…' : 'Confirm registration' }}
+                    </button>
+                </div>
+                }
+            </div>
+            }
+        </div>
+        } @else {
+        <div class="card empty-tournaments">
+            <p>No new tournaments available right now — check back later.</p>
+        </div>
+        }
+    </section>
+    }
+</div>

@@ -1,7 +1,7 @@
 <div class="container" style="padding-top: var(--space-lg); padding-bottom: var(--space-xl);">
     <div class="flex-center" style="justify-content: space-between; margin-bottom: var(--space-lg);">
         <h2 class="text-gradient">{{ tournament()?.tournament_name || 'Tournament' }}</h2>
-        <a routerLink="/admin" class="btn btn-secondary">Back</a>
+        <a [routerLink]="backLink" class="btn btn-secondary">Back</a>
     </div>
 
     @if (loading()) {
@@ -19,12 +19,45 @@
 
     <div class="card" style="margin-bottom: var(--space-lg);">
         <p style="margin: 0; color: var(--color-text-muted);">
-            {{ t.match_format }} · {{ t.tournament_start_date }}@if (t.tournament_end_date) { – {{ t.tournament_end_date
-            }} }
+            <span style="text-transform: capitalize;">{{ t.match_format }}</span>
+            @if (t.dupr_min != null || t.dupr_max != null) {
+            · DUPR {{ t.dupr_min ?? '0' }}–{{ t.dupr_max ?? '8' }}
+            }
+            · <span style="text-transform: capitalize;">{{ t.tournament_status }}</span>
+            · {{ t.tournament_start_date }}@if (t.tournament_end_date) { – {{ t.tournament_end_date }} }
             @if (t.club_name) { · 🏛️ {{ t.club_name }} }
             @if (t.location) { · 📍 {{ t.location }} }
         </p>
     </div>
+
+    @if (isAdminView && isPending()) {
+    <div class="card" style="margin-bottom: var(--space-lg);">
+        <h3 style="margin: 0 0 var(--space-sm) 0;">Registration</h3>
+        @if (isDoubles()) {
+        <p style="margin: 0 0 var(--space-xs) 0;">
+            <strong>{{ formedTeams().length }}</strong> team(s) formed,
+            <strong>{{ soloRegistrations().length }}</strong> player(s) looking for a partner.
+        </p>
+        @if (soloRegistrations().length > 0) {
+        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0 0 var(--space-xs) 0;">
+            Looking for a partner: {{ soloNames() }} — these will be paired by rating when you draw.
+        </p>
+        }
+        @if (unresolvedInvites().length > 0) {
+        <p style="font-size: 0.85rem; color: var(--color-accent); margin: 0 0 var(--space-xs) 0;">
+            ⚠️ {{ unresolvedInvites().length }} invited partner(s) have no account yet — their rating isn't checked.
+        </p>
+        }
+        } @else {
+        <p style="margin: 0 0 var(--space-xs) 0;">
+            <strong>{{ t.registrations.length }}</strong> player(s) registered.
+        </p>
+        }
+        <button class="btn" style="margin-top: var(--space-sm);" [disabled]="drawing()" (click)="generateDraw()">
+            {{ drawing() ? 'Generating…' : 'Close registration & generate draw' }}
+        </button>
+    </div>
+    }
 
     <h3 class="text-gradient" style="margin-bottom: var(--space-md);">Pools</h3>
     <div class="pool-grid">
@@ -32,12 +65,23 @@
         <div class="card">
             <h4 style="margin: 0 0 var(--space-sm) 0;">{{ pool.pool_name }}</h4>
             <ol style="margin: 0 0 var(--space-sm) 0; padding-left: 1.2rem;">
+                @if (isDoubles()) {
+                @for (team of pool.teams; track team.team_id) {
+                <li>{{ team.team_name }}
+                    <span style="color: var(--color-accent); font-size: 0.8rem;">
+                        @if (team.dupr_rating != null) { ({{ team.dupr_rating.toFixed(2) }}) }
+                        @if (team.formed_by === 'auto') { <em style="color: var(--color-text-muted);">· auto</em> }
+                    </span>
+                </li>
+                }
+                } @else {
                 @for (p of pool.players; track playerName(p)) {
                 <li>{{ playerName(p) }}
                     <span style="color: var(--color-accent); font-size: 0.8rem;">
                         @if (p.dupr_rating != null) { ({{ p.dupr_rating.toFixed(2) }}) }
                     </span>
                 </li>
+                }
                 }
             </ol>
             <span style="font-size: 0.8rem; color: var(--color-text-muted);">
@@ -46,25 +90,97 @@
         </div>
         }
         @if (t.pools.length === 0) {
-        <p style="color: var(--color-text-muted);">No pools generated (no players registered).</p>
+        <p style="color: var(--color-text-muted);">
+            The draw hasn't been generated yet — pools appear once the club closes registration.
+        </p>
         }
     </div>
+
+    @if (isAdminView && !isPending() && (t.pools.length || t.knockout.length)) {
+    <h3 class="text-gradient" style="margin: var(--space-lg) 0 var(--space-md) 0;">
+        Results
+        @if (pendingResultCount() > 0) {
+        <span class="results-pending-badge">{{ pendingResultCount() }} to enter</span>
+        }
+    </h3>
+    <div class="card results-card">
+        @if (t.pools.length) {
+        <h4 class="results-subhead">Pool matches</h4>
+        @for (pool of t.pools; track pool.pool_id) {
+        <div class="result-group">
+            <h5 class="result-group-name">{{ pool.pool_name }}</h5>
+            @for (m of pool.matches; track m.match_id) {
+            <div class="result-row" [class.is-done]="isDone(m)">
+                <span class="rr-name">{{ m.participant_one_name }}</span>
+                <input #a class="score-input" type="number" min="0" inputmode="numeric" [value]="m.score_one" />
+                <span class="rr-dash">–</span>
+                <input #b class="score-input" type="number" min="0" inputmode="numeric" [value]="m.score_two" />
+                <span class="rr-name rr-name-right">{{ m.participant_two_name }}</span>
+                <button class="btn btn-secondary rr-save" [disabled]="savingMatch() === m.match_id"
+                    (click)="saveScore(m, 'pool', a.value, b.value)">
+                    {{ savingMatch() === m.match_id ? '…' : (isDone(m) ? 'Update' : 'Save') }}
+                </button>
+            </div>
+            }
+        </div>
+        }
+        }
+
+        @if (t.knockout.length) {
+        <h4 class="results-subhead">Knockout matches</h4>
+        @for (round of t.knockout; track round.round_id) {
+        <div class="result-group">
+            <h5 class="result-group-name">{{ round.round_name }}</h5>
+            @for (m of round.matches; track m.match_id) {
+            <div class="result-row" [class.is-done]="isDone(m)">
+                @if (canScore(m)) {
+                <span class="rr-name">{{ m.participant_one_name }}</span>
+                <input #k1 class="score-input" type="number" min="0" inputmode="numeric" [value]="m.score_one" />
+                <span class="rr-dash">–</span>
+                <input #k2 class="score-input" type="number" min="0" inputmode="numeric" [value]="m.score_two" />
+                <span class="rr-name rr-name-right">{{ m.participant_two_name }}</span>
+                <button class="btn btn-secondary rr-save" [disabled]="savingMatch() === m.match_id"
+                    (click)="saveScore(m, 'knockout', k1.value, k2.value)">
+                    {{ savingMatch() === m.match_id ? '…' : (isDone(m) ? 'Update' : 'Save') }}
+                </button>
+                } @else {
+                <span class="rr-name">{{ m.participant_one_name || m.slot_one_label }}</span>
+                <span class="rr-dash">vs</span>
+                <span class="rr-name rr-name-right">{{ m.participant_two_name || m.slot_two_label }}</span>
+                <span class="rr-waiting">waiting for pool results</span>
+                }
+            </div>
+            }
+        </div>
+        }
+        }
+    </div>
+    }
 
     <h3 class="text-gradient" style="margin: var(--space-lg) 0 var(--space-md) 0;">Knockout Bracket</h3>
     @if (t.knockout.length === 0) {
     <p style="color: var(--color-text-muted);">Not enough qualifiers for a knockout stage.</p>
     } @else {
     <div class="bracket">
-        @for (round of t.knockout; track round.round_id) {
-        <div class="bracket-round">
-            <h4 style="margin: 0 0 var(--space-sm) 0;">{{ round.round_name }}</h4>
-            @for (m of round.matches; track m.match_id) {
-            <div class="card bracket-match">
-                <span>{{ m.slot_one_label }}</span>
-                <span style="color: var(--color-text-muted); font-size: 0.75rem;">vs</span>
-                <span>{{ m.slot_two_label }}</span>
+        @for (round of t.knockout; track round.round_id; let first = $first; let last = $last) {
+        <div class="bracket-round" [class.is-first]="first" [class.is-last]="last">
+            <h4 class="bracket-round-name">{{ round.round_name }}</h4>
+            <div class="bracket-matches">
+                @for (m of round.matches; track m.match_id) {
+                <div class="bracket-match-wrap">
+                    <div class="card bracket-match" [class.is-done]="isDone(m)">
+                        <div class="bm-slot" [class.bm-winner]="isDone(m) && m.score_one > m.score_two">
+                            <span class="bm-name">{{ m.participant_one_name || m.slot_one_label }}</span>
+                            @if (isDone(m)) { <span class="bm-score">{{ m.score_one }}</span> }
+                        </div>
+                        <div class="bm-slot" [class.bm-winner]="isDone(m) && m.score_two > m.score_one">
+                            <span class="bm-name">{{ m.participant_two_name || m.slot_two_label }}</span>
+                            @if (isDone(m)) { <span class="bm-score">{{ m.score_two }}</span> }
+                        </div>
+                    </div>
+                </div>
+                }
             </div>
-            }
         </div>
         }
     </div>
@@ -82,20 +198,224 @@
 
     .bracket {
         display: flex;
-        gap: var(--space-lg);
+        gap: 0;
         overflow-x: auto;
         padding-bottom: var(--space-sm);
+        /* half the horizontal space between two rounds; connector lines live here */
+        --bracket-gutter: var(--space-lg);
+        --bracket-line: HSL(var(--color-text-muted));
     }
 
     .bracket-round {
+        display: flex;
+        flex-direction: column;
         min-width: 200px;
+        padding: 0 var(--bracket-gutter);
+    }
+
+    .bracket-round.is-first {
+        padding-left: 0;
+    }
+
+    .bracket-round.is-last {
+        padding-right: 0;
+    }
+
+    .bracket-round-name {
+        margin: 0 0 var(--space-sm) 0;
+        text-align: center;
+    }
+
+    /* matches spread evenly so each round's match centers on the midpoint
+       of its feeder pair in the previous round */
+    .bracket-matches {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        flex: 1;
+    }
+
+    .bracket-match-wrap {
+        display: flex;
+        align-items: center;
+        flex: 1;
+        position: relative;
     }
 
     .bracket-match {
         display: flex;
         flex-direction: column;
         gap: 2px;
-        margin-bottom: var(--space-sm);
         padding: var(--space-sm);
+        width: 100%;
+    }
+
+    /* outgoing stub: match right edge -> gutter midpoint */
+    .bracket-round:not(.is-last) .bracket-match-wrap::after {
+        content: '';
+        position: absolute;
+        left: 100%;
+        width: var(--bracket-gutter);
+        top: 50%;
+        height: 2px;
+        background: var(--bracket-line);
+    }
+
+    /* vertical connector joining a feeder pair, drawn at the gutter midpoint */
+    .bracket-round:not(.is-last) .bracket-match-wrap::before {
+        content: '';
+        position: absolute;
+        left: calc(100% + var(--bracket-gutter));
+        width: 2px;
+        height: 100%;
+        background: var(--bracket-line);
+    }
+
+    .bracket-round:not(.is-last) .bracket-match-wrap:nth-child(odd)::before {
+        top: 50%;
+    }
+
+    .bracket-round:not(.is-last) .bracket-match-wrap:nth-child(even)::before {
+        bottom: 50%;
+    }
+
+    /* incoming stub: gutter midpoint -> this match's left edge */
+    .bracket-round:not(.is-first) .bracket-match::before {
+        content: '';
+        position: absolute;
+        right: 100%;
+        width: var(--bracket-gutter);
+        top: 50%;
+        height: 2px;
+        background: var(--bracket-line);
+    }
+
+    .bracket-round:not(.is-first) .bracket-match {
+        position: relative;
+    }
+
+    /* ---- score entry (pool matches + knockout) ---- */
+
+    .score-input {
+        width: 3rem;
+        padding: 2px 4px;
+        text-align: center;
+        border: 1px solid var(--card-border);
+        border-radius: var(--radius-md);
+        background: HSL(var(--color-bg-dark));
+        color: HSL(var(--color-text-main));
+        font: inherit;
+    }
+
+    .results-card {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+
+    .results-subhead {
+        margin: var(--space-sm) 0 var(--space-xs) 0;
+    }
+
+    .results-subhead:first-child {
+        margin-top: 0;
+    }
+
+    .results-pending-badge {
+        margin-left: var(--space-sm);
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: HSL(var(--color-brand-accent) / 0.15);
+        color: HSL(var(--color-brand-accent));
+        vertical-align: middle;
+    }
+
+    .result-group {
+        padding: var(--space-xs) 0;
+    }
+
+    .result-group-name {
+        margin: 0 0 var(--space-xs) 0;
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .result-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 4px 0;
+    }
+
+    .result-row + .result-row {
+        border-top: 1px solid var(--card-border);
+    }
+
+    .rr-name {
+        flex: 1 1 7rem;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .rr-name-right {
+        text-align: right;
+    }
+
+    .rr-dash {
+        color: var(--color-text-muted);
+        flex: 0 0 auto;
+    }
+
+    .rr-save {
+        flex: 0 0 auto;
+        padding: 2px 10px;
+        font-size: 0.75rem;
+    }
+
+    .rr-waiting {
+        flex: 1 1 100%;
+        font-size: 0.75rem;
+        color: var(--color-text-muted);
+    }
+
+    .result-row.is-done .rr-name {
+        color: var(--color-text-muted);
+    }
+
+    .bm-slot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-xs);
+    }
+
+    .bm-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .bm-score {
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .bm-slot.bm-winner .bm-name,
+    .bm-slot.bm-winner .bm-score {
+        color: HSL(var(--color-brand-accent));
+        font-weight: 600;
+    }
+
+    .bracket-match.is-done {
+        border-color: HSL(var(--color-brand-accent) / 0.4);
     }
 </style>

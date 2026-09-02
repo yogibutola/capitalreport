@@ -98,6 +98,29 @@
                 </div>
             </div>
 
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="field-duprMin" style="display: block; margin-bottom: var(--space-xs);">Min DUPR Rating
+                        (optional)</label>
+                    <input id="field-duprMin" type="number" [(ngModel)]="duprMin" name="duprMin" class="input-field"
+                        min="1" max="8" step="0.25" placeholder="e.g. 3.0" aria-describedby="dupr-help">
+                </div>
+                <div class="form-group">
+                    <label for="field-duprMax" style="display: block; margin-bottom: var(--space-xs);">Max DUPR Rating
+                        (optional)</label>
+                    <input id="field-duprMax" type="number" [(ngModel)]="duprMax" name="duprMax" #duprMaxCtrl="ngModel"
+                        class="input-field" min="1" max="8" step="0.25" placeholder="e.g. 4.0"
+                        [appInvalid]="duprMaxCtrl" [appInvalidServer]="fieldErrors['dupr_max']"
+                        [appInvalidForce]="submitAttempted">
+                    <small id="dupr-help" class="input-hint">Leave both blank to allow any rating</small>
+                    @if (duprRangeInvalid || fieldErrors['dupr_max']) {
+                    <small class="input-hint" style="color: var(--color-danger, #d33);">
+                        {{ fieldErrors['dupr_max'] || 'Max rating must be at least the min rating.' }}
+                    </small>
+                    }
+                </div>
+            </div>
+
             <button type="submit" class="btn" style="width: 100%; margin-top: var(--space-lg);" [disabled]="submitting">
                 {{ submitting ? 'Creating…' : 'Create Tournament' }}
             </button>

@@ -45,6 +45,19 @@ class PBTournamentStore:
     def get_tournaments_by_club(self, club_id: str) -> list[dict]:
         return [self._summary(t) for t in self._list_summaries({"club_id": club_id})]
 
+    def get_tournaments_by_player_email(self, email: str) -> list[dict]:
+        return [
+            self._summary(t)
+            for t in self._list_summaries({"players.email": email.lower()})
+        ]
+
+    def update_tournament(self, tournament_id: str, fields: dict) -> bool:
+        collection = self.get_tournament_collection()
+        result = collection.update_one(
+            {"_id": ObjectId(tournament_id)}, {"$set": fields}
+        )
+        return result.matched_count > 0
+
     def _list_summaries(self, query: dict) -> list[dict]:
         collection = self.get_tournament_collection()
         projection = {
@@ -54,6 +67,9 @@ class PBTournamentStore:
             "tournament_end_date": 1,
             "club_name": 1,
             "location": 1,
+            "match_format": 1,
+            "dupr_min": 1,
+            "dupr_max": 1,
             "players": 1,
         }
         return list(collection.find(query, projection))
@@ -68,6 +84,9 @@ class PBTournamentStore:
             "tournament_end_date": doc.get("tournament_end_date"),
             "club_name": doc.get("club_name"),
             "location": doc.get("location"),
+            "match_format": doc.get("match_format"),
+            "dupr_min": doc.get("dupr_min"),
+            "dupr_max": doc.get("dupr_max"),
             "player_count": len(doc.get("players", []) or []),
         }
 
