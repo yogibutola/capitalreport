@@ -1,5 +1,6 @@
 import logging
 import uuid
+from datetime import datetime
 
 from app.services.tournament_bracket import (
     advance_knockout,
@@ -57,6 +58,117 @@ class PBTournamentService:
 
     def get_tournament_by_id(self, tournament_id: str):
         return self.pb_tournament_store.get_tournament_details(tournament_id)
+
+    def get_matches_by_player_email(self, email: str) -> list[dict]:
+        """Flatten pool + knockout matches from every tournament the player is
+        registered in, resolved to the player's own email, in the same nested
+        team_one/team_two -> player_one/player_two shape league matches use.
+        """
+        email_lower = (email or "").lower()
+        matches: list[dict] = []
+        for tournament in self.pb_tournament_store.get_tournaments_containing_player(email_lower):
+            team_map = {t["team_id"]: t for t in (tournament.get("teams") or [])}
+            for pool in tournament.get("pools") or []:
+                for match in pool.get("matches") or []:
+                    normalized = self._normalize_tournament_match(
+                        tournament, team_map, match, stage="pool", email_lower=email_lower
+                    )
+                    if normalized:
+                        matches.append(normalized)
+            for round_ in tournament.get("knockout") or []:
+                for match in round_.get("matches") or []:
+                    normalized = self._normalize_tournament_match(
+                        tournament, team_map, match, stage="knockout", email_lower=email_lower
+                    )
+                    if normalized:
+                        matches.append(normalized)
+        return matches
+
+    @staticmethod
+    def _split_name(name: str) -> tuple[str, str]:
+        parts = (name or "").strip().split(" ", 1)
+        return (parts[0] if parts else "", parts[1] if len(parts) > 1 else "")
+
+    def _resolve_side(self, participant_email, participant_name, team_map: dict) -> dict:
+        """Build a team_one/team_two-shaped dict for one side of a tournament match."""
+        if not participant_email:
+            return {"team_name": "TBD", "score": None, "player_one": None, "player_two": None}
+
+        team = team_map.get(participant_email)
+        if team:
+            first1, last1 = self._split_name(team.get("player_one_name"))
+            side = {
+                "team_name": team.get("team_name"),
+                "player_one": {
+                    "email": team.get("player_one_email"),
+                    "firstName": first1,
+                    "lastName": last1,
+                },
+                "player_two": None,
+            }
+            if team.get("player_two_email"):
+                first2, last2 = self._split_name(team.get("player_two_name"))
+                side["player_two"] = {
+                    "email": team.get("player_two_email"),
+                    "firstName": first2,
+                    "lastName": last2,
+                }
+            return side
+
+        # Singles: participant_email is the player's own email.
+        first, last = self._split_name(participant_name)
+        return {
+            "team_name": participant_name,
+            "player_one": {"email": participant_email, "firstName": first, "lastName": last},
+            "player_two": None,
+        }
+
+    def _normalize_tournament_match(
+        self, tournament: dict, team_map: dict, match: dict, stage: str, email_lower: str
+    ) -> dict | None:
+        team_one = self._resolve_side(
+            match.get("participant_one_email"), match.get("participant_one_name"), team_map
+        )
+        team_two = self._resolve_side(
+            match.get("participant_two_email"), match.get("participant_two_name"), team_map
+        )
+
+        involved_emails = {
+            (p.get("email") or "").lower()
+            for side in (team_one, team_two)
+            for p in (side.get("player_one"), side.get("player_two"))
+            if p and p.get("email")
+        }
+        if email_lower not in involved_emails:
+            return None
+
+        team_one["score"] = match.get("score_one", 0)
+        team_two["score"] = match.get("score_two", 0)
+
+        return {
+            "source": "tournament",
+            "tournament_id": tournament.get("tournament_id"),
+            "tournament_name": tournament.get("tournament_name"),
+            "league_id": None,
+            "match_id": match.get("match_id"),
+            "stage": stage,
+            "team_one": team_one,
+            "team_two": team_two,
+            "match_status": match.get("match_status"),
+            "location": tournament.get("location"),
+            # Individual matches aren't scheduled to a specific time; fall back
+            # to the tournament's start date so the UI still has something to show.
+            "time": self._parse_tournament_date(tournament.get("tournament_start_date")),
+        }
+
+    @staticmethod
+    def _parse_tournament_date(date_str: str | None):
+        if not date_str:
+            return None
+        try:
+            return datetime.strptime(date_str, "%m-%d-%Y")
+        except ValueError:
+            return None
 
     def delete_tournament(self, tournament_id: str) -> bool:
         return self.pb_tournament_store.delete_tournament(tournament_id)

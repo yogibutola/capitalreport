@@ -1,4 +1,10 @@
 import bcrypt
+import hashlib
+import logging
+import os
+import secrets
+from datetime import datetime, timedelta
+
 from fastapi import HTTPException, status
 
 from app.store.mongo.pb_player_store import PBPlayerStore
@@ -9,10 +15,16 @@ from app.vo.pb.player import (
     PlayerLogin,
     ClubSignup,
     ChangePasswordRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
     ProfileResponse,
     ProfileUpdateRequest,
 )
 from app.utils.security import create_access_token
+
+logger = logging.getLogger(__name__)
+
+RESET_TOKEN_EXPIRE_MINUTES = 30
 
 
 class PBPlayerService:
@@ -106,6 +118,45 @@ class PBPlayerService:
             )
 
         self.pb_player_store.update_player_password(email, self.hash_password(req.new_password))
+
+    @staticmethod
+    def _hash_token(token: str) -> str:
+        return hashlib.sha256(token.encode('utf-8')).hexdigest()
+
+    def forgot_password(self, req: ForgotPasswordRequest) -> None:
+        """
+        Issue a password-reset token for the given email, if it belongs to an account.
+
+        Silently no-ops for unknown emails - the router always returns the same
+        generic response so this endpoint can't be used to enumerate accounts.
+        """
+        player = self.pb_player_store.find_player_by_email(req.email)
+        if not player:
+            return
+
+        token = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)
+        self.pb_player_store.set_reset_token(player['email'], self._hash_token(token), expires_at)
+
+        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:4200')
+        reset_link = f"{frontend_url}/reset-password?token={token}"
+        logger.info(f"[STUB EMAIL] Password reset link for {player['email']}: {reset_link}")
+
+    def reset_password(self, req: ResetPasswordRequest) -> None:
+        """
+        Set a new password using a token issued by forgot_password.
+
+        Raises:
+            HTTPException 400: If the token is unknown, already used, or expired
+        """
+        player = self.pb_player_store.find_player_by_reset_token_hash(self._hash_token(req.token))
+        if not player or player.get('reset_token_expires', datetime.min) < datetime.utcnow():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired reset token"
+            )
+
+        self.pb_player_store.reset_password(player['email'], self.hash_password(req.new_password))
 
     @staticmethod
     def _to_profile_response(player: dict, token: str | None = None) -> ProfileResponse:

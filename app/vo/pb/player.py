@@ -162,3 +162,29 @@ class ChangePasswordRequest(BaseModel):
         if not re.search(r"[@#$]", v):
             raise ValueError('Password must contain at least one special character (@, #, or $)')
         return v
+
+
+class ForgotPasswordRequest(BaseModel):
+    """Model for forgot-password requests (unauthenticated)"""
+    email: EmailStr = Field(..., description="Account email address to send a reset link to")
+
+
+class ResetPasswordRequest(BaseModel):
+    """Model for reset-password requests (unauthenticated, uses a one-time token)"""
+    token: str = Field(..., description="The reset token from the emailed link")
+    new_password: str = Field(..., description="The new password to set")
+
+    @field_validator('new_password')
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        if not re.search(r"[A-Z]", v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not re.search(r"\d", v):
+            raise ValueError('Password must contain at least one number')
+        if not re.search(r"[a-zA-Z]", v):
+            raise ValueError('Password must contain at least one alphabet')
+        if not re.search(r"[@#$]", v):
+            raise ValueError('Password must contain at least one special character (@, #, or $)')
+        return v

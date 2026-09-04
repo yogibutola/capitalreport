@@ -57,7 +57,7 @@ def get_league_details_by_league_name(league_name: str,
 @router.get("/player/{email_id}/matches", status_code=status.HTTP_200_OK)
 def get_matches_by_player_email(email_id: str,
                                 pb_league_service: PBLeagueService = Depends(get_pb_league_service)):
-    """ Get all matches for a player across all leagues."""
+    """ Get all matches for a player across all leagues and tournaments."""
     return pb_league_service.get_matches_by_player_email(email_id)
 
 

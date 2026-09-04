@@ -234,6 +234,24 @@ export class AuthService {
       );
   }
 
+  /** Request a password-reset link for the given email. */
+  forgotPassword(email: string): Observable<void> {
+    return this.http.post<unknown>('api/v1/forgot-password', { email }).pipe(
+      map(() => undefined),
+      catchError((err) => throwError(() => parseHttpError(err)))
+    );
+  }
+
+  /** Set a new password using a token from a reset-password email link. */
+  resetPassword(token: string, newPassword: string): Observable<void> {
+    return this.http
+      .post<unknown>('api/v1/reset-password', { token, new_password: newPassword })
+      .pipe(
+        map(() => undefined),
+        catchError((err) => throwError(() => parseHttpError(err)))
+      );
+  }
+
   /** Merge a fresh profile into the current session + localStorage. */
   private applyProfile(profile: Profile): void {
     const current = this.currentUser();

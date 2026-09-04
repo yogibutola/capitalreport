@@ -10,6 +10,8 @@ from app.vo.pb.player import (
     PlayerLogin,
     ClubSignup,
     ChangePasswordRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
     ProfileResponse,
     ProfileUpdateRequest,
 )
@@ -105,6 +107,53 @@ def signin_player(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to sign in: {str(e)}"
         )
+
+
+@router.post("/forgot-password", status_code=status.HTTP_200_OK)
+def forgot_password(
+        req: ForgotPasswordRequest,
+        pb_player_service: PBPlayerService = Depends(get_pb_player_service)
+):
+    """
+    Request a password-reset link for the given email.
+
+    Always returns the same generic message, whether or not the email is
+    registered, so this endpoint can't be used to enumerate accounts.
+    """
+    try:
+        pb_player_service.forgot_password(req)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process request: {str(e)}"
+        )
+    return {"message": "If an account exists for that email, a reset link has been sent."}
+
+
+@router.post("/reset-password", status_code=status.HTTP_200_OK)
+def reset_password(
+        req: ResetPasswordRequest,
+        pb_player_service: PBPlayerService = Depends(get_pb_player_service)
+):
+    """
+    Set a new password using a token issued by /forgot-password.
+
+    Raises:
+        HTTPException 400: If the token is invalid, already used, or expired
+        HTTPException 422: If the new password fails complexity rules
+    """
+    try:
+        pb_player_service.reset_password(req)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to reset password: {str(e)}"
+        )
+    return {"message": "Password has been reset successfully"}
 
 
 @router.get("/profile", status_code=status.HTTP_200_OK, response_model=ProfileResponse)

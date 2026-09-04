@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pymongo import MongoClient, ReturnDocument
 from pymongo.server_api import ServerApi
 from pymongo.synchronous.collection import Collection
@@ -90,6 +92,32 @@ class PBPlayerStore:
             {"$set": {"password": hashed_password}}
         )
         self.logger.info(f"Password updated for player {email.lower()}")
+
+    def set_reset_token(self, email: str, token_hash: str, expires_at: datetime) -> None:
+        """Store a hashed password-reset token and its expiry for this player."""
+        collection = self.get_players_collection()
+        collection.update_one(
+            {"email": email.lower()},
+            {"$set": {"reset_token_hash": token_hash, "reset_token_expires": expires_at}}
+        )
+        self.logger.info(f"Reset token set for player {email.lower()}")
+
+    def find_player_by_reset_token_hash(self, token_hash: str) -> dict | None:
+        """Find a player by their hashed password-reset token."""
+        collection = self.get_players_collection()
+        return collection.find_one({"reset_token_hash": token_hash})
+
+    def reset_password(self, email: str, hashed_password: str) -> None:
+        """Set a new (already hashed) password and consume the reset token in one update."""
+        collection = self.get_players_collection()
+        collection.update_one(
+            {"email": email.lower()},
+            {
+                "$set": {"password": hashed_password},
+                "$unset": {"reset_token_hash": "", "reset_token_expires": ""}
+            }
+        )
+        self.logger.info(f"Password reset for player {email.lower()}")
 
     def update_player_profile(self, email: str, updates: dict) -> dict | None:
         """Apply a partial profile update and return the player document after the change.

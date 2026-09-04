@@ -51,6 +51,15 @@ class PBTournamentStore:
             for t in self._list_summaries({"players.email": email.lower()})
         ]
 
+    def get_tournaments_containing_player(self, email: str) -> list[dict]:
+        """Full tournament docs (pools/knockout/teams included) for tournaments
+        the player is registered in — used to build their match history."""
+        collection = self.get_tournament_collection()
+        docs = list(collection.find({"players.email": email.lower()}))
+        for doc in docs:
+            doc["tournament_id"] = str(doc.pop("_id"))
+        return docs
+
     def update_tournament(self, tournament_id: str, fields: dict) -> bool:
         collection = self.get_tournament_collection()
         result = collection.update_one(

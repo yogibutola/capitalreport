@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './auth/login';
 import { SignupComponent } from './auth/signup';
+import { ForgotPasswordComponent } from './auth/forgot-password';
+import { ResetPasswordComponent } from './auth/reset-password';
 import { DashboardComponent } from './league/dashboard';
 import { DailySlottingComponent } from './league/daily-slotting';
 import { MatchEntryComponent } from './matches/match-entry';
@@ -32,6 +34,8 @@ export const routes: Routes = [
     { path: 'admin/league/:league_id', component: LeagueDetailsComponent, canActivate: [adminGuard] },
     { path: 'login', component: LoginComponent },
     { path: 'signup', component: SignupComponent },
+    { path: 'forgot-password', component: ForgotPasswordComponent },
+    { path: 'reset-password', component: ResetPasswordComponent },
     { path: 'player', component: PlayerDashboardComponent },
     { path: 'player/leagues', component: PlayerLeaguesComponent },
     { path: 'player/tournaments', component: PlayerTournamentsComponent },

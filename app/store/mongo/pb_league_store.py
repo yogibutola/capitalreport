@@ -54,6 +54,11 @@ class PBLeagueStore:
         collection = self.get_league_collection()
         return collection.find_one({"_id": ObjectId(league_id)})
 
+    def get_league_location(self, league_id: str):
+        collection = self.get_league_collection()
+        league = collection.find_one({"_id": ObjectId(league_id)}, {"location": 1})
+        return league.get("location") if league else None
+
     def update_league_details(self, league_id: str, league_details: League):
         collection = self.get_league_collection()
         collection.update_one({"_id": ObjectId(league_id)}, {"$set": league_details.model_dump()})

@@ -1,31 +1,64 @@
-<div class="container" style="padding-top: var(--space-lg);">
-    <div class="flex-center" style="justify-content: space-between; margin-bottom: var(--space-lg);">
-        <h2 class="text-gradient">Match History</h2>
+<div class="container match-history-page">
+    <div class="match-history-header">
+        <div>
+            <h2 class="text-gradient">Match History</h2>
+            <p class="match-history-subtitle">Every match you've played across leagues and tournaments</p>
+        </div>
         <a routerLink="/league" class="btn btn-secondary">Back</a>
     </div>
 
-    <div class="flex-col gap-md">
-        @for (match of matches(); track match.id) {
-        <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <span style="color: var(--color-text-muted); font-size: 0.8rem;">{{ match.date | date:'mediumDate'
-                    }}</span>
-                <div class="flex-center gap-sm" style="margin-top: var(--space-sm);">
-                    <span [style.font-weight]="match.winnerTeam === 1 ? 'bold' : 'normal'"
-                        [style.color]="match.winnerTeam === 1 ? 'var(--color-success)' : 'inherit'">
-                        Team 1: {{ match.scores[0] }}
+    <div class="match-list">
+        @for (match of matches(); track match.matchId) {
+        <div class="card match-card">
+            <div class="match-card__meta">
+                <span class="match-card__source">{{ match.sourceLabel }}</span>
+                <div class="match-card__meta-details">
+                    @if (match.time) {
+                    <span class="match-card__meta-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        {{ match.time | date:'mediumDate' }}
                     </span>
-                    <span>vs</span>
-                    <span [style.font-weight]="match.winnerTeam === 2 ? 'bold' : 'normal'"
-                        [style.color]="match.winnerTeam === 2 ? 'var(--color-success)' : 'inherit'">
-                        Team 2: {{ match.scores[1] }}
+                    }
+                    @if (match.location) {
+                    <span class="match-card__meta-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        {{ match.location }}
                     </span>
+                    }
+                </div>
+            </div>
+
+            <div class="match-card__teams">
+                <div class="match-card__team" [class.is-winner]="match.winner === 1">
+                    <span class="match-card__team-name">{{ match.teamOneName }}</span>
+                    <span class="match-card__team-score">{{ match.scoreOne }}</span>
+                </div>
+                <span class="match-card__vs">vs</span>
+                <div class="match-card__team match-card__team--right" [class.is-winner]="match.winner === 2">
+                    <span class="match-card__team-score">{{ match.scoreTwo }}</span>
+                    <span class="match-card__team-name">{{ match.teamTwoName }}</span>
                 </div>
             </div>
         </div>
         } @empty {
-        <div class="card" style="text-align: center; color: var(--color-text-muted);">
-            No matches played yet.
+        <div class="card match-history-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <p>No matches played yet.</p>
         </div>
         }
     </div>

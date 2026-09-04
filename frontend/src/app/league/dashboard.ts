@@ -6,6 +6,7 @@ import { AuthService } from '../auth/auth';
 import { PlayerService } from '../player/player';
 import { FormsModule } from '@angular/forms';
 import { GroupsService, GroupEvent } from '../groups/groups.service';
+import { MatchService } from '../matches/match';
 
 interface UpcomingGroupEvent {
     groupId: string;
@@ -35,12 +36,12 @@ export class DashboardComponent {
   private router = inject(Router);
   private http = inject(HttpClient);
   private groupsService = inject(GroupsService);
+  private matchService = inject(MatchService);
   protected playerService = inject(PlayerService);
 
   currentUser = this.authService.currentUser;
   leagues = this.playerService.getLeagues;
   upcomingMatches = this.playerService.getUpcomingMatches;
-  completedMatches = this.playerService.getCompletedMatches;
   availableLeagues = this.playerService.getAvailableLeagues;
 
   // Premium banking visual states
@@ -65,13 +66,32 @@ export class DashboardComponent {
     return this.availableLeagues()[0] ?? null;
   }
 
-  // Last 5 completed games as W/L, oldest → most recent
+  // Last 5 completed games (across all leagues/tournaments) as W/L, oldest → most recent
   get lastFiveResults(): ('W' | 'L')[] {
-    return [...this.completedMatches()]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    const email = this.currentUser()?.email?.toLowerCase();
+    if (!email) return [];
+
+    const isMe = (p: any) => (p?.email || '').toLowerCase() === email;
+
+    return this.matchService.getMatches()()
+      .filter(m => {
+        const t1 = m.team_one, t2 = m.team_two;
+        if (!t1 || !t2) return false;
+        const statusLower = String(m.match_status || '').toLowerCase();
+        const isCompleted = statusLower === 'completed' || Number(t1.score || 0) > 0 || Number(t2.score || 0) > 0;
+        if (!isCompleted) return false;
+        return [t1.player_one, t1.player_two, t2.player_one, t2.player_two].some(isMe);
+      })
+      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
       .slice(0, 5)
       .reverse()
-      .map(m => (m.team1Score || 0) > (m.team2Score || 0) ? 'W' : 'L');
+      .map(m => {
+        const t1 = m.team_one, t2 = m.team_two;
+        const isTeam1 = [t1.player_one, t1.player_two].some(isMe);
+        const s1 = Number(t1.score || 0), s2 = Number(t2.score || 0);
+        const won = isTeam1 ? s1 > s2 : s2 > s1;
+        return won ? 'W' : 'L';
+      });
   }
 
   get lastFiveRecord(): string {
@@ -112,10 +132,12 @@ export class DashboardComponent {
 
   constructor() {
     effect(() => {
-      if (!this.authService.currentUser()) {
+      const user = this.authService.currentUser();
+      if (!user) {
         this.router.navigate(['/login']);
       } else {
         this.groupsService.loadGroupsForCurrentUser();
+        this.matchService.loadMatchesForPlayer(user.email);
       }
     });
 

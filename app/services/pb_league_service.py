@@ -1,11 +1,13 @@
 from bson import ObjectId
 from app.store.mongo.pb_league_store import PBLeagueStore
 from app.store.mongo.pb_player_store import PBPlayerStore
+from app.store.mongo.pb_tournament_store import PBTournamentStore
 from app.vo.pb.league import League
 from app.vo.pb.match import Match
 from app.vo.pb.match_details_payload import MatchDetailsPayload
 from app.vo.pb.slotting_details_payload import SlottingDetailsPayload
 from app.store.mongo.pb_match_store import PBMatchStore
+from app.services.pb_tournament_service import PBTournamentService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,6 +18,7 @@ class PBLeagueService:
     def __init__(self, pb_league_store: PBLeagueStore):
         self.pb_league_store = pb_league_store
         self.pb_match_store = PBMatchStore()
+        self.pb_tournament_service = PBTournamentService(PBTournamentStore())
 
     def get_league_details(self):
         return "League details"
@@ -94,11 +97,17 @@ class PBLeagueService:
         return league_details
 
     def get_matches_by_player_email(self, email: str):
-        """Get all matches for a player across all leagues, in serializable form."""
+        """Get all matches for a player across leagues and tournaments, in serializable form."""
         matches = self.pb_match_store.get_matches_by_player_email(email)
+        league_locations = {}
         for match in matches:
-            if "_id" in match:
-                del match["_id"]
+            match["source"] = "league"
+            match.pop("_id", None)
+            league_id = match.get("league_id")
+            if league_id not in league_locations:
+                league_locations[league_id] = self.pb_league_store.get_league_location(league_id)
+            match["location"] = league_locations[league_id]
+        matches.extend(self.pb_tournament_service.get_matches_by_player_email(email))
         return matches
 
     def save_match_score(self, match_details: MatchDetailsPayload):
