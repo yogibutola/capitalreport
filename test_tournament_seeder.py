@@ -18,11 +18,11 @@ Usage:
     python test_tournament_seeder.py --players 24 --pool-size 6 --format singles
 """
 import argparse
-import random
 import sys
 from datetime import datetime
 
 from fastapi import HTTPException
+from faker import Faker
 
 from app.services.pb_player_service import PBPlayerService
 from app.services.pb_tournament_service import PBTournamentService
@@ -33,20 +33,6 @@ from app.vo.pb.tournament import Tournament
 from app.vo.pb.tournament_registration_payload import TournamentRegistrationPayload
 
 PASSWORD = "Password@123"
-
-FIRST_NAMES = [
-    "Aarav", "Priya", "Liam", "Sofia", "Noah", "Aisha", "Mateo", "Emma", "Kenji",
-    "Zara", "Diego", "Nina", "Omar", "Leila", "Ravi", "Hana", "Marcus", "Yuki",
-    "Amara", "Felix", "Ingrid", "Tariq", "Chloe", "Arjun", "Maya", "Lucas",
-    "Freya", "Ibrahim", "Elena", "Wei", "Rosa", "Dmitri", "Ada", "Kofi", "Lena",
-    "Pablo", "Nadia", "Theo", "Sana", "Bruno",
-]
-LAST_NAMES = [
-    "Sharma", "Nguyen", "Okafor", "Rossi", "Kim", "Patel", "Silva", "Andersson",
-    "Haddad", "Kowalski", "Mbeki", "Tanaka", "Fernandez", "Novak", "Reyes",
-    "Bauer", "Costa", "Ali", "Larsen", "Ivanov", "Cohen", "Dubois", "Yamada",
-    "Mensah", "Petrov", "Khan", "Moreau", "Singh", "Weber", "Diaz",
-]
 
 
 def main():
@@ -88,9 +74,10 @@ def main():
     for i in range(1, args.players + 1):
         # Seed per-index so names are random-looking but stable across re-runs
         # (existing players keep their original name anyway; email is the key).
-        rng = random.Random(f"tourney-seeder-{i}")
-        first_name = rng.choice(FIRST_NAMES)
-        last_name = rng.choice(LAST_NAMES)
+        fake = Faker()
+        fake.seed_instance(f"tourney-seeder-{i}")
+        first_name = fake.first_name()
+        last_name = fake.last_name()
         email = f"tourney{i:02d}.player@test.com"
 
         signup = PlayerSignup(
