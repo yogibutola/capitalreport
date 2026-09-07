@@ -1,0 +1,128 @@
+.reg-page {
+  min-height: 100vh;
+  padding: var(--space-lg) var(--space-md) var(--space-xl);
+  display: flex;
+  justify-content: center;
+}
+
+.reg-shell {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.reg-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.reg-hero h1 {
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+.reg-meta {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.reg-link,
+a.reg-link {
+  color: HSL(var(--color-brand-accent));
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.reg-link:hover {
+  text-decoration: underline;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: var(--space-xs);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.reg-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+@media (max-width: 460px) {
+  .reg-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.reg-checklist {
+  margin-top: 0.5rem;
+  font-size: 0.83rem;
+  background: HSL(var(--color-bg-dark) / 0.35);
+  padding: 0.7rem 0.8rem;
+  border-radius: 8px;
+  color: var(--color-text-muted);
+}
+
+.reg-checklist div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+
+.reg-checklist div.ok {
+  color: HSL(var(--success-text, 140 60% 45%));
+}
+
+.reg-checklist span {
+  width: 1.1em;
+  text-align: center;
+  font-weight: 700;
+}
+
+.reg-fieldset {
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin: 0 0 var(--space-md);
+}
+
+.reg-fieldset legend {
+  padding: 0 6px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.reg-radio {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.reg-success {
+  text-align: center;
+}
+
+.reg-check {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto var(--space-sm);
+  border-radius: 50%;
+  background: HSL(var(--color-brand-accent));
+  color: #fff;
+  font-size: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

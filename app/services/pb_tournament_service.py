@@ -12,13 +12,22 @@ from app.services.tournament_bracket import (
 )
 from app.store.mongo.pb_player_store import PBPlayerStore
 from app.store.mongo.pb_tournament_store import PBTournamentStore
-from app.vo.pb.player import Player
+from app.vo.pb.player import Player, PlayerSignup
 from app.vo.pb.tournament import KnockoutRound, Pool, Tournament
 from app.vo.pb.tournament_match_score_payload import TournamentMatchScorePayload
-from app.vo.pb.tournament_registration_payload import TournamentRegistrationPayload
+from app.vo.pb.tournament_registration_payload import (
+    PublicTournamentRegistrationPayload,
+    TournamentRegistrationPayload,
+)
 from app.vo.pb.tournament_team import TournamentTeam
+from app.utils.security import create_access_token
 
 logger = logging.getLogger(__name__)
+
+
+class AccountExistsError(Exception):
+    """Raised when a public tournament registrant already has a platform account
+    (they should sign in and use the authenticated registration flow instead)."""
 
 
 class PBTournamentService:
@@ -295,6 +304,74 @@ class PBTournamentService:
             raise ValueError("You are not registered for this tournament")
 
         self._persist_registrations(tournament_id, remaining)
+
+    def register_public(self, payload: PublicTournamentRegistrationPayload) -> dict:
+        """Create a player account for a brand-new user and register it for the
+        tournament in one step. Backs the public share-link registration page.
+
+        Raises:
+            AccountExistsError: the email already belongs to a platform account
+            ValueError: tournament missing/closed, already registered, or the
+                player's DUPR rating is outside the tournament's range
+        """
+        email = payload.email.lower()
+        doc = self.pb_tournament_store.get_tournament_details(payload.tournament_id)
+        if not doc:
+            raise ValueError(f"Tournament with ID {payload.tournament_id} not found")
+        if (doc.get("tournament_status") or "pending") != "pending":
+            raise ValueError("Registration is closed for this tournament")
+
+        if email in self._registered_emails(doc.get("registrations") or []):
+            raise ValueError("You are already registered for this tournament")
+
+        # Check the DUPR gate before creating anything, so a rejected registrant
+        # isn't left with a dangling account.
+        dupr_error = self._dupr_error(payload.dupr_rating, doc, "Your")
+        if dupr_error:
+            raise ValueError(dupr_error)
+
+        if PBPlayerStore().find_player_by_email(email):
+            raise AccountExistsError(
+                "An account with this email already exists. Please sign in to register."
+            )
+
+        from app.services.pb_player_service import PBPlayerService
+
+        PBPlayerService(PBPlayerStore()).register_player(
+            PlayerSignup(
+                firstName=payload.firstName,
+                lastName=payload.lastName,
+                email=email,
+                password=payload.password,
+                dupr_rating=payload.dupr_rating,
+            )
+        )
+
+        self.register(
+            payload.tournament_id,
+            TournamentRegistrationPayload(
+                tournament_id=payload.tournament_id,
+                email=email,
+                partner_email=payload.partner_email,
+                partner_invite_name=payload.partner_invite_name,
+                partner_invite_email=payload.partner_invite_email,
+                needs_partner=payload.needs_partner,
+            ),
+            email,
+        )
+
+        # Hand back a session so the new user lands logged in on the tournament page.
+        token = create_access_token(data={"sub": email, "role": "player"})
+        return {
+            "message": "Registered successfully",
+            "token": token,
+            "email": email,
+            "firstName": payload.firstName,
+            "lastName": payload.lastName,
+            "dupr_rating": payload.dupr_rating,
+            "role": "player",
+            "tournament_id": payload.tournament_id,
+        }
 
     # backwards-compatible alias used by older callers / seeders
     def register_player(self, tournament_id: str, email: str) -> None:

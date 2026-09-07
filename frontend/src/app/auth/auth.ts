@@ -131,6 +131,36 @@ export class AuthService {
     return this.currentUser()?.token;
   }
 
+  /**
+   * Adopt a session from a backend response that already carries a token
+   * (e.g. public tournament registration, which creates the account server-side).
+   */
+  adoptSession(response: {
+    id?: string;
+    firstName?: string;
+    lastName?: string;
+    userName?: string;
+    email: string;
+    dupr_rating?: number;
+    role?: 'player' | 'admin';
+    token?: string;
+  }): void {
+    const user: User = {
+      id: response.id || crypto.randomUUID(),
+      firstName: response.firstName || '',
+      lastName: response.lastName || '',
+      userName: response.userName || '',
+      email: response.email,
+      dupr_rating: response.dupr_rating || 0,
+      role: response.role || 'player',
+      token: response.token,
+    };
+    this.currentUser.set(user);
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('pickleball_user', JSON.stringify(user));
+    }
+  }
+
   isAdmin(): boolean {
     return this.currentUser()?.role === 'admin';
   }

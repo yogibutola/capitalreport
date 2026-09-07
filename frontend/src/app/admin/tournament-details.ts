@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, PLATFORM_ID, signal } from '@angular/core';
+import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TournamentService } from './tournament';
@@ -68,7 +69,23 @@ interface TournamentRegistration {
   needs_partner?: boolean;
   partner_email?: string | null;
   partner_name?: string | null;
+  partner_dupr?: number | null;
   partner_registered?: boolean;
+}
+
+interface RosterPlayer {
+  name: string;
+  dupr: number | null;
+  email?: string | null;
+  note?: string;
+}
+
+interface RosterEntry {
+  key: string;
+  team_name: string;
+  dupr: number | null;
+  badge: string;
+  players: RosterPlayer[];
 }
 
 interface TournamentDetail {
@@ -91,7 +108,7 @@ interface TournamentDetail {
 @Component({
   selector: 'app-tournament-details',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, NgTemplateOutlet],
   templateUrl: './tournament-details.html',
 })
 export class TournamentDetailsComponent {
@@ -100,6 +117,7 @@ export class TournamentDetailsComponent {
   private tournamentService = inject(TournamentService);
   private confirm = inject(ConfirmService);
   private toast = inject(ToastService);
+  private platformId = inject(PLATFORM_ID);
 
   tournament = signal<TournamentDetail | null>(null);
   loading = signal(true);
@@ -113,6 +131,30 @@ export class TournamentDetailsComponent {
 
   isDoubles = computed(() => this.tournament()?.match_format === 'doubles');
   isPending = computed(() => (this.tournament()?.tournament_status ?? 'pending') === 'pending');
+
+  /** Public share link that new players use to register (embed behind a flyer image). */
+  registrationUrl = computed(() => {
+    const t = this.tournament();
+    if (!t) return '';
+    const origin = isPlatformBrowser(this.platformId) ? window.location.origin : '';
+    return `${origin}/register-tournament/${t.tournament_id}`;
+  });
+
+  /** Ready-to-paste HTML: wrap a flyer image in the registration link. */
+  embedSnippet = computed(
+    () => `<a href="${this.registrationUrl()}"><img src="tournament-flyer.png" alt="Register"></a>`
+  );
+
+  copyText(value: string, label: string) {
+    if (!isPlatformBrowser(this.platformId) || !navigator.clipboard) {
+      this.toast.error('Copy isn’t available here — select the text manually.');
+      return;
+    }
+    navigator.clipboard
+      .writeText(value)
+      .then(() => this.toast.success(`${label} copied to clipboard.`))
+      .catch(() => this.toast.error('Could not copy — select the text manually.'));
+  }
 
   /** Matches whose participants are known but whose score hasn't been entered. */
   pendingResultCount = computed(() => {
@@ -139,6 +181,62 @@ export class TournamentDetailsComponent {
   formedTeams = computed(() =>
     (this.tournament()?.registrations ?? []).filter((r) => r.partner_email)
   );
+
+  /** Doubles roster: seeded teams once the draw is done, otherwise the
+   *  teams-in-formation derived from each registration's partner choice. */
+  doublesEntries = computed<RosterEntry[]>(() => {
+    const t = this.tournament();
+    if (!t || !this.isDoubles()) return [];
+
+    if (t.teams?.length) {
+      return t.teams.map((tm, i) => ({
+        key: tm.team_id ?? `t${i}`,
+        team_name: tm.team_name,
+        dupr: tm.dupr_rating ?? null,
+        badge: tm.formed_by === 'auto' ? 'auto-paired' : '',
+        players: [
+          { name: tm.player_one_name, dupr: null },
+          ...(tm.player_two_name ? [{ name: tm.player_two_name, dupr: null }] : []),
+        ],
+      }));
+    }
+
+    return (t.registrations ?? []).map((r, i) => {
+      const players: RosterPlayer[] = [
+        { name: `${r.firstName} ${r.lastName}`.trim(), dupr: r.dupr_rating ?? null, email: r.email },
+      ];
+      let badge: string;
+      if (r.partner_email) {
+        players.push({
+          name: r.partner_name || r.partner_email,
+          dupr: r.partner_dupr ?? null,
+          email: r.partner_email,
+          note: r.partner_registered ? undefined : 'invited — not registered yet',
+        });
+        badge = r.partner_registered ? '' : 'partner invited';
+      } else {
+        badge = 'looking for a partner';
+      }
+      return {
+        key: r.email || `r${i}`,
+        team_name: players.map((p) => p.name).join(' / '),
+        dupr: null,
+        badge,
+        players,
+      };
+    });
+  });
+
+  /** Singles roster: one row per registered player. */
+  registeredPlayers = computed<RosterPlayer[]>(() => {
+    const t = this.tournament();
+    if (!t || this.isDoubles()) return [];
+    return (t.registrations ?? []).map((r) => ({
+      name: `${r.firstName} ${r.lastName}`.trim(),
+      dupr: r.dupr_rating ?? null,
+      email: r.email,
+    }));
+  });
   soloNames = computed(() =>
     this.soloRegistrations()
       .map((r) => `${r.firstName} ${r.lastName}`.trim())

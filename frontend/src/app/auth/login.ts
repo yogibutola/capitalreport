@@ -1,6 +1,6 @@
 import { Component, inject, NgZone, signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from './auth';
 import { FORM_ERROR_UI, ParsedHttpError } from '../shared/form-error-ui';
@@ -15,7 +15,14 @@ import { FORM_ERROR_UI, ParsedHttpError } from '../shared/form-error-ui';
 export class LoginComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private zone = inject(NgZone);
+
+  /** Where to land after a successful sign-in — only same-origin paths. */
+  private redirectTarget(): string {
+    const raw = this.route.snapshot.queryParamMap.get('redirect');
+    return raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : '/league';
+  }
 
   email = '';
   password = '';
@@ -47,7 +54,7 @@ export class LoginComponent {
           );
           return;
         }
-        this.router.navigate(['/league']);
+        this.router.navigateByUrl(this.redirectTarget());
       },
       error: (err: ParsedHttpError) => {
         this.zone.run(() => {

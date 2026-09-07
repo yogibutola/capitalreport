@@ -1,0 +1,177 @@
+<div class="reg-page">
+  <div class="reg-shell">
+
+    @if (loading()) {
+    <div class="card"><p style="margin: 0; color: var(--color-text-muted);">Loading tournament…</p></div>
+    } @else if (loadError()) {
+    <div class="card">
+      <app-form-banner [message]="loadError()" />
+      <a routerLink="/" class="btn btn-secondary" style="margin-top: var(--space-md);">Go to home</a>
+    </div>
+    } @else if (tournament(); as t) {
+
+    <!-- Tournament summary -->
+    <div class="card reg-hero">
+      <span class="reg-eyebrow">Tournament registration</span>
+      <h1 class="text-gradient" style="margin: var(--space-xs) 0 var(--space-sm);">{{ t.tournament_name }}</h1>
+      <p class="reg-meta">
+        <span style="text-transform: capitalize;">{{ t.match_format || 'doubles' }}</span>
+        @if (duprRange()) { · DUPR {{ duprRange() }} }
+        @if (t.tournament_start_date) { · 📅 {{ formatDate(t.tournament_start_date) }}
+          @if (t.tournament_end_date) { – {{ formatDate(t.tournament_end_date) }} }
+        }
+        @if (t.club_name) { · 🏛️ {{ t.club_name }} }
+        @if (t.location) { · 📍 {{ t.location }} }
+      </p>
+      @if (t.tournament_description) {
+      <p style="margin: var(--space-sm) 0 0; color: var(--color-text-muted);">{{ t.tournament_description }}</p>
+      }
+    </div>
+
+    @if (done()) {
+    <!-- Success -->
+    <div class="card reg-success">
+      <div class="reg-check">✓</div>
+      <h2 style="margin: 0 0 var(--space-xs);">You're registered!</h2>
+      <p style="color: var(--color-text-muted); margin: 0 0 var(--space-md);">
+        We've created your account and added you to <strong>{{ t.tournament_name }}</strong>.
+        @if (isDoubles() && partnerChoice() === 'looking') {
+        You'll be paired with a partner when the organiser generates the draw.
+        }
+      </p>
+      <button class="btn" (click)="goToTournament()">View tournament</button>
+    </div>
+    } @else if (isClosed()) {
+    <div class="card">
+      <app-form-banner message="Registration is closed for this tournament." />
+      <p style="color: var(--color-text-muted); margin: var(--space-sm) 0 0;">
+        The organiser has already generated the draw. Get in touch with them if you think this is a mistake.
+      </p>
+    </div>
+    } @else {
+
+    <!-- Registration form -->
+    <div class="card">
+      <h2 style="margin: 0 0 var(--space-xs);">Create your account &amp; register</h2>
+      <p style="color: var(--color-text-muted); margin: 0 0 var(--space-lg); font-size: 0.9rem;">
+        Already have an account?
+        <a [routerLink]="['/login']" [queryParams]="{ redirect: '/register-tournament/' + tournamentId }"
+          class="reg-link">Sign in to register</a>.
+      </p>
+
+      <form #f="ngForm" (ngSubmit)="submit(f)" (input)="clearServerErrors()" novalidate>
+        <app-form-banner [message]="formError()" />
+
+        @if (accountExists()) {
+        <p style="margin: 0 0 var(--space-md);">
+          <a [routerLink]="['/login']" [queryParams]="{ redirect: '/register-tournament/' + tournamentId }"
+            class="btn btn-secondary">Sign in and register</a>
+        </p>
+        }
+
+        <div class="reg-grid-2">
+          <div class="form-group">
+            <label for="r-first">First name</label>
+            <input id="r-first" type="text" class="input-field" name="firstName" required
+              [(ngModel)]="firstName" #firstCtrl="ngModel" placeholder="First name"
+              [appInvalid]="firstCtrl" [appInvalidServer]="fieldErrors()['firstName']"
+              [appInvalidForce]="submitAttempted()" />
+            <app-field-error label="First name" [control]="firstCtrl"
+              [serverError]="fieldErrors()['firstName']" [forceShow]="submitAttempted()" />
+          </div>
+          <div class="form-group">
+            <label for="r-last">Last name</label>
+            <input id="r-last" type="text" class="input-field" name="lastName" required
+              [(ngModel)]="lastName" #lastCtrl="ngModel" placeholder="Last name"
+              [appInvalid]="lastCtrl" [appInvalidServer]="fieldErrors()['lastName']"
+              [appInvalidForce]="submitAttempted()" />
+            <app-field-error label="Last name" [control]="lastCtrl"
+              [serverError]="fieldErrors()['lastName']" [forceShow]="submitAttempted()" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="r-email">Email</label>
+          <input id="r-email" type="email" class="input-field" name="email" required email
+            [(ngModel)]="email" #emailCtrl="ngModel" placeholder="you@example.com"
+            [appInvalid]="emailCtrl" [appInvalidServer]="fieldErrors()['email']"
+            [appInvalidForce]="submitAttempted()" />
+          <app-field-error label="Email" [control]="emailCtrl"
+            [serverError]="fieldErrors()['email']" [forceShow]="submitAttempted()" />
+        </div>
+
+        <div class="form-group">
+          <label for="r-pass">Password</label>
+          <input id="r-pass" type="password" class="input-field" name="password" required maxlength="72"
+            [(ngModel)]="password" #passCtrl="ngModel" placeholder="Create a password"
+            (focus)="passwordFocus = true" (blur)="passwordFocus = false"
+            [appInvalid]="passCtrl"
+            [appInvalidServer]="fieldErrors()['password'] || (submitAttempted() && !isPasswordValid ? ' ' : null)"
+            [appInvalidForce]="submitAttempted()" />
+          @if (password || passwordFocus) {
+          <div class="reg-checklist">
+            <div [class.ok]="hasMinLength"><span>{{ hasMinLength ? '✓' : '○' }}</span> At least 8 characters</div>
+            <div [class.ok]="hasUpperCase"><span>{{ hasUpperCase ? '✓' : '○' }}</span> One uppercase letter</div>
+            <div [class.ok]="hasNumber"><span>{{ hasNumber ? '✓' : '○' }}</span> One number</div>
+            <div [class.ok]="hasSpecialChar"><span>{{ hasSpecialChar ? '✓' : '○' }}</span> One special character (&#64; # $)</div>
+          </div>
+          }
+          <app-field-error label="Password" [control]="passCtrl"
+            [serverError]="fieldErrors()['password']" [forceShow]="submitAttempted()" />
+        </div>
+
+        <div class="form-group">
+          <label for="r-dupr">DUPR rating</label>
+          <input id="r-dupr" type="number" class="input-field" name="dupr_rating" required step="0.01" min="0" max="8"
+            [(ngModel)]="dupr_rating" #duprCtrl="ngModel" placeholder="e.g. 3.75"
+            [appInvalid]="duprCtrl" [appInvalidServer]="fieldErrors()['dupr_rating']"
+            [appInvalidForce]="submitAttempted()" />
+          <small class="input-hint">
+            @if (duprRange()) { This tournament is open to DUPR {{ duprRange() }}. }
+            @else { Your current DUPR rating (0.00 – 8.00). If you don't have one, estimate. }
+          </small>
+          <app-field-error label="DUPR rating" [control]="duprCtrl"
+            [serverError]="fieldErrors()['dupr_rating']" [forceShow]="submitAttempted()" />
+        </div>
+
+        @if (isDoubles()) {
+        <fieldset class="reg-fieldset">
+          <legend>Partner (doubles)</legend>
+          <label class="reg-radio">
+            <input type="radio" name="partnerChoice" [checked]="partnerChoice() === 'looking'"
+              (change)="partnerChoice.set('looking')" />
+            <span>I'll find a partner — pair me at the draw</span>
+          </label>
+          <label class="reg-radio">
+            <input type="radio" name="partnerChoice" [checked]="partnerChoice() === 'invite'"
+              (change)="partnerChoice.set('invite')" />
+            <span>Invite my partner by email</span>
+          </label>
+
+          @if (partnerChoice() === 'invite') {
+          <div class="reg-grid-2" style="margin-top: var(--space-sm);">
+            <div class="form-group">
+              <label for="r-pname">Partner's name</label>
+              <input id="r-pname" type="text" class="input-field" name="inviteName" [(ngModel)]="inviteName"
+                placeholder="Partner's name" />
+            </div>
+            <div class="form-group">
+              <label for="r-pemail">Partner's email</label>
+              <input id="r-pemail" type="email" class="input-field" name="inviteEmail" [(ngModel)]="inviteEmail"
+                placeholder="partner@example.com" />
+            </div>
+          </div>
+          }
+        </fieldset>
+        }
+
+        <button type="submit" class="btn" style="width: 100%; margin-top: var(--space-sm);"
+          [disabled]="submitting()">
+          {{ submitting() ? 'Registering…' : 'Register for ' + t.tournament_name }}
+        </button>
+      </form>
+    </div>
+    }
+    }
+  </div>
+</div>

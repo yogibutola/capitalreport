@@ -65,6 +65,8 @@ steps:
           $$SA_FLAG \
           --memory=2Gi \
           --cpu=2 \
+          --min-instances=1 \
+          --cpu-boost \
           --timeout=300 \
           --set-env-vars="GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${_REGION},GOOGLE_GENAI_USE_VERTEXAI=0" \
           --set-secrets="MONGO_URI=capitalreport-mongo-uri:latest,GOOGLE_API_KEY=capitalreport-google-api-key:latest,GEMINI_API_KEY=capitalreport-google-api-key:latest"
@@ -107,6 +109,8 @@ steps:
           $$SA_FLAG \
           --memory=512Mi \
           --cpu=1 \
+          --min-instances=1 \
+          --cpu-boost \
           --set-env-vars="BACKEND_URL=$$BACKEND_URL"
         gcloud run services describe ${_FRONTEND_SERVICE} --region=${_REGION} \
           --format='value(status.url)' > /workspace/frontend_url.txt

@@ -1,12 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.v1.deps import get_current_admin, get_current_player
-from app.services.pb_tournament_service import PBTournamentService
+from app.services.pb_tournament_service import AccountExistsError, PBTournamentService
 from app.store.mongo.pb_tournament_store import PBTournamentStore
 from app.vo.pb.response_model.tournament_response import TournamentResponse
 from app.vo.pb.tournament import Tournament
 from app.vo.pb.tournament_match_score_payload import TournamentMatchScorePayload
-from app.vo.pb.tournament_registration_payload import TournamentRegistrationPayload
+from app.vo.pb.tournament_registration_payload import (
+    PublicTournamentRegistrationPayload,
+    TournamentRegistrationPayload,
+)
 
 router = APIRouter(tags=["Tournament"])
 
@@ -83,6 +86,27 @@ def register_player_to_tournament(
     try:
         pb_tournament_service.register(registration.tournament_id, registration, email)
         return {"message": "Player registered successfully"}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post("/tournament/register/public", status_code=status.HTTP_201_CREATED)
+def register_new_player_to_tournament(
+    registration: PublicTournamentRegistrationPayload,
+    pb_tournament_service: PBTournamentService = Depends(get_pb_tournament_service),
+):
+    """Public registration for a brand-new user, reached from the share link
+    embedded on a tournament flyer / image.
+
+    Creates the player account and registers it for the tournament in one step,
+    returning a session token so the new player lands logged in. No auth required.
+    """
+    try:
+        return pb_tournament_service.register_public(registration)
+    except AccountExistsError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
