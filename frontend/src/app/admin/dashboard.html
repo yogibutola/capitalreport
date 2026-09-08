@@ -31,7 +31,9 @@
             <span style="font-size: 0.8rem; color: var(--color-text-muted);">Create and manage competition leagues</span>
           </div>
         </div>
+        @if (!auth.isDemo()) {
         <button class="btn" routerLink="/admin/create-league" style="white-space: nowrap;">+ New League</button>
+        }
       </div>
 
       <div class="league-list">
@@ -57,10 +59,12 @@
             </span>
             }
           </div>
+          @if (!auth.isDemo()) {
           <div (click)="$event.stopPropagation()">
             <button class="btn btn-secondary btn-danger-outline" style="padding: 4px 10px; font-size: 0.75rem;"
               (click)="deleteLeague($event, league.league_id)">Delete</button>
           </div>
+          }
         </div>
         }
         @if (leagues().length === 0) {
@@ -81,7 +85,9 @@
             <span style="font-size: 0.8rem; color: var(--color-text-muted);">Round-robin pools + knockout bracket</span>
           </div>
         </div>
+        @if (!auth.isDemo()) {
         <button class="btn" routerLink="/admin/create-tournament" style="white-space: nowrap;">+ New Tournament</button>
+        }
       </div>
 
       <div class="league-list">
@@ -107,10 +113,12 @@
             </span>
             }
           </div>
+          @if (!auth.isDemo()) {
           <div (click)="$event.stopPropagation()">
             <button class="btn btn-secondary btn-danger-outline" style="padding: 4px 10px; font-size: 0.75rem;"
               (click)="deleteTournament($event, tournament.tournament_id)">Delete</button>
           </div>
+          }
         </div>
         }
         @if (tournaments().length === 0) {

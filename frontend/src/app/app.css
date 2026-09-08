@@ -6,6 +6,40 @@
     color: HSL(var(--color-text-main));
 }
 
+/* ─── Read-only demo banner ─── */
+.demo-mode-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem 1rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(to right, #22c55e, #a855f7);
+    color: #fff;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.demo-mode-link {
+    color: #fff;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.demo-mode-exit {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.demo-mode-exit:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
 /* ─── Premium Header ─── */
 .banking-header {
     background: linear-gradient(to right, #0c3d2b 0%, #0f172a 48%, #1a0a38 100%);
@@ -123,45 +157,6 @@
     color: #475569;
 }
 
-/* Middle Search Bar */
-.header-search-bar {
-    flex: 1;
-    max-width: 480px;
-    margin: 0 var(--space-lg);
-}
-
-.search-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    width: 100%;
-}
-
-.search-icon {
-    position: absolute;
-    left: 12px;
-    color: #94a3b8;
-    pointer-events: none;
-}
-
-.search-input {
-    width: 100%;
-    padding: 8px 16px 8px 38px;
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    font-family: 'Manrope', sans-serif;
-    color: #1e293b;
-    outline: none;
-    transition: all var(--transition-fast);
-}
-
-.search-input:focus {
-    border-color: #1b49c2;
-    box-shadow: 0 0 0 3px rgba(27, 73, 194, 0.15);
-}
-
 /* Top Utilities: Services, Icons, Initials Avatar */
 .header-utilities {
     display: flex;
@@ -186,17 +181,6 @@
 .icon-utility-btn:hover {
     color: #ffffff;
     background-color: rgba(255, 255, 255, 0.08);
-}
-
-.notification-indicator {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    width: 7px;
-    height: 7px;
-    background: #a855f7;
-    border-radius: 50%;
-    box-shadow: 0 0 6px rgba(168, 85, 247, 0.8);
 }
 
 .user-profile-menu {
@@ -280,21 +264,6 @@
 
 .nav-tab-link.active::after {
     transform: scaleX(1);
-}
-
-.quick-theme-switch {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #cbd5e1;
-    cursor: pointer;
-    padding: 6px 12px;
-    border-radius: 4px;
-    transition: all var(--transition-fast);
-}
-
-.quick-theme-switch:hover {
-    color: #ffffff;
-    background-color: rgba(255, 255, 255, 0.08);
 }
 
 .main-content {
@@ -464,20 +433,6 @@
 
 [data-theme="light"] .nav-tab-link::after {
     background: linear-gradient(to right, #16a34a, #7c3aed);
-}
-
-[data-theme="light"] .quick-theme-switch {
-    color: #475569;
-}
-
-[data-theme="light"] .quick-theme-switch:hover {
-    color: #7c3aed;
-    background-color: rgba(124, 58, 237, 0.07);
-}
-
-[data-theme="light"] .notification-indicator {
-    background: #a855f7;
-    box-shadow: 0 0 6px rgba(168, 85, 247, 0.6);
 }
 
 /* ─── Light Mode Fixes ─── */

@@ -25,7 +25,7 @@ export class App {
   private http = inject(HttpClient);
   protected playerService = inject(PlayerService);
 
-  protected readonly title = signal('The League');
+  protected readonly title = signal('StackedPaddle');
   currentUser = this.authService.currentUser;
 
   // AI-generated pickleball quote shown in the header, refreshed on each login.
@@ -42,6 +42,7 @@ export class App {
   );
 
   isAdmin = () => this.currentUser()?.role === 'admin';
+  isDemo = () => this.currentUser()?.demo === true;
 
   private lastQuotedUser: string | null = null;
 
@@ -72,10 +73,6 @@ export class App {
       next: res => this.pickleballQuote.set(res.quote),
       error: () => this.pickleballQuote.set('')
     });
-  }
-
-  toggleTheme() {
-    this.themeService.toggleTheme();
   }
 
   selectLeague(leagueId: string) {

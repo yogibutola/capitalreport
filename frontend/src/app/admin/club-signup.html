@@ -18,7 +18,7 @@
             <div class="form-group">
                 <label for="field-clubName">Club Name</label>
                 <input id="field-clubName" type="text" [(ngModel)]="clubName" name="clubName" #clubNameCtrl="ngModel"
-                    class="input-field" placeholder="e.g. The League Pro Club" required aria-describedby="err-clubName"
+                    class="input-field" placeholder="e.g. StackedPaddle Pro Club" required aria-describedby="err-clubName"
                     [appInvalid]="clubNameCtrl" [appInvalidServer]="fieldErrors()['clubName']"
                     [appInvalidForce]="submitAttempted()">
                 <app-field-error id="err-clubName" label="Club name" [control]="clubNameCtrl"

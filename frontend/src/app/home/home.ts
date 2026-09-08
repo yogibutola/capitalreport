@@ -1,12 +1,12 @@
-import { Component, inject, computed, signal, effect } from '@angular/core';
+import { Component, inject, computed, effect, signal } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { ThemeService } from '../theme.service';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { PlayerService, UpcomingMatch } from '../player/player';
 import { AuthService } from '../auth/auth';
 import { GroupsService, GroupEvent } from '../groups/groups.service';
+import { ToastService } from '../shared/toast.service';
+import { parseHttpError } from '../shared/http-error';
 
 interface UpcomingGroupEvent {
     groupId: string;
@@ -14,20 +14,10 @@ interface UpcomingGroupEvent {
     event: GroupEvent;
 }
 
-interface PlayerResult {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    dupr_rating: number;
-    role: string;
-    leagues: { league_name: string }[];
-}
-
 @Component({
     selector: 'app-home',
     standalone: true,
-    imports: [RouterLink, CommonModule, FormsModule],
+    imports: [RouterLink, CommonModule],
     templateUrl: './home.html',
     styleUrl: './home.css'
 })
@@ -36,10 +26,13 @@ export class HomeComponent {
     private themeService = inject(ThemeService);
     private playerService = inject(PlayerService);
     private router = inject(Router);
-    private http = inject(HttpClient);
     private groupsService = inject(GroupsService);
+    private toast = inject(ToastService);
     authService = inject(AuthService);
     currentTheme = this.themeService.theme;
+
+    /** Which demo (if any) is currently signing in — disables both buttons. */
+    demoLoading = signal<'admin' | 'player' | null>(null);
 
     constructor() {
         effect(() => {
@@ -47,69 +40,6 @@ export class HomeComponent {
                 this.groupsService.loadGroupsForCurrentUser();
             }
         });
-    }
-
-    // Player search state
-    searchFirstName = '';
-    searchLastName = '';
-    searchResults = signal<PlayerResult[]>([]);
-    allPlayers = signal<PlayerResult[]>([]);
-    isSearching = signal(false);
-    searchError = signal<string | null>(null);
-    hasSearched = signal(false);
-
-    searchPlayers(): void {
-        const first = this.searchFirstName.trim().toLowerCase();
-        const last = this.searchLastName.trim().toLowerCase();
-        if (!first && !last) {
-            this.searchError.set('Enter a first or last name to search.');
-            this.hasSearched.set(false);
-            return;
-        }
-
-        this.isSearching.set(true);
-        this.searchError.set(null);
-        this.hasSearched.set(true);
-
-        if (this.allPlayers().length > 0) {
-            this.filterPlayers(first, last);
-            this.isSearching.set(false);
-            return;
-        }
-
-        this.http.get<PlayerResult[]>('api/v1/players').subscribe({
-            next: (players) => {
-                this.allPlayers.set(players);
-                this.filterPlayers(first, last);
-                this.isSearching.set(false);
-            },
-            error: () => {
-                this.searchError.set("We couldn't load the player list just now. Please try again in a moment.");
-                this.isSearching.set(false);
-            }
-        });
-    }
-
-    private filterPlayers(first: string, last: string): void {
-        const filtered = this.allPlayers().filter(p => {
-            const firstMatch = !first || p.firstName.toLowerCase().includes(first);
-            const lastMatch = !last || p.lastName.toLowerCase().includes(last);
-            return firstMatch && lastMatch;
-        });
-        this.searchResults.set(filtered);
-    }
-
-    clearSearch(): void {
-        this.searchFirstName = '';
-        this.searchLastName = '';
-        this.searchResults.set([]);
-        this.hasSearched.set(false);
-        this.searchError.set(null);
-    }
-
-    onSearchInput(): void {
-        // Clear the "enter a name" prompt as soon as the user starts typing.
-        if (this.searchError()) this.searchError.set(null);
     }
 
     nextMatch = computed<UpcomingMatch | null>(() => {
@@ -185,13 +115,21 @@ export class HomeComponent {
             .join(', ');
     }
 
-    images = [
+    images: {
+        src: string;
+        alt: string;
+        title: string;
+        caption: string;
+        buttonText?: string;
+        link?: string;
+        demo?: boolean;
+    }[] = [
         {
             src: '/assets/images/pickleball_group_high_five_1767668502686.png',
             alt: 'Group high five',
             title: 'Manage Your League',
             caption: 'Effortless organization for clubs and groups.',
-            buttonText: 'Manage League',
+            buttonText: 'Manage Club',
             link: '/admin/login'
         },
         {
@@ -206,11 +144,33 @@ export class HomeComponent {
             src: '/assets/images/pickleball_game_action_1767668476539.png',
             alt: 'Action shot of a doubles game',
             title: 'See It in Action',
-            caption: 'Experience the power of automated slotting.',
-            buttonText: 'Demo',
-            link: '/signup'
+            caption: 'Jump into a live, read-only demo — no sign-up needed.',
+            demo: true
         }
     ];
+
+    startAdminDemo() {
+        this.startDemo('admin', '/admin');
+    }
+
+    startPlayerDemo() {
+        this.startDemo('player', '/player');
+    }
+
+    private startDemo(persona: 'admin' | 'player', target: string) {
+        if (this.demoLoading()) return;
+        this.demoLoading.set(persona);
+        this.authService.demoSignin(persona).subscribe({
+            next: () => {
+                this.demoLoading.set(null);
+                this.router.navigateByUrl(target);
+            },
+            error: (err) => {
+                this.demoLoading.set(null);
+                this.toast.error(parseHttpError(err).message);
+            }
+        });
+    }
 
     currentSlide = 0;
 

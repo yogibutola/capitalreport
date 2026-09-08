@@ -1,0 +1,1 @@
+All requests are rewritten to the capitalreport-frontend Cloud Run service (see ../firebase.json).

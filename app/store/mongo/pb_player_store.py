@@ -45,9 +45,14 @@ class PBPlayerStore:
         return player_data
 
     def get_all_players(self) -> list[dict]:
-        """Fetch all players from the database"""
+        """Fetch all non-admin players from the database.
+
+        Club (admin) accounts live in the same collection as players, tagged
+        ``role="admin"``. They are not players and must never appear in player
+        lists / pickers. ``$ne`` also matches legacy docs with no ``role``.
+        """
         collection = self.get_players_collection()
-        players = list(collection.find())
+        players = list(collection.find({"role": {"$ne": "admin"}}))
         for player in players:
             player["_id"] = str(player["_id"])
         return players

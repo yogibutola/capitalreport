@@ -1,0 +1,7 @@
+/* Distinguish the Club Admin (League Manager) login card from the player sign-in,
+   using the app's primary brand-accent color so it stays on-theme in light and dark. */
+.admin-card {
+  background-color: HSL(var(--color-primary) / 0.06);
+  border-color: HSL(var(--color-primary) / 0.35);
+  border-top: 4px solid HSL(var(--color-primary));
+}

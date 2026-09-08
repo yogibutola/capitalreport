@@ -3,6 +3,7 @@ import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TournamentService } from './tournament';
+import { AuthService } from '../auth/auth';
 import { ConfirmService } from '../shared/confirm.service';
 import { ToastService } from '../shared/toast.service';
 import { parseHttpError } from '../shared/http-error';
@@ -115,6 +116,7 @@ export class TournamentDetailsComponent {
   private http = inject(HttpClient);
   private route = inject(ActivatedRoute);
   private tournamentService = inject(TournamentService);
+  auth = inject(AuthService);
   private confirm = inject(ConfirmService);
   private toast = inject(ToastService);
   private platformId = inject(PLATFORM_ID);

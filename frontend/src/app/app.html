@@ -1,7 +1,15 @@
 <div class="noise-overlay"></div>
 <div class="app-container">
+  @if (isDemo()) {
+  <div class="demo-mode-banner" role="status">
+    <span>You're exploring a <strong>read-only demo</strong> — changes are disabled.</span>
+    <a class="demo-mode-link" routerLink="/admin/signup">Set up your own club</a>
+    <button type="button" class="demo-mode-exit" (click)="logout()">Exit demo</button>
+  </div>
+  }
+
   <header class="global-header banking-header" *ngIf="currentUser() && !isLandingPage()">
-    <!-- Top row: Logo, Search, and Action Utilities -->
+    <!-- Top row: Logo and Action Utilities -->
     <div class="header-top-row">
       <div class="header-brand-logo" routerLink="/league">
         <span class="logo-box">
@@ -12,8 +20,8 @@
             <path d="M12 2c0 0 4 4 4 10s-4 10-4 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
             <line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="1.5" />
           </svg>
-          <span class="logo-dink">THE</span>
-          <span class="logo-league">LEAGUE</span>
+          <span class="logo-dink">STACKED</span>
+          <span class="logo-league">PADDLE</span>
         </span>
       </div>
 
@@ -26,27 +34,7 @@
         }
       </div>
 
-      <div class="header-search-bar">
-        <div class="search-wrapper">
-          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input type="text" placeholder="Search leagues, matches, players, etc." class="search-input">
-        </div>
-      </div>
-
       <div class="header-utilities">
-        <button class="icon-utility-btn" aria-label="Notifications">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-          </svg>
-          <span class="notification-indicator"></span>
-        </button>
-
         <button class="icon-utility-btn" (click)="logout()" aria-label="Sign Out">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
@@ -83,11 +71,6 @@
         <a class="nav-tab-link" routerLink="/profile" routerLinkActive="active">Club Profile</a>
         }
       </nav>
-
-      <div class="quick-theme-switch" (click)="toggleTheme()">
-        <span *ngIf="currentTheme() === 'dark'">☀️ Light Style</span>
-        <span *ngIf="currentTheme() === 'light'">🌙 Dark Style</span>
-      </div>
     </div>
   </header>
 

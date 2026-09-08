@@ -18,7 +18,7 @@ import { parseHttpError } from '../shared/http-error';
 export class PlayerTournamentsComponent implements OnInit {
   private tournamentService = inject(TournamentService);
   private leagueService = inject(LeagueService);
-  private auth = inject(AuthService);
+  auth = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toast = inject(ToastService);

@@ -26,6 +26,14 @@ logger = logging.getLogger(__name__)
 
 RESET_TOKEN_EXPIRE_MINUTES = 30
 
+# Fixed accounts created by seed_demo.py. The "Demo" buttons on the home page
+# sign visitors straight into these; demo tokens carry a "demo" claim and are
+# rejected by app.api.v1.deps for any non-GET request.
+DEMO_ACCOUNTS = {
+    "admin": "demo.club@stackedpaddle.com",
+    "player": "demo.player@stackedpaddle.com",
+}
+
 
 class PBPlayerService:
     """Service for managing player operations"""
@@ -87,6 +95,52 @@ class PBPlayerService:
             leagues=player_data.get('leagues', [])
         )
 
+
+    def demo_signin(self, persona: str) -> PlayerResponse:
+        """
+        Sign in to a pre-seeded, read-only demo account (no password).
+
+        Args:
+            persona: "admin" or "player" - selects which demo account to enter.
+
+        Returns:
+            PlayerResponse: demo account data with a token that carries a
+            "demo" claim (write requests using it are rejected with 403).
+
+        Raises:
+            HTTPException 404: If this environment has not been seeded (run seed_demo.py).
+        """
+        email = DEMO_ACCOUNTS.get(persona)
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Unknown demo persona",
+            )
+
+        player_data = self.pb_player_store.find_player_by_email(email)
+        if not player_data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="The demo is not available right now. Please try again later.",
+            )
+
+        role = player_data.get('role', 'player')
+        access_token = create_access_token(
+            data={"sub": player_data['email'], "role": role, "demo": True}
+        )
+
+        return PlayerResponse(
+            id=str(player_data.get('_id')),
+            firstName=player_data['firstName'],
+            lastName=player_data['lastName'],
+            email=player_data['email'],
+            dupr_rating=player_data.get('dupr_rating') or 0.0,
+            role=role,
+            token=access_token,
+            clubName=player_data.get('clubName'),
+            leagues=player_data.get('leagues', []),
+            is_demo=True,
+        )
 
     def change_password(self, email: str, req: ChangePasswordRequest) -> None:
         """

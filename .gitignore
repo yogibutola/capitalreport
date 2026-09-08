@@ -13,6 +13,11 @@ __pycache__/
 # Environment files
 .env
 
+# Firebase
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+
 # Package distribution and uploads
 dist/
 .egg-info/

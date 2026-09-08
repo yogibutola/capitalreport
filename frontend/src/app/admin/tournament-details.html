@@ -139,9 +139,11 @@
             <ng-container [ngTemplateOutlet]="rosterDetails" />
         </div>
 
+        @if (!auth.isDemo()) {
         <button class="btn" style="margin-top: var(--space-sm);" [disabled]="drawing()" (click)="generateDraw()">
             {{ drawing() ? 'Generating…' : 'Close registration & generate draw' }}
         </button>
+        }
     </div>
     }
 
@@ -202,10 +204,12 @@
                 <span class="rr-dash">–</span>
                 <input #b class="score-input" type="number" min="0" inputmode="numeric" [value]="m.score_two" />
                 <span class="rr-name rr-name-right">{{ m.participant_two_name }}</span>
+                @if (!auth.isDemo()) {
                 <button class="btn btn-secondary rr-save" [disabled]="savingMatch() === m.match_id"
                     (click)="saveScore(m, 'pool', a.value, b.value)">
                     {{ savingMatch() === m.match_id ? '…' : (isDone(m) ? 'Update' : 'Save') }}
                 </button>
+                }
             </div>
             }
         </div>
@@ -225,10 +229,12 @@
                 <span class="rr-dash">–</span>
                 <input #k2 class="score-input" type="number" min="0" inputmode="numeric" [value]="m.score_two" />
                 <span class="rr-name rr-name-right">{{ m.participant_two_name }}</span>
+                @if (!auth.isDemo()) {
                 <button class="btn btn-secondary rr-save" [disabled]="savingMatch() === m.match_id"
                     (click)="saveScore(m, 'knockout', k1.value, k2.value)">
                     {{ savingMatch() === m.match_id ? '…' : (isDone(m) ? 'Update' : 'Save') }}
                 </button>
+                }
                 } @else {
                 <span class="rr-name">{{ m.participant_one_name || m.slot_one_label }}</span>
                 <span class="rr-dash">vs</span>

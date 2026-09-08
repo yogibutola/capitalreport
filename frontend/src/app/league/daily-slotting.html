@@ -11,9 +11,11 @@
             </div>
         </div>
         <div class="flex-center gap-md">
+            @if (!auth.isDemo()) {
             <button class="btn btn-primary" [disabled]="!canSlotNextRound()" (click)="slotNextRound()">
                 Slot Round {{ nextRoundId() }}
             </button>
+            }
             <a routerLink="/admin" class="btn btn-secondary">Back to Admin</a>
         </div>
     </div>

@@ -28,9 +28,11 @@
       <button class="nav-pill-btn" [class.active]="activeSection() === 'stats'" (click)="setActiveSection('stats')">
         📊 Standings
       </button>
+      @if (!authService.isDemo()) {
       <button class="nav-pill-btn" [class.active]="activeSection() === 'league-details'" (click)="setActiveSection('league-details')">
         🚪 Withdraw
       </button>
+      }
     </nav>
 
     @if (leagues().length > 1) {
@@ -133,6 +135,7 @@
 
           <div class="match-footer">
             <span class="league-tag">{{ match.leagueName }}</span>
+            @if (!authService.isDemo()) {
             <div class="score-actions" (click)="$event.stopPropagation()">
               @if (editingMatchId() !== match.id) {
                 <button class="btn btn-secondary btn-xs" (click)="setEditingMatch(match.id); $event.stopPropagation()">Score</button>
@@ -143,6 +146,7 @@
                 </div>
               }
             </div>
+            }
           </div>
 
           @if (editingMatchId() === match.id && scoreError()) {

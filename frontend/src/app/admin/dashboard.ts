@@ -2,6 +2,7 @@ import { Component, inject, computed, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AdminService } from './admin';
 import { TournamentService } from './tournament';
+import { AuthService } from '../auth/auth';
 import { ToastService } from '../shared/toast.service';
 import { ConfirmService } from '../shared/confirm.service';
 import { parseHttpError } from '../shared/http-error';
@@ -16,6 +17,7 @@ import { parseHttpError } from '../shared/http-error';
 export class DashboardComponent implements OnInit {
   adminService = inject(AdminService);
   tournamentService = inject(TournamentService);
+  auth = inject(AuthService);
   private toast = inject(ToastService);
   private confirm = inject(ConfirmService);
   leagues = this.adminService.leagues;

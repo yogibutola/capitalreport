@@ -32,10 +32,12 @@
                 </div>
                 <div class="match-footer" style="margin-top: var(--space-md);">
                     <span class="view-details">View Details →</span>
+                    @if (!auth.isDemo()) {
                     <button class="btn btn-secondary btn-xs" style="color: var(--color-error, #e74c3c); border-color: var(--color-error, #e74c3c);"
                             (click)="$event.stopPropagation(); unregister(league.id, league.name)">
                         Unregister
                     </button>
+                    }
                 </div>
             </div>
             }
@@ -83,7 +85,9 @@
                         <td>{{ formatDate(league.startDate) }}</td>
                         <td>{{ formatDate(league.endDate) }}</td>
                         <td>
+                            @if (!auth.isDemo()) {
                             <button class="btn btn-primary" (click)="register(league.id)">Register</button>
+                            }
                         </td>
                     </tr>
                     }

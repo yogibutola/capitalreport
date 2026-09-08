@@ -20,6 +20,8 @@ export interface User {
   phone?: string | null;
   role?: 'player' | 'admin';
   token?: string;
+  /** True for a read-only demo session started from the home page. */
+  demo?: boolean;
 }
 
 export interface Profile {
@@ -144,6 +146,7 @@ export class AuthService {
     dupr_rating?: number;
     role?: 'player' | 'admin';
     token?: string;
+    is_demo?: boolean;
   }): void {
     const user: User = {
       id: response.id || crypto.randomUUID(),
@@ -154,6 +157,7 @@ export class AuthService {
       dupr_rating: response.dupr_rating || 0,
       role: response.role || 'player',
       token: response.token,
+      demo: response.is_demo === true,
     };
     this.currentUser.set(user);
     if (isPlatformBrowser(this.platformId)) {
@@ -161,8 +165,25 @@ export class AuthService {
     }
   }
 
+  /**
+   * One-click sign-in to a pre-seeded, read-only demo account. The returned
+   * token carries a "demo" claim, so the backend rejects any write made with it.
+   */
+  demoSignin(persona: 'admin' | 'player'): Observable<boolean> {
+    return this.http.post<any>('api/v1/demo-signin', { persona }).pipe(
+      tap((response) => this.adoptSession({ ...response, is_demo: true })),
+      map(() => true),
+      catchError((err) => throwError(() => parseHttpError(err)))
+    );
+  }
+
   isAdmin(): boolean {
     return this.currentUser()?.role === 'admin';
+  }
+
+  /** True while the visitor is in a read-only demo session. */
+  isDemo(): boolean {
+    return this.currentUser()?.demo === true;
   }
 
   // Observable-based signup that returns result for proper async handling

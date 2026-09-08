@@ -8,6 +8,7 @@ from app.vo.pb.player import (
     PlayerSignup,
     PlayerResponse,
     PlayerLogin,
+    DemoSigninRequest,
     ClubSignup,
     ChangePasswordRequest,
     ForgotPasswordRequest,
@@ -106,6 +107,35 @@ def signin_player(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to sign in: {str(e)}"
+        )
+
+
+@router.post("/demo-signin", status_code=status.HTTP_200_OK, response_model=PlayerResponse)
+def demo_signin(
+        req: DemoSigninRequest,
+        pb_player_service: PBPlayerService = Depends(get_pb_player_service)
+):
+    """
+    One-click sign-in to a pre-seeded, read-only demo account.
+
+    Reached from the "Demo" buttons on the home page. No password: returns a
+    session token that carries a "demo" claim, which the auth dependencies
+    reject for any write request.
+
+    Args:
+        req: { "persona": "admin" | "player" }
+
+    Raises:
+        HTTPException 404: If this environment has no demo data (run seed_demo.py)
+    """
+    try:
+        return pb_player_service.demo_signin(req.persona)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to start demo: {str(e)}"
         )
 
 

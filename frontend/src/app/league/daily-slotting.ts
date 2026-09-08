@@ -2,6 +2,7 @@ import { Component, computed, signal, inject, effect, Injector } from '@angular/
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { LeagueService, Player, LeagueRoundPayload, RoundItem, GroupItem, MatchItem, TeamItem, TeamMember, LeagueDetailsPayload } from './league';
 import { AdminService } from '../admin/admin';
+import { AuthService } from '../auth/auth';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
@@ -31,6 +32,7 @@ export class DailySlottingComponent {
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
   private toast = inject(ToastService);
+  auth = inject(AuthService);
 
   leagueId = signal<string | null>(null);
   league = computed(() => {

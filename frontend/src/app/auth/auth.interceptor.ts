@@ -29,6 +29,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
                         toast.error('Your session has expired. Please sign in again.');
                         router.navigate(['/login']);
                     }
+                } else if (err.status === 403 && authService.isDemo()) {
+                    // Every write is blocked in the read-only demo - make sure the
+                    // visitor always gets told why, even from screens that don't
+                    // surface the error themselves.
+                    toast.error(parsed.message);
                 } else if (parsed.kind === 'network' || parsed.kind === 'server') {
                     // System-wide failures: a global toast, per the error-handling spec.
                     toast.error(parsed.message);

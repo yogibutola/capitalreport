@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PlayerService } from './player';
+import { AuthService } from '../auth/auth';
 import { ToastService } from '../shared/toast.service';
 import { ConfirmService } from '../shared/confirm.service';
 import { parseHttpError } from '../shared/http-error';
@@ -15,6 +16,7 @@ import { parseHttpError } from '../shared/http-error';
 })
 export class PlayerLeaguesComponent implements OnInit {
     playerService = inject(PlayerService);
+    auth = inject(AuthService);
     router = inject(Router);
     route = inject(ActivatedRoute);
     private toast = inject(ToastService);

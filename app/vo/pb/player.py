@@ -93,12 +93,25 @@ class PlayerResponse(BaseModel):
     token: Optional[str] = None
     clubName: Optional[str] = None
     leagues: List[PlayerLeague] = Field(default_factory=list)
+    is_demo: bool = Field(default=False, description="True when this is a read-only demo session")
 
 
 class PlayerLogin(BaseModel):
     """Model for player login requests"""
     email: EmailStr = Field(..., description="Player's email address")
     password: str = Field(..., description="Player's password")
+
+
+class DemoSigninRequest(BaseModel):
+    """Request body for the one-click demo sign-in."""
+    persona: str = Field(..., description="Which demo account to enter: 'admin' or 'player'")
+
+    @field_validator('persona')
+    @classmethod
+    def validate_persona(cls, v: str) -> str:
+        if v not in ("admin", "player"):
+            raise ValueError("persona must be 'admin' or 'player'")
+        return v
 
 
 class ProfileResponse(BaseModel):

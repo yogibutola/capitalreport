@@ -42,10 +42,12 @@
                 </div>
                 <div class="tournament-card-footer">
                     <span class="view-details">View Details →</span>
+                    @if (!auth.isDemo()) {
                     <button class="btn btn-secondary btn-xs btn-danger-outline"
                         (click)="$event.stopPropagation(); withdraw(tournament.tournament_id, tournament.tournament_name)">
                         Withdraw
                     </button>
+                    }
                 </div>
             </div>
             }
@@ -89,7 +91,9 @@
                     <a class="view-details" [routerLink]="['/player/tournament', tournament.tournament_id]"
                         (click)="$event.stopPropagation()">View Details →</a>
                     @if (tournament.tournament_status === 'pending') {
-                    @if (registeringId() === tournament.tournament_id) {
+                    @if (auth.isDemo()) {
+                    <!-- read-only demo: registration disabled -->
+                    } @else if (registeringId() === tournament.tournament_id) {
                     <button class="btn btn-secondary btn-xs" (click)="cancelPanel()">Cancel</button>
                     } @else {
                     <button class="btn btn-primary btn-xs" (click)="startRegister(tournament)">Register</button>

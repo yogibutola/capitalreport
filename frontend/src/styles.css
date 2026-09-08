@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Chivo+Mono:wght@400;700;900&family=Manrope:wght@400;600;800&display=swap');
 
 :root {
-  /* ─── The League HDFC Banking Style Core Palette ─── */
+  /* ─── StackedPaddle HDFC Banking Style Core Palette ─── */
   /* #001233  Deep Navy Blue Brand Background */
   --color-brand-dark: 220 100% 7%;
   /* #00205b  HDFC Royal Navy Blue Primary */
@@ -12,7 +12,7 @@
   /* #eab308  Gold / Amber highlight */
   --color-brand-gold: 45 93% 47%;
   
-  /* Standard colors mapped to The League branding */
+  /* Standard colors mapped to StackedPaddle branding */
   --color-court-green: 220 100% 12%;
   --color-rally-green: 224 75% 44%;
   --color-ace-lime: 260 70% 60%;
