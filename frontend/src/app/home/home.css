@@ -3,6 +3,84 @@
     overflow-x: hidden;
 }
 
+/* Landing Header */
+.landing-header {
+    position: relative;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+    padding: var(--space-md) var(--space-xl);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.landing-brand {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 0.12em;
+    color: HSL(var(--color-text-muted));
+}
+
+.landing-brand-strong {
+    color: HSL(var(--color-text-main));
+}
+
+.landing-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+}
+
+.landing-header-btn {
+    padding: 9px 20px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    box-shadow: none;
+    transition: all var(--transition-fast);
+}
+
+.landing-header-btn:hover {
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+/* Player Sign-In — quiet outline */
+.landing-header-btn.btn-secondary {
+    border-color: HSL(var(--color-text-muted) / 0.28);
+    color: HSL(var(--color-text-main));
+    background-color: transparent;
+}
+
+.landing-header-btn.btn-secondary:hover {
+    border-color: HSL(var(--color-primary) / 0.55);
+    background-color: HSL(var(--color-primary) / 0.06);
+    color: HSL(var(--color-primary));
+    box-shadow: none;
+}
+
+/* Club Sign-In — primary, subtle depth */
+.landing-header-btn.btn:not(.btn-secondary) {
+    box-shadow: 0 1px 2px rgba(27, 73, 194, 0.18);
+}
+
+.landing-header-btn.btn:not(.btn-secondary):hover {
+    box-shadow: 0 4px 12px rgba(27, 73, 194, 0.24);
+}
+
+@media (max-width: 560px) {
+    .landing-header {
+        padding: var(--space-md) var(--space-lg);
+        justify-content: center;
+    }
+}
+
 /* Hero Section */
 .hero-section {
     position: relative;
@@ -22,18 +100,18 @@
 }
 
 .hero-title {
-    font-size: 3.5rem;
+    font-size: clamp(1.75rem, 5.5vw, 3.5rem);
     font-weight: 800;
-    line-height: 1.2;
+    line-height: 1.1;
     margin-bottom: var(--space-lg);
-    letter-spacing: -0.05em;
+    letter-spacing: 0.01em;
+    color: HSL(var(--color-text-main));
+    white-space: nowrap;
+    font-variant-caps: all-small-caps;
 }
 
-.hero-subtitle {
-    font-size: 1.25rem;
-    color: var(--color-text-muted);
-    margin-bottom: 2.5rem;
-    line-height: 1.6;
+.hero-title .text-gradient {
+    letter-spacing: inherit;
 }
 
 /* Carousel */
@@ -103,6 +181,11 @@
     font-size: 1rem;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    text-decoration: none;
+}
+
+.carousel-action-btn:hover {
+    text-decoration: none;
 }
 
 .carousel-action-btn:disabled {
@@ -705,10 +788,6 @@
 }
 
 @media (max-width: 768px) {
-    .hero-title {
-        font-size: 2.5rem;
-    }
-
     .hero-section {
         min-height: 60vh;
         padding: var(--space-lg);

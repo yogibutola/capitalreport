@@ -125,20 +125,20 @@ export class HomeComponent {
         demo?: boolean;
     }[] = [
         {
-            src: '/assets/images/pickleball_group_high_five_1767668502686.png',
-            alt: 'Group high five',
-            title: 'Manage Your League',
-            caption: 'Effortless organization for clubs and groups.',
-            buttonText: 'Manage Club',
-            link: '/admin/login'
-        },
-        {
             src: '/assets/images/pickleball_serve_moment_1767668489237.png',
             alt: 'Close up of a serve',
             title: 'Player Portal',
             caption: 'Track your stats, matches, and ratings.',
             buttonText: 'Player Sign-In',
             link: '/login'
+        },
+        {
+            src: '/assets/images/pickleball_group_high_five_1767668502686.png',
+            alt: 'Group high five',
+            title: 'Manage Your League',
+            caption: 'Effortless organization for clubs and groups.',
+            buttonText: 'Manage Club',
+            link: '/admin/login'
         },
         {
             src: '/assets/images/pickleball_game_action_1767668476539.png',
