@@ -23,6 +23,9 @@ import { ClubSignupComponent } from './admin/club-signup';
 import { HomeComponent } from './home/home';
 import { TournamentRegisterComponent } from './tournament/tournament-register';
 import { adminGuard } from './auth/admin.guard';
+import { superAdminGuard } from './auth/super-admin.guard';
+import { PlatformLoginComponent } from './platform/platform-login';
+import { PlatformConsoleComponent } from './platform/platform-console';
 import { MyGroupsComponent } from './groups/my-groups';
 
 export const routes: Routes = [
@@ -33,6 +36,10 @@ export const routes: Routes = [
     { path: 'admin/create-tournament', component: CreateTournamentComponent, canActivate: [adminGuard] },
     { path: 'admin/tournament/:tournament_id', component: TournamentDetailsComponent, canActivate: [adminGuard] },
     { path: 'admin/league/:league_id', component: LeagueDetailsComponent, canActivate: [adminGuard] },
+    // Hidden application-admin console. Path is intentionally unadvertised and
+    // not linked from any nav; superAdminGuard is the second line of defence.
+    { path: 'x9k2-console/login', component: PlatformLoginComponent },
+    { path: 'x9k2-console', component: PlatformConsoleComponent, canActivate: [superAdminGuard] },
     { path: 'login', component: LoginComponent },
     { path: 'signup', component: SignupComponent },
     { path: 'forgot-password', component: ForgotPasswordComponent },

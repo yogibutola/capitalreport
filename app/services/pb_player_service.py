@@ -20,7 +20,7 @@ from app.vo.pb.player import (
     ProfileResponse,
     ProfileUpdateRequest,
 )
-from app.utils.security import create_access_token
+from app.utils.security import create_access_token, is_superadmin_email
 
 logger = logging.getLogger(__name__)
 
@@ -73,16 +73,25 @@ class PBPlayerService:
         
         # Verify player exists and password matches
         if not player_data or not self.verify_password(login_data.password, player_data['password']):
+            self._audit_signin(login_data.email, None, 401, "Failed sign-in")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password"
             )
-        
+
+        # Emails in the SUPERADMIN_EMAILS allowlist are elevated to the platform
+        # ("superadmin") role for this session; the stored doc keeps its own role.
+        role = player_data.get('role', 'player')
+        if is_superadmin_email(player_data['email']):
+            role = 'superadmin'
+
+        self._audit_signin(player_data['email'], role, 200, "Signed in")
+
         # Generate access token
         access_token = create_access_token(
-            data={"sub": player_data['email'], "role": player_data.get('role', 'player')}
+            data={"sub": player_data['email'], "role": role}
         )
-        
+
         # Return player profile with token
         return PlayerResponse(
             id=str(player_data.get('_id')),
@@ -90,10 +99,37 @@ class PBPlayerService:
             lastName=player_data['lastName'],
             email=player_data['email'],
             dupr_rating=player_data['dupr_rating'],
-            role=player_data.get('role', 'player'),
+            role=role,
             token=access_token,
             leagues=player_data.get('leagues', [])
         )
+
+    @staticmethod
+    def _audit_signin(email: str, role: str | None, status_code: int, action: str) -> None:
+        """Record a sign-in attempt in the audit log (best-effort, never raises).
+
+        The audit middleware can't see the attempted email (the request carries no
+        token), so sign-ins are logged explicitly here - with the real actor - for
+        the platform activity feed. The middleware skips /api/v1/signin to match.
+        """
+        try:
+            from app.store.mongo.pb_audit_store import PBAuditStore
+            from datetime import datetime, timezone
+            PBAuditStore().record({
+                "ts": datetime.now(timezone.utc),
+                "actor": (email or "anonymous").lower(),
+                "actor_role": role,
+                "method": "POST",
+                "path": "/api/v1/signin",
+                "route": "/api/v1/signin",
+                "status_code": status_code,
+                "duration_ms": 0,
+                "action": action,
+                "client_ip": None,
+                "error": None if status_code < 400 else "Invalid email or password",
+            })
+        except Exception:  # pragma: no cover - audit must never break sign-in
+            logger.debug("Could not record sign-in audit entry", exc_info=True)
 
 
     def demo_signin(self, persona: str) -> PlayerResponse:
@@ -300,8 +336,11 @@ class PBPlayerService:
                 )
             updates["email"] = new_email.lower()
             # The JWT 'sub' is the email, so a change invalidates the current token.
+            token_role = player.get("role", "player")
+            if is_superadmin_email(new_email):
+                token_role = "superadmin"
             new_token = create_access_token(
-                data={"sub": new_email.lower(), "role": player.get("role", "player")}
+                data={"sub": new_email.lower(), "role": token_role}
             )
         else:
             updates.pop("email", None)

@@ -42,6 +42,7 @@ export class App {
   );
 
   isAdmin = () => this.currentUser()?.role === 'admin';
+  isSuperAdmin = () => this.currentUser()?.role === 'superadmin';
   isDemo = () => this.currentUser()?.demo === true;
 
   private lastQuotedUser: string | null = null;

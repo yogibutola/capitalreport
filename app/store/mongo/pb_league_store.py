@@ -290,3 +290,44 @@ class PBLeagueStore:
         self.logger.info(f"Successfully deleted league {league_id}. Deleted count: {result.deleted_count}")
         return result.deleted_count > 0
 
+    def get_leagues_owned_by(self, club_id: str) -> list[dict]:
+        """Full league docs owned by a club (used to unlink players on club delete)."""
+        collection = self.get_league_collection()
+        docs = list(collection.find({"club_id": club_id}))
+        for doc in docs:
+            doc["league_id"] = str(doc.get("_id"))
+        return docs
+
+    def purge_player(self, email: str) -> int:
+        """Remove a player from every league: the top-level ``players`` roster and
+        any ``rounds[].group[].players`` snapshots. Match history is left intact.
+
+        Returns the number of league documents touched.
+        """
+        email = email.lower()
+        collection = self.get_league_collection()
+
+        result = collection.update_many(
+            {"players.email": email},
+            {"$pull": {"players": {"email": email}}},
+        )
+        touched = result.modified_count
+
+        # Nested round/group rosters: read-modify-write on the affected docs only.
+        for league in collection.find({"rounds.group.players.email": email}):
+            rounds = league.get("rounds", [])
+            changed = False
+            for r in rounds:
+                for g in r.get("group", []):
+                    players = g.get("players", [])
+                    filtered = [p for p in players if p.get("email") != email]
+                    if len(filtered) != len(players):
+                        g["players"] = filtered
+                        changed = True
+            if changed:
+                collection.update_one({"_id": league["_id"]}, {"$set": {"rounds": rounds}})
+                touched += 1
+
+        self.logger.info(f"Purged player {email} from {touched} league document(s)")
+        return touched
+

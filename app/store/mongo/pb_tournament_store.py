@@ -106,3 +106,20 @@ class PBTournamentStore:
             f"Deleted tournament {tournament_id}. Deleted count: {result.deleted_count}"
         )
         return result.deleted_count > 0
+
+    def purge_player(self, email: str) -> int:
+        """Remove a player from every tournament's flat roster and registrations.
+        Teams / pools / knockout snapshots and scores are left intact.
+
+        Returns the number of tournament documents touched.
+        """
+        email = email.lower()
+        collection = self.get_tournament_collection()
+        result = collection.update_many(
+            {"$or": [{"players.email": email}, {"registrations.email": email}]},
+            {"$pull": {"players": {"email": email}, "registrations": {"email": email}}},
+        )
+        self.logger.info(
+            f"Purged player {email} from {result.modified_count} tournament document(s)"
+        )
+        return result.modified_count

@@ -23,6 +23,7 @@ substitutions:
   _BACKEND_SERVICE: capitalreport-api
   _FRONTEND_SERVICE: capitalreport-frontend
   _RUN_SA: "" # e.g. capitalreport-run@${PROJECT_ID}.iam.gserviceaccount.com — leave blank to use the default compute SA
+  _SUPERADMIN_EMAILS: "" # comma-separated emails elevated to the hidden platform-admin console (/x9k2-console)
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -68,7 +69,7 @@ steps:
           --min-instances=1 \
           --cpu-boost \
           --timeout=300 \
-          --set-env-vars="GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${_REGION},GOOGLE_GENAI_USE_VERTEXAI=0" \
+          --set-env-vars="GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${_REGION},GOOGLE_GENAI_USE_VERTEXAI=0,SUPERADMIN_EMAILS=${_SUPERADMIN_EMAILS}" \
           --set-secrets="MONGO_URI=capitalreport-mongo-uri:latest,GOOGLE_API_KEY=capitalreport-google-api-key:latest,GEMINI_API_KEY=capitalreport-google-api-key:latest"
         gcloud run services describe ${_BACKEND_SERVICE} --region=${_REGION} \
           --format='value(status.url)' > /workspace/backend_url.txt

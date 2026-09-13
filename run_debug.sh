@@ -8,6 +8,11 @@ export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/credentials.json"
 export GOOGLE_CLOUD_PROJECT="stable-smithy-270416"
 export GOOGLE_CLOUD_LOCATION="us-central1"
 
+# Comma-separated emails that are elevated to the hidden platform-admin console
+# (/x9k2-console) on sign-in. Leave unset to disable superadmin locally.
+# export SUPERADMIN_EMAILS="you@example.com"
+# export AUDIT_LOG_ENABLED="true"   # set to "false" to turn off the activity log
+
 # Check if credentials.json exists
 if [ ! -f "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
     echo "Warning: credentials.json not found at $GOOGLE_APPLICATION_CREDENTIALS"

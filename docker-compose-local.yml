@@ -16,6 +16,9 @@ services:
       - GOOGLE_CLOUD_PROJECT=stable-smithy-270416
       - GOOGLE_CLOUD_LOCATION=us-central1
       - MONGO_URI=mongodb://mongo:27017/?directConnection=true
+      # Emails elevated to the hidden platform-admin console (/x9k2-console).
+      - SUPERADMIN_EMAILS=${SUPERADMIN_EMAILS:-}
+      - AUDIT_LOG_ENABLED=${AUDIT_LOG_ENABLED:-true}
     depends_on:
       - mongo
 

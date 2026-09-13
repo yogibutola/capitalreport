@@ -57,3 +57,22 @@ def get_current_admin(
         )
     _reject_demo_writes(payload, request)
     return payload
+
+
+def get_current_superadmin(
+    request: Request,
+    payload: dict = Depends(get_current_user_payload),
+) -> dict:
+    """
+    Dependency to ensure the user is the application ("platform") admin.
+
+    The superadmin role is granted at sign-in to emails in the
+    ``SUPERADMIN_EMAILS`` allowlist - it is distinct from a club (``role="admin"``).
+    """
+    if payload.get("role") != "superadmin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Platform admin privileges required"
+        )
+    _reject_demo_writes(payload, request)
+    return payload

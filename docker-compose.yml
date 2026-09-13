@@ -12,6 +12,8 @@ services:
       - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
       - GOOGLE_CLOUD_PROJECT=stable-smithy-270416
       - GOOGLE_CLOUD_LOCATION=us-central1
+      - SUPERADMIN_EMAILS=${SUPERADMIN_EMAILS:-}
+      - AUDIT_LOG_ENABLED=${AUDIT_LOG_ENABLED:-true}
   frontend:
     build:
       context: ./frontend

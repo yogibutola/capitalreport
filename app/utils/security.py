@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from typing import Optional
 import jwt
@@ -7,6 +8,22 @@ from fastapi import HTTPException, status
 SECRET_KEY = "your-secret-key-here"  # In production, get this from environment variables
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
+
+
+def superadmin_emails() -> set[str]:
+    """Lowercased set of emails allowed to sign in as the application ("superadmin").
+
+    Source of truth is the ``SUPERADMIN_EMAILS`` env var (comma-separated). A club
+    or player account with one of these emails is elevated to ``role="superadmin"``
+    at sign-in time; the stored document keeps its original role.
+    """
+    raw = os.getenv("SUPERADMIN_EMAILS", "")
+    return {e.strip().lower() for e in raw.split(",") if e.strip()}
+
+
+def is_superadmin_email(email: Optional[str]) -> bool:
+    """True when this email is in the SUPERADMIN_EMAILS allowlist."""
+    return bool(email) and email.lower() in superadmin_emails()
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:

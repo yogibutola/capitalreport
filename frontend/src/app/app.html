@@ -8,7 +8,7 @@
   </div>
   }
 
-  <header class="global-header banking-header" *ngIf="currentUser() && !isLandingPage()">
+  <header class="global-header banking-header" *ngIf="currentUser() && !isLandingPage() && !isSuperAdmin()">
     <!-- Top row: Logo and Action Utilities -->
     <div class="header-top-row">
       <div class="header-brand-logo" routerLink="/league">
@@ -81,7 +81,7 @@
   <app-toast-host></app-toast-host>
   <app-confirm-host></app-confirm-host>
 
-  @if (currentUser() && !isLandingPage() && !isAdmin()) {
+  @if (currentUser() && !isLandingPage() && !isAdmin() && !isSuperAdmin()) {
   <nav class="mobile-bottom-nav" role="navigation" aria-label="Mobile navigation">
     <a class="mobile-nav-item" routerLink="/league" routerLinkActive="mobile-nav-item--active"
       [routerLinkActiveOptions]="{exact:true}">

@@ -58,66 +58,51 @@
         <div class="bg-blur blur-2"></div>
     </section>
 
-    <!-- Next Match Card (visible whenever logged in) -->
-    @if (authService.currentUser()) {
+    <!-- Next Match Card (visible when logged in and a next match exists) -->
+    @if (authService.currentUser() && nextMatch(); as match) {
     <section class="next-match-section fade-in-up" style="animation-delay: 0.35s;">
         <div class="next-match-card" (click)="goToPlayerDashboard()">
 
-            @if (nextMatch(); as match) {
-                <div class="nmc-label-col">
-                    <span class="nmc-badge">Next Match</span>
-                </div>
+            <div class="nmc-label-col">
+                <span class="nmc-badge">Next Match</span>
+            </div>
 
-                <div class="nmc-datetime">
-                    <span class="nmc-date">{{ formatMatchDate(match.date) }}</span>
-                    <span class="nmc-time">{{ match.time }}</span>
-                </div>
+            <div class="nmc-datetime">
+                <span class="nmc-date">{{ formatMatchDate(match.date) }}</span>
+                <span class="nmc-time">{{ match.time }}</span>
+            </div>
 
-                <div class="nmc-separator"></div>
+            <div class="nmc-separator"></div>
 
-                <div class="nmc-teams">
-                    <div class="nmc-team">
-                        <span class="nmc-team-label">My Team</span>
-                        <span class="nmc-team-name">{{ match.myTeamName || 'My Team' }}</span>
-                        @if (getTeammates(match)) {
-                        <span class="nmc-players">w/ {{ getTeammates(match) }}</span>
-                        }
-                    </div>
-                    <div class="nmc-vs">VS</div>
-                    <div class="nmc-team">
-                        <span class="nmc-team-label">Opponents</span>
-                        <span class="nmc-team-name">{{ match.opponentTeamName || 'Opponents' }}</span>
-                        @if (getOpponents(match)) {
-                        <span class="nmc-players">{{ getOpponents(match) }}</span>
-                        }
-                    </div>
-                </div>
-
-                <div class="nmc-meta">
-                    <span class="nmc-league-tag">{{ match.leagueName }}</span>
-                    @if (match.roundName || match.roundId) {
-                    <span class="nmc-info-tag">{{ match.roundName || 'Round ' + match.roundId }}</span>
-                    }
-                    @if (match.court && match.court !== 'TBD') {
-                    <span class="nmc-info-tag">Court {{ match.court }}</span>
+            <div class="nmc-teams">
+                <div class="nmc-team">
+                    <span class="nmc-team-label">My Team</span>
+                    <span class="nmc-team-name">{{ match.myTeamName || 'My Team' }}</span>
+                    @if (getTeammates(match)) {
+                    <span class="nmc-players">w/ {{ getTeammates(match) }}</span>
                     }
                 </div>
-
-                <div class="nmc-cta">View Dashboard →</div>
-            } @else {
-                <div class="nmc-label-col">
-                    <span class="nmc-badge nmc-badge-muted">My Dashboard</span>
+                <div class="nmc-vs">VS</div>
+                <div class="nmc-team">
+                    <span class="nmc-team-label">Opponents</span>
+                    <span class="nmc-team-name">{{ match.opponentTeamName || 'Opponents' }}</span>
+                    @if (getOpponents(match)) {
+                    <span class="nmc-players">{{ getOpponents(match) }}</span>
+                    }
                 </div>
+            </div>
 
-                <div class="nmc-no-match-content">
-                    <span class="nmc-no-match-title">No upcoming matches</span>
-                    <span class="nmc-no-match-sub">
-                        Welcome back, {{ authService.currentUser()!.firstName }}! Your schedule is clear — check your leagues for new rounds.
-                    </span>
-                </div>
+            <div class="nmc-meta">
+                <span class="nmc-league-tag">{{ match.leagueName }}</span>
+                @if (match.roundName || match.roundId) {
+                <span class="nmc-info-tag">{{ match.roundName || 'Round ' + match.roundId }}</span>
+                }
+                @if (match.court && match.court !== 'TBD') {
+                <span class="nmc-info-tag">Court {{ match.court }}</span>
+                }
+            </div>
 
-                <div class="nmc-cta">Go to Dashboard →</div>
-            }
+            <div class="nmc-cta">View Dashboard →</div>
 
         </div>
     </section>

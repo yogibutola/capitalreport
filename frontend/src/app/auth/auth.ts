@@ -18,7 +18,7 @@ export interface User {
   clubName?: string | null;
   address?: string | null;
   phone?: string | null;
-  role?: 'player' | 'admin';
+  role?: 'player' | 'admin' | 'superadmin';
   token?: string;
   /** True for a read-only demo session started from the home page. */
   demo?: boolean;
@@ -36,7 +36,7 @@ export interface Profile {
   clubName: string | null;
   address: string | null;
   phone: string | null;
-  role: 'player' | 'admin';
+  role: 'player' | 'admin' | 'superadmin';
   token?: string | null;
 }
 
@@ -179,6 +179,11 @@ export class AuthService {
 
   isAdmin(): boolean {
     return this.currentUser()?.role === 'admin';
+  }
+
+  /** True for the application ("platform") admin - the hidden ops console. */
+  isSuperAdmin(): boolean {
+    return this.currentUser()?.role === 'superadmin';
   }
 
   /** True while the visitor is in a read-only demo session. */

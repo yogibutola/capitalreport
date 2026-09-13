@@ -1,6 +1,6 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, PLATFORM_ID, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { DatePipe, CommonModule } from '@angular/common';
+import { DatePipe, CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../auth/auth';
 import { PlayerService } from '../player/player';
@@ -34,6 +34,7 @@ interface PlayerResult {
 export class DashboardComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private platformId = inject(PLATFORM_ID);
   private http = inject(HttpClient);
   private groupsService = inject(GroupsService);
   private matchService = inject(MatchService);
@@ -132,6 +133,13 @@ export class DashboardComponent {
 
   constructor() {
     effect(() => {
+      // No localStorage during SSR, so currentUser is always null on the
+      // server - skip the redirect there and let it re-run for real once the
+      // client boots and AuthService has restored the actual session.
+      if (!isPlatformBrowser(this.platformId)) {
+        return;
+      }
+
       const user = this.authService.currentUser();
       if (!user) {
         this.router.navigate(['/login']);

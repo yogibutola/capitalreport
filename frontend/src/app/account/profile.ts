@@ -42,7 +42,7 @@ export class AccountProfileComponent implements OnInit {
   address = '';
   phone = '';
 
-  role = signal<'player' | 'admin'>(this.auth.currentUser()?.role ?? 'player');
+  role = signal<'player' | 'admin' | 'superadmin'>(this.auth.currentUser()?.role ?? 'player');
   isClub = computed(() => this.role() === 'admin');
 
   loading = signal(true);

@@ -19,6 +19,21 @@ export function runSeeder(): string {
     return match[1];
 }
 
+/**
+ * Seeds the platform-console superadmin + a club + two players.
+ * The backend must be running with SUPERADMIN_EMAILS=platform.admin@test.com.
+ */
+export function runPlatformSeeder(): void {
+    const output = execSync(
+        '/Users/yogenderbutola/work/ai/capitalreport/.venv/bin/python ' +
+        '/Users/yogenderbutola/work/ai/capitalreport/seed_platform_admin.py',
+        { encoding: 'utf-8' }
+    );
+    console.log('[PlatformSeeder]', output.trim().split('\n').pop());
+}
+
+export const SUPERADMIN = { email: 'platform.admin@test.com', password: 'Password@123' };
+
 // ─── Auth helpers ────────────────────────────────────────────────────────────
 
 export async function adminLogin(page: Page, email: string, password: string) {
@@ -28,6 +43,15 @@ export async function adminLogin(page: Page, email: string, password: string) {
     await page.fill('input[type="password"]', password);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/admin', { timeout: 20_000 });
+}
+
+export async function platformLogin(page: Page, email: string, password: string) {
+    await page.goto('/x9k2-console/login');
+    await page.waitForLoadState('networkidle');
+    await page.fill('input[type="email"]', email);
+    await page.fill('input[type="password"]', password);
+    await page.click('button[type="submit"]');
+    await page.waitForURL('**/x9k2-console', { timeout: 20_000 });
 }
 
 export async function playerLogin(page: Page, email: string, password: string) {

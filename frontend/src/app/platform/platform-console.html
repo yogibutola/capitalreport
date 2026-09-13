@@ -1,0 +1,201 @@
+<div class="pc container">
+
+  <header class="pc-header">
+    <div>
+      <h1 class="text-gradient" style="margin:0;">Platform Console</h1>
+      <p style="color: var(--color-text-muted); margin: 4px 0 0;">Clubs, players &amp; activity across the whole system</p>
+    </div>
+    <button class="btn btn-secondary" (click)="logout()">Sign out</button>
+  </header>
+
+  @if (svc.metrics(); as m) {
+  <div class="pc-metrics">
+    <div class="pc-metric"><span class="pc-metric-n">{{ m.total_clubs }}</span><span class="pc-metric-l">Clubs</span></div>
+    <div class="pc-metric"><span class="pc-metric-n">{{ m.total_players }}</span><span class="pc-metric-l">Players</span></div>
+    <div class="pc-metric"><span class="pc-metric-n">{{ m.total_leagues }}</span><span class="pc-metric-l">Leagues</span></div>
+    <div class="pc-metric"><span class="pc-metric-n">{{ m.total_tournaments }}</span><span class="pc-metric-l">Tournaments</span></div>
+    <div class="pc-metric"><span class="pc-metric-n">{{ m.actions_24h }}</span><span class="pc-metric-l">Actions / 24h</span></div>
+    <div class="pc-metric"><span class="pc-metric-n">{{ m.active_actors_24h }}</span><span class="pc-metric-l">Active users / 24h</span></div>
+    <div class="pc-metric"><span class="pc-metric-n">{{ m.signins_7d }}</span><span class="pc-metric-l">Sign-ins / 7d</span></div>
+    <div class="pc-metric" [class.pc-metric--warn]="m.errors_24h > 0">
+      <span class="pc-metric-n">{{ m.errors_24h }}</span><span class="pc-metric-l">Errors / 24h</span>
+    </div>
+  </div>
+  }
+
+  <nav class="pc-tabs">
+    <button [class.active]="tab() === 'clubs'" (click)="setTab('clubs')">Clubs ({{ svc.clubs().length }})</button>
+    <button [class.active]="tab() === 'players'" (click)="setTab('players')">Players ({{ svc.players().length }})</button>
+    <button [class.active]="tab() === 'activity'" (click)="setTab('activity')">Activity</button>
+  </nav>
+
+  <!-- ============ CLUBS ============ -->
+  @if (tab() === 'clubs') {
+  <section class="card">
+    <div class="pc-section-head">
+      <h3 style="margin:0;">All clubs</h3>
+      <button class="btn" (click)="showClubForm.set(!showClubForm())">
+        {{ showClubForm() ? 'Cancel' : '+ Add club' }}
+      </button>
+    </div>
+
+    @if (showClubForm()) {
+    <form #cf="ngForm" (ngSubmit)="submitClub(cf)" (input)="clubFormError.set(null)" class="pc-form" novalidate>
+      <app-form-banner [message]="clubFormError()" />
+      <div class="pc-form-grid">
+        <label>Club name
+          <input class="input-field" name="clubName" [(ngModel)]="club.clubName" required>
+          <app-field-error label="Club name" [serverError]="clubFieldErrors()['clubName']" />
+        </label>
+        <label>Email
+          <input class="input-field" type="email" name="email" [(ngModel)]="club.email" required email>
+          <app-field-error label="Email" [serverError]="clubFieldErrors()['email']" />
+        </label>
+        <label>Password
+          <input class="input-field" type="password" name="password" [(ngModel)]="club.password" required minlength="8">
+          <app-field-error label="Password" [serverError]="clubFieldErrors()['password']" />
+        </label>
+        <label>Address <span class="pc-opt">(optional)</span>
+          <input class="input-field" name="address" [(ngModel)]="club.address">
+        </label>
+        <label>Phone <span class="pc-opt">(optional)</span>
+          <input class="input-field" name="phone" [(ngModel)]="club.phone">
+        </label>
+      </div>
+      <p class="pc-hint">Password needs 8+ chars, an uppercase letter, a number and one of &#64; # $.</p>
+      <button type="submit" class="btn" [disabled]="clubBusy()">{{ clubBusy() ? 'Creating…' : 'Create club' }}</button>
+    </form>
+    }
+
+    <div class="pc-table-wrap">
+      <table class="pc-table">
+        <thead>
+          <tr><th>Club</th><th>Email</th><th>Phone</th><th class="num">Leagues</th><th class="num">Tournaments</th><th></th></tr>
+        </thead>
+        <tbody>
+          @for (c of svc.clubs(); track c.id) {
+          <tr>
+            <td>{{ c.clubName || '—' }}</td>
+            <td>{{ c.email }}</td>
+            <td>{{ c.phone || '—' }}</td>
+            <td class="num">{{ c.league_count }}</td>
+            <td class="num">{{ c.tournament_count }}</td>
+            <td class="row-actions">
+              <button class="link-btn" (click)="viewActivityFor(c.email)">Activity</button>
+              <button class="link-btn danger" (click)="removeClub(c)">Remove</button>
+            </td>
+          </tr>
+          } @empty {
+          <tr><td colspan="6" class="pc-empty">No clubs yet.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+  }
+
+  <!-- ============ PLAYERS ============ -->
+  @if (tab() === 'players') {
+  <section class="card">
+    <div class="pc-section-head">
+      <h3 style="margin:0;">All players</h3>
+      <button class="btn" (click)="showPlayerForm.set(!showPlayerForm())">
+        {{ showPlayerForm() ? 'Cancel' : '+ Add player' }}
+      </button>
+    </div>
+
+    @if (showPlayerForm()) {
+    <form #pf="ngForm" (ngSubmit)="submitPlayer(pf)" (input)="playerFormError.set(null)" class="pc-form" novalidate>
+      <app-form-banner [message]="playerFormError()" />
+      <div class="pc-form-grid">
+        <label>First name
+          <input class="input-field" name="firstName" [(ngModel)]="player.firstName" required>
+          <app-field-error label="First name" [serverError]="playerFieldErrors()['firstName']" />
+        </label>
+        <label>Last name
+          <input class="input-field" name="lastName" [(ngModel)]="player.lastName" required>
+          <app-field-error label="Last name" [serverError]="playerFieldErrors()['lastName']" />
+        </label>
+        <label>Email
+          <input class="input-field" type="email" name="email" [(ngModel)]="player.email" required email>
+          <app-field-error label="Email" [serverError]="playerFieldErrors()['email']" />
+        </label>
+        <label>Password
+          <input class="input-field" type="password" name="password" [(ngModel)]="player.password" required minlength="8">
+          <app-field-error label="Password" [serverError]="playerFieldErrors()['password']" />
+        </label>
+        <label>DUPR rating
+          <input class="input-field" type="number" name="dupr_rating" [(ngModel)]="player.dupr_rating" min="0" max="8"
+            step="0.25" required>
+          <app-field-error label="DUPR rating" [serverError]="playerFieldErrors()['dupr_rating']" />
+        </label>
+      </div>
+      <p class="pc-hint">Password needs 8+ chars, an uppercase letter, a number and one of &#64; # $.</p>
+      <button type="submit" class="btn" [disabled]="playerBusy()">{{ playerBusy() ? 'Creating…' : 'Create player' }}</button>
+    </form>
+    }
+
+    <div class="pc-table-wrap">
+      <table class="pc-table">
+        <thead>
+          <tr><th>Name</th><th>Email</th><th class="num">DUPR</th><th>Location</th><th class="num">Leagues</th><th></th></tr>
+        </thead>
+        <tbody>
+          @for (p of svc.players(); track p.id) {
+          <tr>
+            <td>{{ p.firstName }} {{ p.lastName }}</td>
+            <td>{{ p.email }}</td>
+            <td class="num">{{ p.dupr_rating ?? '—' }}</td>
+            <td>{{ (p.city || p.state) ? ((p.city || '') + ' ' + (p.state || '')) : '—' }}</td>
+            <td class="num">{{ p.league_count }}</td>
+            <td class="row-actions">
+              <button class="link-btn" (click)="viewActivityFor(p.email)">Activity</button>
+              <button class="link-btn danger" (click)="removePlayer(p)">Remove</button>
+            </td>
+          </tr>
+          } @empty {
+          <tr><td colspan="6" class="pc-empty">No players yet.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+  }
+
+  <!-- ============ ACTIVITY ============ -->
+  @if (tab() === 'activity') {
+  <section class="card">
+    <div class="pc-section-head">
+      <h3 style="margin:0;">Activity feed</h3>
+      <div class="pc-filter">
+        <input class="input-field" placeholder="Filter by user email" [(ngModel)]="activityActor"
+          (keyup.enter)="applyActivityFilter()">
+        <button class="btn btn-secondary" (click)="applyActivityFilter()">Filter</button>
+        @if (activityActor) { <button class="link-btn" (click)="clearActivityFilter()">Clear</button> }
+      </div>
+    </div>
+
+    <div class="pc-table-wrap">
+      <table class="pc-table">
+        <thead>
+          <tr><th>When</th><th>User</th><th>Role</th><th>Action</th><th class="num">Status</th></tr>
+        </thead>
+        <tbody>
+          @for (a of svc.activity(); track a.id) {
+          <tr [class.err]="a.status_code >= 400">
+            <td>{{ a.ts | date: 'MMM d, HH:mm:ss' }}</td>
+            <td>{{ a.actor }}</td>
+            <td>{{ a.actor_role || '—' }}</td>
+            <td>{{ a.action }}</td>
+            <td class="num">{{ a.status_code }}</td>
+          </tr>
+          } @empty {
+          <tr><td colspan="5" class="pc-empty">{{ svc.loading() ? 'Loading…' : 'No activity recorded yet.' }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+  }
+
+</div>

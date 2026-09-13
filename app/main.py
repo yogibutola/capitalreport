@@ -13,6 +13,8 @@ from app.api.v1.routers.pickleball import pb_player
 from app.api.v1.routers.pickleball import pb_authorization
 from app.api.v1.routers.pickleball import pb_quote
 from app.api.v1.routers.pickleball import pb_group
+from app.api.v1.routers.pickleball import pb_admin
+from app.utils.audit_middleware import AuditLogMiddleware
 
 app = FastAPI(title="Query Param Example")
 
@@ -27,6 +29,10 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers from the request
 )
 
+# Records user actions into the `audit_log` collection for the platform console.
+# No-ops when AUDIT_LOG_ENABLED != "true" or MONGO_URI is unset.
+app.add_middleware(AuditLogMiddleware)
+
 app.include_router(prashn_kijiye.router, prefix="/api/v1")
 app.include_router(upload_documents.router, prefix="/api/v1")
 app.include_router(list_files.router, prefix="/api/v1")
@@ -36,4 +42,5 @@ app.include_router(pb_player.router, prefix="/api/v1")
 app.include_router(pb_authorization.router, prefix="/api/v1")
 app.include_router(pb_quote.router, prefix="/api/v1")
 app.include_router(pb_group.router, prefix="/api/v1")
+app.include_router(pb_admin.router, prefix="/api/v1")
 app.include_router(generate_report.router, prefix="/api/v1")

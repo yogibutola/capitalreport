@@ -57,6 +57,35 @@ class PBPlayerStore:
             player["_id"] = str(player["_id"])
         return players
 
+    def get_clubs(self) -> list[dict]:
+        """Fetch all club (admin) accounts. Mirror of ``get_all_players`` for the
+        other side of the ``players`` collection."""
+        collection = self.get_players_collection()
+        clubs = list(collection.find({"role": "admin"}))
+        for club in clubs:
+            club["_id"] = str(club["_id"])
+        return clubs
+
+    def delete_player_by_email(self, email: str) -> bool:
+        """Delete a single account (player or club) by email."""
+        collection = self.get_players_collection()
+        result = collection.delete_one({"email": email.lower()})
+        self.logger.info(
+            f"Deleted account {email.lower()}. Deleted count: {result.deleted_count}"
+        )
+        return result.deleted_count > 0
+
+    def count_by_role(self) -> dict:
+        """{'player': n, 'admin': m} counts for the platform metrics header.
+
+        Legacy docs with no ``role`` count as players.
+        """
+        collection = self.get_players_collection()
+        return {
+            "admin": collection.count_documents({"role": "admin"}),
+            "player": collection.count_documents({"role": {"$ne": "admin"}}),
+        }
+
     def bulk_update_players_league_details(self, emails: list[str], league_data: dict):
         """
         Add a league entry to multiple players at once.
