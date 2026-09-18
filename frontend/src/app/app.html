@@ -67,14 +67,18 @@
         <a class="nav-tab-link" routerLink="/profile" routerLinkActive="active">Profile</a>
         }
         @if (isAdmin()) {
-        <a class="nav-tab-link" routerLink="/admin" routerLinkActive="active">Manage</a>
+        <!-- Manage is the /admin hub only; Leagues/Tournaments stay highlighted on their create + detail pages -->
+        <a class="nav-tab-link" routerLink="/admin" [class.active]="isManageActive()">Manage</a>
+        <a class="nav-tab-link" routerLink="/admin/leagues" [class.active]="isLeaguesActive()">Leagues</a>
+        <a class="nav-tab-link" routerLink="/admin/tournaments" [class.active]="isTournamentsActive()">Tournaments</a>
+        <a class="nav-tab-link" routerLink="/admin/season" routerLinkActive="active">Active Season</a>
         <a class="nav-tab-link" routerLink="/profile" routerLinkActive="active">Club Profile</a>
         }
       </nav>
     </div>
   </header>
 
-  <main class="main-content">
+  <main class="main-content" [class.main-content--landing]="isLandingPage()">
     <router-outlet></router-outlet>
   </main>
 

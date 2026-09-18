@@ -1,38 +1,22 @@
-import { Injectable, signal, PLATFORM_ID, inject, effect } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { Injectable, signal } from '@angular/core';
 
 export type Theme = 'dark' | 'light';
 
+/**
+ * The app ships a single committed dark theme. The signal is kept so the
+ * `data-theme` attribute and any callers keep working, but it is always 'dark'.
+ */
 @Injectable({
     providedIn: 'root'
 })
 export class ThemeService {
-    private platformId = inject(PLATFORM_ID);
-
-    // Default theme is light
-    theme = signal<Theme>('light');
-
-    constructor() {
-        if (isPlatformBrowser(this.platformId)) {
-            const storedTheme = localStorage.getItem('app_theme') as Theme;
-            if (storedTheme) {
-                this.theme.set(storedTheme);
-            }
-        }
-
-        // Persist theme changes
-        effect(() => {
-            if (isPlatformBrowser(this.platformId)) {
-                localStorage.setItem('app_theme', this.theme());
-            }
-        });
-    }
+    theme = signal<Theme>('dark');
 
     toggleTheme() {
-        this.theme.update(current => current === 'dark' ? 'light' : 'dark');
+        this.theme.set('dark');
     }
 
-    setTheme(theme: Theme) {
-        this.theme.set(theme);
+    setTheme(_theme: Theme) {
+        this.theme.set('dark');
     }
 }

@@ -74,7 +74,7 @@ export class CreateTournamentComponent {
       .subscribe({
         next: () => {
           this.tournamentService.fetchTournaments();
-          this.router.navigate(['/admin']);
+          this.router.navigate(['/admin/tournaments']);
         },
         error: (err) => {
           this.submitting = false;

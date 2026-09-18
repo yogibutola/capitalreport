@@ -82,7 +82,7 @@
             <div class="form-group">
                 <label for="field-dupr_rating" style="display: block; margin-bottom: var(--space-xs);">
                     DUPR Rating
-                    <span style="color: var(--color-text-muted); font-size: 0.85rem; font-weight: normal;">(Precise
+                    <span style="color: HSL(var(--color-text-muted)); font-size: 0.85rem; font-weight: normal;">(Precise
                         rating, e.g., 4.52)</span>
                 </label>
                 <input id="field-dupr_rating" type="number" [(ngModel)]="dupr_rating" name="dupr_rating"
@@ -102,7 +102,7 @@
         </form>
 
         <div style="margin-top: var(--space-md); text-align: center; font-size: 0.9rem;">
-            <span style="color: var(--color-text-muted);">Already playing? </span>
+            <span style="color: HSL(var(--color-text-muted));">Already playing? </span>
             <a routerLink="/login" style="color: HSL(var(--color-ace-lime)); text-decoration: none;">Log In</a>
         </div>
     </div>
@@ -113,7 +113,7 @@
     .validation-checklist {
         margin-top: 0.5rem;
         font-size: 0.85rem;
-        color: var(--color-text-muted);
+        color: HSL(var(--color-text-muted));
         background: HSL(var(--color-bg-dark) / 0.4);
         padding: 0.75rem;
         border-radius: 8px;
@@ -132,7 +132,7 @@
     }
 
     .validation-checklist div.invalid {
-        color: var(--color-text-muted);
+        color: HSL(var(--color-text-muted));
     }
 
     .icon {

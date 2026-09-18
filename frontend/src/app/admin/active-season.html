@@ -1,0 +1,133 @@
+<div class="season-container container">
+
+  <div class="season-banner">
+    <div>
+      <h1 class="text-gradient season-title">Active Season</h1>
+      <p class="season-subtitle">What's in play right now across your club</p>
+    </div>
+    <div class="season-stats">
+      <div class="season-stat" data-testid="season-stat-leagues">
+        <span class="season-stat-number">{{ activeLeagues().length }}</span>
+        <span class="season-stat-label">Leagues</span>
+      </div>
+      <div class="season-stat" data-testid="season-stat-tournaments">
+        <span class="season-stat-number">{{ activeTournaments().length }}</span>
+        <span class="season-stat-label">Tournaments</span>
+      </div>
+      <div class="season-stat" data-testid="season-stat-players">
+        <span class="season-stat-number">{{ playersInPlay() }}</span>
+        <span class="season-stat-label">Players</span>
+      </div>
+      <div class="season-stat season-stat--pending" data-testid="season-stat-pending">
+        <span class="season-stat-number">{{ matchesPending() }}</span>
+        <span class="season-stat-label">Matches left</span>
+      </div>
+    </div>
+  </div>
+
+  @if (!hasActivity()) {
+  <div class="card season-empty" data-testid="season-empty">
+    <span class="season-empty-icon">🏓</span>
+    <h3>Nothing is in play yet</h3>
+    <p>Leagues and tournaments show up here once their status is set to active.</p>
+    <a routerLink="/admin" class="btn btn-secondary">Go to Manage</a>
+  </div>
+  }
+
+  @if (activeLeagues().length > 0) {
+  <section class="card season-section">
+    <div class="season-section-header">
+      <span class="season-section-icon">🏆</span>
+      <div>
+        <h3>Leagues in progress</h3>
+        <span class="season-section-sub">Round progress, players, and what's left to play</span>
+      </div>
+    </div>
+
+    <div class="season-list">
+      @for (league of activeLeagues(); track league.league_id) {
+      @let p = progressFor(league);
+      <article class="season-item" data-testid="season-league">
+        <div class="season-item-main">
+          <div class="season-item-name-row">
+            <span class="season-item-name">{{ league.league_name }}</span>
+            <span class="season-badge season-badge--active">active</span>
+          </div>
+
+          @if (p) {
+          <div class="season-item-meta">
+            <span>{{ p.playerCount }} players</span>
+            @if (p.currentRound !== null) {
+            <span>· Round {{ p.currentRound }}</span>
+            <span>· Play day {{ p.playDay }}</span>
+            } @else {
+            <span>· Not slotted yet</span>
+            }
+            @if (p.location || league.location) { <span>· 📍 {{ p.location || league.location }}</span> }
+          </div>
+
+          @if (p.matchesTotal > 0) {
+          <div class="season-progress" [attr.aria-label]="p.matchesCompleted + ' of ' + p.matchesTotal + ' matches played'">
+            <div class="season-progress-track">
+              <div class="season-progress-fill"
+                   [style.width.%]="(p.matchesCompleted / p.matchesTotal) * 100"></div>
+            </div>
+            <span class="season-progress-label">
+              {{ p.matchesCompleted }} / {{ p.matchesTotal }} matches played
+              @if (p.currentRoundPending > 0) { · {{ p.currentRoundPending }} left in round {{ p.currentRound }} }
+            </span>
+          </div>
+          }
+          } @else if (progressErrors()[league.league_id]) {
+          <span class="season-item-meta season-item-meta--error">Couldn't load progress for this league.</span>
+          } @else {
+          <span class="season-item-meta">Loading progress…</span>
+          }
+        </div>
+
+        <div class="season-item-actions">
+          <a class="btn btn-secondary season-action" [routerLink]="['/admin/league', league.league_name]">Open league</a>
+          <a class="btn season-action" routerLink="/league/slotting" [queryParams]="{ league_id: league.league_name }">Slot rounds</a>
+        </div>
+      </article>
+      }
+    </div>
+  </section>
+  }
+
+  @if (activeTournaments().length > 0) {
+  <section class="card season-section">
+    <div class="season-section-header">
+      <span class="season-section-icon">🎾</span>
+      <div>
+        <h3>Tournaments in progress</h3>
+        <span class="season-section-sub">Pools and brackets currently being played</span>
+      </div>
+    </div>
+
+    <div class="season-list">
+      @for (tournament of activeTournaments(); track tournament.tournament_id) {
+      <article class="season-item" data-testid="season-tournament">
+        <div class="season-item-main">
+          <div class="season-item-name-row">
+            <span class="season-item-name">{{ tournament.tournament_name }}</span>
+            <span class="season-badge season-badge--active">active</span>
+          </div>
+          <div class="season-item-meta">
+            <span>{{ tournament.player_count }} players</span>
+            @if (tournament.match_format) { <span>· {{ tournament.match_format }}</span> }
+            @if (tournament.tournament_start_date) { <span>· {{ tournament.tournament_start_date }}</span> }
+            @if (tournament.tournament_end_date) { <span>→ {{ tournament.tournament_end_date }}</span> }
+            @if (tournament.location) { <span>· 📍 {{ tournament.location }}</span> }
+          </div>
+        </div>
+        <div class="season-item-actions">
+          <a class="btn btn-secondary season-action" [routerLink]="['/admin/tournament', tournament.tournament_id]">Open tournament</a>
+        </div>
+      </article>
+      }
+    </div>
+  </section>
+  }
+
+</div>

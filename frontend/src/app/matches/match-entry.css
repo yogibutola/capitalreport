@@ -42,7 +42,7 @@
 
 .info-label {
     font-size: 0.8rem;
-    color: var(--color-text-muted);
+    color: HSL(var(--color-text-muted));
     text-transform: uppercase;
     font-weight: 600;
 }
@@ -94,7 +94,7 @@
     align-items: center;
     margin-bottom: var(--space-md);
     padding-bottom: var(--space-md);
-    border-bottom: 1px solid rgba(168, 212, 90, 0.1);
+    border-bottom: 1px solid rgba(205, 240, 58, 0.1);
 }
 
 .team-header h3 {
@@ -131,13 +131,13 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--space-md);
-    background-color: rgba(30, 58, 36, 0.25);
+    background-color: rgba(24, 45, 59, 0.25);
     border-radius: var(--radius-sm);
     transition: all var(--transition-fast);
 }
 
 .player-row:hover {
-    background-color: rgba(30, 58, 36, 0.35);
+    background-color: rgba(24, 45, 59, 0.35);
 }
 
 .player-row.is-you {
@@ -180,8 +180,8 @@
 .player-select {
     width: 100%;
     padding: var(--space-md);
-    background-color: rgba(30, 58, 36, 0.35);
-    border: 1px solid rgba(168, 212, 90, 0.15);
+    background-color: rgba(24, 45, 59, 0.35);
+    border: 1px solid rgba(205, 240, 58, 0.15);
     border-radius: var(--radius-sm);
     color: HSL(var(--color-text-main));
     font-size: 1rem;
@@ -190,14 +190,14 @@
 }
 
 .player-select:hover {
-    background-color: rgba(30, 58, 36, 0.45);
+    background-color: rgba(24, 45, 59, 0.45);
     border-color: HSL(var(--color-ace-lime) / 0.4);
 }
 
 .player-select:focus {
     outline: none;
     border-color: HSL(var(--color-ace-lime));
-    background-color: rgba(30, 58, 36, 0.5);
+    background-color: rgba(24, 45, 59, 0.5);
 }
 
 .player-select option {
@@ -209,13 +209,13 @@
 .score-input-section {
     margin-top: var(--space-md);
     padding-top: var(--space-md);
-    border-top: 1px solid rgba(168, 212, 90, 0.1);
+    border-top: 1px solid rgba(205, 240, 58, 0.1);
 }
 
 .score-label {
     display: block;
     font-size: 0.8rem;
-    color: var(--color-text-muted);
+    color: HSL(var(--color-text-muted));
     text-transform: uppercase;
     font-weight: 600;
     margin-bottom: var(--space-sm);
@@ -224,8 +224,8 @@
 .score-input {
     width: 100%;
     padding: var(--space-md);
-    background-color: rgba(30, 58, 36, 0.35);
-    border: 2px solid rgba(168, 212, 90, 0.15);
+    background-color: rgba(24, 45, 59, 0.35);
+    border: 2px solid rgba(205, 240, 58, 0.15);
     border-radius: var(--radius-md);
     color: HSL(var(--color-text-main));
     font-size: 1.5rem;
@@ -242,7 +242,7 @@
 .score-input:focus {
     outline: none;
     border-color: HSL(var(--color-ace-lime));
-    background-color: rgba(30, 58, 36, 0.5);
+    background-color: rgba(24, 45, 59, 0.5);
 }
 
 .score-input::placeholder {
@@ -266,8 +266,8 @@
     justify-content: center;
     font-weight: 900;
     font-size: 1.2rem;
-    color: white;
-    box-shadow: 0 4px 12px rgba(30, 58, 36, 0.4);
+    color: var(--ball-ink);
+    box-shadow: 0 4px 12px rgba(24, 45, 59, 0.4);
 }
 
 /* Action Section */

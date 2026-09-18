@@ -13,6 +13,12 @@ from app.vo.pb.player import PlayerSignup
 def main():
     parser = argparse.ArgumentParser(description="Seed test league and test players.")
     parser.add_argument("--players", type=int, default=9, help="Number of test players to create and add to the league")
+    parser.add_argument(
+        "--club",
+        default="test_pro@gmail.com",
+        help="Email of the club (admin account) that owns the league; /api/v1/my_leagues filters by this. "
+             "Defaults to the account the Playwright e2e specs sign in with.",
+    )
     args = parser.parse_args()
 
     players = [
@@ -73,6 +79,7 @@ def main():
     print("\n--- Creating League ---")
     today = datetime.now().strftime("%m-%d-%Y")
     league = League(
+        club_id=args.club,
         league_name=f"Pro_{timestamp}",
         league_description="League created by seed script for testing.",
         league_start_date=today,

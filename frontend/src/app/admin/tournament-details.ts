@@ -129,7 +129,7 @@ export class TournamentDetailsComponent {
 
   // Players reach this page from /player/tournament/:id; admins from /admin/tournament/:id.
   isAdminView = this.route.snapshot.url.some((s) => s.path === 'admin');
-  backLink = this.isAdminView ? '/admin' : '/player/tournaments';
+  backLink = this.isAdminView ? '/admin/tournaments' : '/player/tournaments';
 
   isDoubles = computed(() => this.tournament()?.match_format === 'doubles');
   isPending = computed(() => (this.tournament()?.tournament_status ?? 'pending') === 'pending');

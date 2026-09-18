@@ -39,7 +39,7 @@
 }
 
 .admin-stat-number {
-    font-family: 'Anton', sans-serif;
+    font-family: var(--font-display);
     font-size: 1.8rem;
     color: HSL(var(--color-text-main));
     line-height: 1;
@@ -79,7 +79,7 @@
     align-items: flex-start;
     gap: var(--space-md);
     padding-bottom: var(--space-md);
-    border-bottom: 1px solid rgba(168, 212, 90, 0.1);
+    border-bottom: 1px solid rgba(205, 240, 58, 0.1);
 }
 
 .admin-card-title-row {
@@ -141,7 +141,7 @@
 .admin-league-meta {
     font-size: 0.75rem;
     color: HSL(var(--color-text-muted));
-    font-family: 'Chivo Mono', monospace;
+    font-family: var(--font-mono);
 }
 
 .admin-league-status {
@@ -161,6 +161,41 @@
 .admin-league-status.status-pending {
     background: HSL(var(--color-ball-yellow) / 0.15);
     color: HSL(var(--color-ball-yellow));
+}
+
+/* Full-width single card used by the Leagues / Tournaments pages */
+.admin-card--page {
+    width: 100%;
+    margin-bottom: var(--space-xl);
+}
+
+/* ─── Manage hub previews ─── */
+.admin-preview-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: HSL(var(--color-bg-dark));
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    color: inherit;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+}
+
+.admin-preview-item:hover {
+    border-color: HSL(var(--color-ace-lime) / 0.4);
+    background: HSL(var(--color-rally-green) / 0.06);
+}
+
+.admin-preview-meta {
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.admin-card-footer-link {
+    align-self: flex-start;
+    text-decoration: none;
 }
 
 .btn-danger-outline {
@@ -185,16 +220,5 @@
 }
 
 /* ─── Light Mode Fixes ─── */
-[data-theme="light"] .admin-stat-pill--active .admin-stat-number {
-    color: HSL(var(--color-court-green));
-}
 
-[data-theme="light"] .admin-league-status.status-active {
-    color: HSL(var(--color-court-green));
-    background: HSL(var(--color-rally-green) / 0.15);
-}
 
-[data-theme="light"] .admin-league-status.status-pending {
-    color: HSL(38 85% 35%);
-    background: HSL(var(--color-ball-yellow) / 0.2);
-}

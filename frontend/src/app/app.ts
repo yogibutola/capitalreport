@@ -1,4 +1,4 @@
-import { Component, signal, inject, effect, PLATFORM_ID } from '@angular/core';
+import { Component, signal, computed, inject, effect, PLATFORM_ID } from '@angular/core';
 import { RouterOutlet, Router, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from './auth/auth';
@@ -9,6 +9,9 @@ import { ToastHostComponent } from './shared/toast-host';
 import { ConfirmHostComponent } from './shared/confirm-host';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs/operators';
+import { isMarketingUrl, isManageUrl, isLeaguesUrl, isTournamentsUrl } from './nav-urls';
+
+export { isMarketingUrl, isManageUrl, isLeaguesUrl, isTournamentsUrl };
 
 @Component({
   selector: 'app-root',
@@ -33,13 +36,18 @@ export class App {
   currentTheme = this.themeService.theme;
   leagues = this.playerService.getLeagues;
   selectedLeague = this.playerService.getSelectedLeague;
-  isLandingPage = toSignal(
+  private currentUrl = toSignal(
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd),
-      map((e: NavigationEnd) => e.urlAfterRedirects === '/')
+      map((e: NavigationEnd) => e.urlAfterRedirects)
     ),
-    { initialValue: this.router.url === '/' }
+    { initialValue: this.router.url }
   );
+  // Full-bleed marketing pages that paint their own chrome (no app header/footer).
+  isLandingPage = computed(() => isMarketingUrl(this.currentUrl()));
+  isManageActive = computed(() => isManageUrl(this.currentUrl()));
+  isLeaguesActive = computed(() => isLeaguesUrl(this.currentUrl()));
+  isTournamentsActive = computed(() => isTournamentsUrl(this.currentUrl()));
 
   isAdmin = () => this.currentUser()?.role === 'admin';
   isSuperAdmin = () => this.currentUser()?.role === 'superadmin';

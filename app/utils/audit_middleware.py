@@ -31,6 +31,7 @@ _ACTION_MAP: dict[tuple[str, str], str] = {
     ("POST", "/api/v1/signup"): "Registered as a player",
     ("POST", "/api/v1/signup/club"): "Registered a club",
     ("POST", "/api/v1/forgot-password"): "Requested a password reset",
+    ("POST", "/api/v1/book-demo"): "Requested a demo",
     ("POST", "/api/v1/reset-password"): "Reset their password",
     ("POST", "/api/v1/change-password"): "Changed their password",
     ("PUT", "/api/v1/profile"): "Updated their profile",

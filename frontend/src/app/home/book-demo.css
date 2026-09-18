@@ -1,0 +1,525 @@
+/* ─────────────────────────────────────────────────────────────
+   Book a demo — public marketing page, same committed dark theme
+   and primitives as the landing page (tokens live in styles.css).
+   ───────────────────────────────────────────────────────────── */
+
+:host {
+    display: block;
+}
+
+.demo-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.55;
+    overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
+}
+
+.demo-page *,
+.demo-page *::before,
+.demo-page *::after {
+    box-sizing: border-box;
+}
+
+.wrap {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding-inline: 24px;
+}
+
+.mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    text-transform: uppercase;
+    line-height: 0.92;
+    letter-spacing: 0.01em;
+}
+
+.eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 18px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ball);
+}
+
+.eyebrow::before {
+    content: '';
+    width: 22px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    flex-shrink: 0;
+}
+
+/* ─── Buttons (mirrors landing .sp-btn) ─── */
+
+.sp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px 24px;
+    border-radius: var(--radius-pill);
+    border: 1px solid transparent;
+    font: 600 0.95rem var(--font-body);
+    letter-spacing: -0.005em;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+        transform var(--ease-lift),
+        box-shadow var(--ease-lift),
+        border-color var(--ease-lift),
+        background-color var(--ease-lift),
+        color var(--ease-lift);
+}
+
+.sp-btn--primary {
+    background: var(--ball);
+    color: var(--ball-ink);
+    box-shadow:
+        0 8px 24px rgba(205, 240, 58, 0.28),
+        0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.sp-btn--primary:hover {
+    transform: var(--lift);
+    box-shadow:
+        0 12px 30px rgba(205, 240, 58, 0.38),
+        0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.sp-btn--ghost {
+    background: transparent;
+    color: var(--text);
+    border-color: var(--line);
+}
+
+.sp-btn--ghost:hover {
+    transform: var(--lift);
+    border-color: var(--ball);
+}
+
+.sp-btn--block {
+    width: 100%;
+    padding: 15px 24px;
+    font-size: 1rem;
+}
+
+.sp-btn:focus-visible {
+    outline: 2px solid var(--ball);
+    outline-offset: 3px;
+}
+
+.sp-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+    transform: none;
+}
+
+/* ─── Nav ─── */
+
+.nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(11, 22, 32, 0.72);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line-soft);
+}
+
+.nav__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    height: 68px;
+}
+
+.nav__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+}
+
+.nav__brand:focus-visible {
+    outline: 2px solid var(--ball);
+    outline-offset: 4px;
+    border-radius: 6px;
+}
+
+.nav__mark {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: var(--ball);
+    color: var(--ball-ink);
+    box-shadow: 0 4px 14px rgba(205, 240, 58, 0.3);
+}
+
+.nav__actions {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.nav__signin,
+.nav__back {
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.92rem;
+    white-space: nowrap;
+    transition: color var(--ease-lift);
+}
+
+.nav__back {
+    color: var(--text);
+    padding-left: 18px;
+    border-left: 1px solid var(--line);
+}
+
+.nav__signin:hover,
+.nav__back:hover {
+    color: var(--ball);
+}
+
+.nav__signin:focus-visible,
+.nav__back:focus-visible {
+    outline: 2px solid var(--ball);
+    outline-offset: 4px;
+    border-radius: 4px;
+}
+
+/* ─── Page body ─── */
+
+.demo {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    padding-block: 72px 96px;
+}
+
+.demo__glow {
+    position: absolute;
+    right: -180px;
+    top: -120px;
+    width: 720px;
+    height: 720px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(205, 240, 58, 0.14) 0%, rgba(205, 240, 58, 0.04) 38%, transparent 64%);
+    pointer-events: none;
+}
+
+.demo__grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 64px;
+    align-items: start;
+}
+
+.demo__title {
+    margin: 0 0 22px;
+    font-size: clamp(2.6rem, 5.4vw, 4.6rem);
+    color: var(--text);
+}
+
+.demo__title-ball {
+    color: var(--ball);
+}
+
+.demo__lede {
+    margin: 0 0 40px;
+    max-width: 46ch;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--muted);
+}
+
+/* Agenda list */
+
+.agenda {
+    list-style: none;
+    margin: 0 0 36px;
+    padding: 0;
+    display: grid;
+    gap: 22px;
+}
+
+.agenda__item {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 14px;
+    align-items: start;
+}
+
+.agenda__num {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--ball);
+}
+
+.agenda__title {
+    margin: 6px 0 4px;
+    font-size: 1.02rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+}
+
+.agenda__body {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--muted);
+}
+
+.demo__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    font-size: 0.66rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted-2);
+}
+
+.demo__facts span::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 10px;
+    border-radius: 50%;
+    background: var(--ball);
+    vertical-align: middle;
+}
+
+/* ─── Form panel ─── */
+
+.panel {
+    background: var(--surface);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--card-shadow);
+    padding: 36px;
+}
+
+.panel__head {
+    margin-bottom: 26px;
+}
+
+.panel__title {
+    margin: 0 0 6px;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+
+.panel__sub {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+.field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 16px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 7px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.label__opt {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted-2);
+}
+
+.input-field--area {
+    resize: vertical;
+    min-height: 110px;
+    line-height: 1.5;
+}
+
+select.input-field {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237F97A2' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+    cursor: pointer;
+}
+
+.panel__fine {
+    margin: 14px 0 0;
+    text-align: center;
+    font-size: 0.64rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted-2);
+}
+
+/* Success state */
+
+.done {
+    text-align: center;
+    padding-block: 12px;
+}
+
+.done__mark {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: rgba(205, 240, 58, 0.14);
+    color: var(--ball);
+    box-shadow: 0 0 0 8px rgba(205, 240, 58, 0.06);
+}
+
+.done__ref {
+    margin: 14px 0 26px;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted-2);
+    overflow-wrap: anywhere;
+}
+
+.done__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+/* ─── Footer ─── */
+
+.foot {
+    background: var(--ground-2);
+    border-top: 1px solid var(--line-soft);
+    padding-block: 22px;
+}
+
+.foot__inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 0.7rem;
+    color: var(--muted-2);
+}
+
+.foot__links {
+    display: flex;
+    gap: 20px;
+}
+
+.foot__links a {
+    color: var(--muted-2);
+    text-decoration: none;
+}
+
+.foot__links a:hover {
+    color: var(--text);
+}
+
+/* ─── Responsive ─── */
+
+@media (max-width: 960px) {
+    .demo__grid {
+        grid-template-columns: 1fr;
+        gap: 44px;
+    }
+
+    .demo {
+        padding-block: 48px 72px;
+    }
+}
+
+@media (max-width: 640px) {
+    .wrap {
+        padding-inline: 16px;
+    }
+
+    .nav__signin {
+        display: none;
+    }
+
+    .nav__back {
+        padding-left: 0;
+        border-left: 0;
+    }
+
+    .panel {
+        padding: 24px 18px;
+    }
+
+    .field-row {
+        grid-template-columns: 1fr;
+    }
+
+    .demo__title {
+        font-size: clamp(2.3rem, 12vw, 3.2rem);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sp-btn,
+    .sp-btn:hover {
+        transition: none;
+        transform: none;
+    }
+}

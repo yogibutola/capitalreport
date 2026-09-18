@@ -1,214 +1,584 @@
-<div class="home-container">
-    <!-- Landing Header -->
-    <header class="landing-header">
-        <span class="landing-brand">
-            <span class="landing-brand-strong">STACKED</span>PADDLE
-        </span>
-        <nav class="landing-header-actions">
-            <a routerLink="/login" class="btn btn-secondary landing-header-btn">Player Sign-In</a>
-            <a routerLink="/admin/login" class="btn landing-header-btn">Club Sign-In</a>
-        </nav>
+<div class="landing" id="top">
+    <!-- ───────────── Sticky nav ───────────── -->
+    <header class="nav" [class.nav--open]="menuOpen()">
+        <div class="wrap nav__inner">
+            <a class="nav__brand" href="/" (click)="scrollTo('top', $event)" aria-label="StackedPaddle — top of page">
+                <span class="nav__mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                        <ellipse cx="12" cy="9.5" rx="6.5" ry="7.5" fill="currentColor" />
+                        <rect x="10.4" y="15.5" width="3.2" height="6.5" rx="1.4" fill="currentColor" />
+                    </svg>
+                </span>
+                <span class="nav__name">StackedPaddle</span>
+            </a>
+
+            <nav class="nav__links" aria-label="Product sections">
+                <a href="#leagues" (click)="scrollTo('leagues', $event)">Leagues</a>
+                <a href="#slotting" (click)="scrollTo('slotting', $event)">Smart Slotting</a>
+                <a href="#ratings" (click)="scrollTo('ratings', $event)">Ratings</a>
+                <a href="#tournaments" (click)="scrollTo('tournaments', $event)">Tournaments</a>
+            </nav>
+
+            <div class="nav__actions">
+                <a routerLink="/login" class="nav__signin" data-testid="nav-player-signin">Player sign in</a>
+                <a routerLink="/admin/login" class="nav__signin nav__signin--club" data-testid="nav-club-signin">
+                    Club sign in
+                </a>
+                <a routerLink="/book-demo" class="sp-btn sp-btn--primary sp-btn--sm" data-testid="nav-book-demo">
+                    Book a demo
+                </a>
+                <button type="button" class="nav__burger" (click)="toggleMenu()" aria-controls="landing-menu"
+                    [attr.aria-expanded]="menuOpen()" aria-label="Toggle menu">
+                    @if (menuOpen()) {
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" aria-hidden="true">
+                        <path d="M6 6l12 12M18 6L6 18" />
+                    </svg>
+                    } @else {
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" aria-hidden="true">
+                        <path d="M4 7h16M4 12h16M4 17h16" />
+                    </svg>
+                    }
+                </button>
+            </div>
+        </div>
+
+        <div class="nav__menu" id="landing-menu" [hidden]="!menuOpen()">
+            <div class="wrap nav__menu-inner">
+                <a href="#leagues" (click)="scrollTo('leagues', $event)">Leagues</a>
+                <a href="#slotting" (click)="scrollTo('slotting', $event)">Smart Slotting</a>
+                <a href="#ratings" (click)="scrollTo('ratings', $event)">Ratings</a>
+                <a href="#tournaments" (click)="scrollTo('tournaments', $event)">Tournaments</a>
+                <div class="nav__menu-divider" role="separator"></div>
+                <a routerLink="/login" (click)="closeMenu()">Player sign in</a>
+                <a routerLink="/admin/login" (click)="closeMenu()">Club sign in</a>
+                <a routerLink="/book-demo" (click)="closeMenu()">Book a demo</a>
+            </div>
+        </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="hero-content fade-in-up">
-            <h1 class="hero-title">
-                Elevate your game with <span class="text-gradient">StackedPaddle</span>
-            </h1>
-        </div>
+    <!-- ───────────── Hero ───────────── -->
+    <section class="hero" aria-labelledby="hero-title">
+        <svg class="hero__court" viewBox="0 0 640 640" aria-hidden="true" focusable="false">
+            <g stroke="var(--court)" stroke-width="2" fill="none" transform="rotate(-22 320 320)">
+                <rect x="60" y="120" width="520" height="400" rx="2" />
+                <line x1="60" y1="320" x2="580" y2="320" />
+                <line x1="60" y1="200" x2="580" y2="200" />
+                <line x1="60" y1="440" x2="580" y2="440" />
+                <line x1="320" y1="120" x2="320" y2="200" />
+                <line x1="320" y1="440" x2="320" y2="520" />
+                <line x1="20" y1="80" x2="620" y2="80" stroke-dasharray="6 10" />
+                <line x1="20" y1="560" x2="620" y2="560" stroke-dasharray="6 10" />
+            </g>
+        </svg>
+        <div class="hero__glow hero__glow--ball" aria-hidden="true"></div>
+        <div class="hero__glow hero__glow--coral" aria-hidden="true"></div>
 
-        <!-- Image Carousel -->
-        <div class="carousel-container fade-in-up" style="animation-delay: 0.2s;">
-            <div class="carousel-track" [style.transform]="'translateX(-' + (currentSlide * 100) + '%)'">
-                <div class="carousel-slide" *ngFor="let image of images">
-                    <img [src]="image.src" [alt]="image.alt">
-                    <div class="slide-caption">
-                        <h3>{{ image.title }}</h3>
-                        <p>{{ image.caption }}</p>
-                        @if (image.demo) {
-                        <div class="carousel-demo-actions">
-                            <button type="button" class="btn btn-primary carousel-action-btn"
-                                [disabled]="demoLoading()" (click)="startAdminDemo()">
-                                {{ demoLoading() === 'admin' ? 'Loading…' : 'Club Demo' }}
-                            </button>
-                            <button type="button" class="btn carousel-action-btn carousel-demo-btn--player"
-                                [disabled]="demoLoading()" (click)="startPlayerDemo()">
-                                {{ demoLoading() === 'player' ? 'Loading…' : 'Player Demo' }}
-                            </button>
-                        </div>
-                        } @else {
-                        <a [routerLink]="image.link" class="btn btn-primary carousel-action-btn">{{ image.buttonText }}</a>
-                        }
-                    </div>
-                </div>
-            </div>
-
-            <button class="carousel-btn prev" (click)="prevSlide()">❮</button>
-            <button class="carousel-btn next" (click)="nextSlide()">❯</button>
-
-            <div class="carousel-indicators">
-                <span *ngFor="let img of images; let i = index" [class.active]="i === currentSlide"
-                    (click)="setSlide(i)"></span>
-            </div>
-        </div>
-
-        <!-- Decorative Background Elements -->
-        <div class="bg-blur blur-1"></div>
-        <div class="bg-blur blur-2"></div>
-    </section>
-
-    <!-- Next Match Card (visible when logged in and a next match exists) -->
-    @if (authService.currentUser() && nextMatch(); as match) {
-    <section class="next-match-section fade-in-up" style="animation-delay: 0.35s;">
-        <div class="next-match-card" (click)="goToPlayerDashboard()">
-
-            <div class="nmc-label-col">
-                <span class="nmc-badge">Next Match</span>
-            </div>
-
-            <div class="nmc-datetime">
-                <span class="nmc-date">{{ formatMatchDate(match.date) }}</span>
-                <span class="nmc-time">{{ match.time }}</span>
-            </div>
-
-            <div class="nmc-separator"></div>
-
-            <div class="nmc-teams">
-                <div class="nmc-team">
-                    <span class="nmc-team-label">My Team</span>
-                    <span class="nmc-team-name">{{ match.myTeamName || 'My Team' }}</span>
-                    @if (getTeammates(match)) {
-                    <span class="nmc-players">w/ {{ getTeammates(match) }}</span>
-                    }
-                </div>
-                <div class="nmc-vs">VS</div>
-                <div class="nmc-team">
-                    <span class="nmc-team-label">Opponents</span>
-                    <span class="nmc-team-name">{{ match.opponentTeamName || 'Opponents' }}</span>
-                    @if (getOpponents(match)) {
-                    <span class="nmc-players">{{ getOpponents(match) }}</span>
-                    }
-                </div>
-            </div>
-
-            <div class="nmc-meta">
-                <span class="nmc-league-tag">{{ match.leagueName }}</span>
-                @if (match.roundName || match.roundId) {
-                <span class="nmc-info-tag">{{ match.roundName || 'Round ' + match.roundId }}</span>
-                }
-                @if (match.court && match.court !== 'TBD') {
-                <span class="nmc-info-tag">Court {{ match.court }}</span>
-                }
-            </div>
-
-            <div class="nmc-cta">View Dashboard →</div>
-
-        </div>
-    </section>
-    }
-
-    <!-- Upcoming Group Events Card (visible when the user's groups have upcoming events) -->
-    @if (authService.currentUser() && upcomingEvents().length) {
-    <section class="events-section fade-in-up" style="animation-delay: 0.4s;">
-        <div class="events-card" (click)="goToGroups()">
-            <div class="events-card-header">
-                <span class="events-badge">Upcoming Events</span>
-                <span class="events-cta">My Groups →</span>
-            </div>
-
-            <div class="events-list">
-                @for (item of upcomingEvents(); track item.event.event_id) {
-                <div class="event-row">
-                    <div class="event-datetime">
-                        <span class="event-date">{{ formatEventDate(item.event.date) }}</span>
-                        @if (item.event.time) {
-                        <span class="event-time">{{ formatEventTime(item.event.time) }}</span>
-                        }
-                    </div>
-
-                    <div class="event-separator"></div>
-
-                    <div class="event-info">
-                        <span class="event-title">{{ item.event.title }}</span>
-                        @if (item.event.place) {
-                        <span class="event-place">📍 {{ item.event.place }}</span>
-                        }
-                    </div>
-
-                    <div class="event-meta">
-                        <span class="event-group-tag">{{ item.groupName }}</span>
-                        @if (inCount(item.event)) {
-                        <span class="event-in-count">{{ inCount(item.event) }} in</span>
-                        }
-                    </div>
-                </div>
-                }
-            </div>
-        </div>
-    </section>
-    }
-
-    <!-- Features Grid -->
-    <section class="features-section">
-        <h2 class="section-title">Everything You Need to Run Your League</h2>
-
-        <div class="features-grid">
-            <!-- League Management -->
-            <div class="feature-card">
-                <div class="icon-wrapper">
-                    🏆
-                </div>
-                <h3>League Management</h3>
-                <p>Effortlessly organize leagues, manage groups, and track seasons with our intuitive admin dashboard.
+        <div class="wrap hero__grid">
+            <div class="hero__copy">
+                <p class="eyebrow">League ops, handled</p>
+                <h1 class="hero__title display" id="hero-title">
+                    Run the<br>
+                    <span class="hero__title-ball">Whole league</span><br>
+                    <span class="hero__title-outline">From one court.</span>
+                </h1>
+                <p class="hero__sub">
+                    The all-in-one platform clubs use to schedule matches, track DUPR, and run tournaments —
+                    without the spreadsheet chaos.
                 </p>
+                <div class="hero__ctas">
+                    <a routerLink="/book-demo" class="sp-btn sp-btn--primary" data-testid="hero-book-demo">
+                        Book a demo
+                        <span aria-hidden="true">→</span>
+                    </a>
+                    <a href="#leagues" class="sp-btn sp-btn--ghost" (click)="scrollTo('leagues', $event)">
+                        Explore the platform
+                    </a>
+                </div>
+                <!-- TODO(content): hidden until there is a real customer count to show.
+                <div class="hero__proof">
+                    <div class="avatars" aria-hidden="true">
+                        <span class="avatar avatar--1">DW</span>
+                        <span class="avatar avatar--2">MK</span>
+                        <span class="avatar avatar--3">JL</span>
+                        <span class="avatar avatar--4">SR</span>
+                    </div>
+                    <div>
+                        <div class="stars" role="img" aria-label="Rated 5 out of 5 stars">★★★★★</div>
+                        <div class="hero__proof-text">Trusted by 500+ clubs across 12 countries.</div>
+                    </div>
+                </div>
+                -->
             </div>
 
-            <!-- Smart Slotting -->
-            <div class="feature-card">
-                <div class="icon-wrapper">
-                    🤖
+            <div class="hero__visual">
+                <div class="device">
+                    <div class="orb" aria-hidden="true"></div>
+                    <div class="device__chrome">
+                        <span class="device__dot device__dot--r" aria-hidden="true"></span>
+                        <span class="device__dot device__dot--y" aria-hidden="true"></span>
+                        <span class="device__dot device__dot--g" aria-hidden="true"></span>
+                        <span class="device__url mono">app.stackedpaddle.com / spring-4.0-division</span>
+                    </div>
+                    <div class="device__body">
+                        <div class="device__toolbar">
+                            <span class="pill pill--live"><span class="pill__dot" aria-hidden="true"></span>Live</span>
+                            <span class="mono device__meta">Standings · Week 6</span>
+                        </div>
+                        <table class="standings">
+                            <caption class="sr-only">Spring 4.0 Division standings</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Team</th>
+                                    <th scope="col" class="num">W–L</th>
+                                    <th scope="col" class="num">Pts</th>
+                                    <th scope="col" class="num">Diff</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (row of standings; track row.team; let i = $index) {
+                                <tr [class.is-lead]="row.lead">
+                                    <td><span class="standings__rank mono">{{ i + 1 }}</span>{{ row.team }}</td>
+                                    <td class="num mono">{{ row.w }}–{{ row.l }}</td>
+                                    <td class="num mono">{{ row.pts }}</td>
+                                    <td class="num mono" [class.is-up]="row.diff.startsWith('+')">{{ row.diff }}</td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <h3>Smart Slotting</h3>
-                <p>Say goodbye to manual scheduling. Our automated algorithm creates fair and balanced matches for every
-                    round.</p>
-            </div>
 
-            <!-- Player Stats -->
-            <div class="feature-card">
-                <div class="icon-wrapper">
-                    📊
+                <div class="float-card">
+                    <div class="float-card__label mono">Club avg DUPR</div>
+                    <div class="float-card__row">
+                        <span class="float-card__value mono">4.12</span>
+                        <span class="float-card__delta mono">▲0.18</span>
+                    </div>
+                    <svg class="sparkline" viewBox="0 0 120 36" aria-hidden="true" focusable="false">
+                        <defs>
+                            <linearGradient id="spark-fill" x1="0" x2="0" y1="0" y2="1">
+                                <stop offset="0" stop-color="var(--good)" stop-opacity="0.35" />
+                                <stop offset="1" stop-color="var(--good)" stop-opacity="0" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M0 28 L15 24 L30 26 L45 18 L60 20 L75 12 L90 14 L105 7 L120 4 V36 H0 Z"
+                            fill="url(#spark-fill)" />
+                        <polyline points="0,28 15,24 30,26 45,18 60,20 75,12 90,14 105,7 120,4" fill="none"
+                            stroke="var(--good)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+                    </svg>
                 </div>
-                <h3>Advanced Statistics</h3>
-                <p>Track DUPR ratings, win rates, and match history to visualize your progress and improvement.</p>
-            </div>
-
-            <!-- Match History -->
-            <div class="feature-card">
-                <div class="icon-wrapper">
-                    📝
-                </div>
-                <h3>Match History</h3>
-                <p>Keep a detailed record of every game played, complete with scores, partners, and opponents.</p>
-            </div>
-
-            <!-- Tournaments -->
-            <div class="feature-card">
-                <div class="icon-wrapper">
-                    🏅
-                </div>
-                <h3>Tournaments</h3>
-                <p>Run bracket-style tournaments with pools, DUPR-based divisions, and doubles partner matching —
-                    players register online in a couple of taps.</p>
             </div>
         </div>
     </section>
 
-    <!-- Multi-Language Banner -->
-    <section class="multilang-banner-section">
-        <div class="banner-container">
-            <img src="/assets/images/pickleball_footer_banner_v3.png" alt="StackedPaddle — Pickleball in many languages"
-                class="multilang-banner">
+    <!-- ───────────── Signed-in shortcuts (only when a member is logged in) ───────────── -->
+    @if (authService.currentUser() && nextMatch(); as match) {
+    <section class="member-strip" aria-label="Your next match">
+        <div class="wrap">
+            <button type="button" class="member-card" (click)="goToPlayerDashboard()">
+                <span class="pill pill--ball">Next match</span>
+                <span class="member-card__when">
+                    <strong>{{ formatMatchDate(match.date) }}</strong>
+                    <span class="mono">{{ match.time }}</span>
+                </span>
+                <span class="member-card__teams">
+                    <span class="member-card__team">
+                        <span class="member-card__label mono">My team</span>
+                        <span class="member-card__name">{{ match.myTeamName || 'My Team' }}</span>
+                        @if (getTeammates(match)) {<span class="member-card__sub">w/ {{ getTeammates(match) }}</span>}
+                    </span>
+                    <span class="member-card__vs mono">vs</span>
+                    <span class="member-card__team">
+                        <span class="member-card__label mono">Opponents</span>
+                        <span class="member-card__name">{{ match.opponentTeamName || 'Opponents' }}</span>
+                        @if (getOpponents(match)) {<span class="member-card__sub">{{ getOpponents(match) }}</span>}
+                    </span>
+                </span>
+                <span class="member-card__meta mono">
+                    {{ match.leagueName }}
+                    @if (match.roundName || match.roundId) { · {{ match.roundName || 'Round ' + match.roundId }} }
+                    @if (match.court && match.court !== 'TBD') { · Court {{ match.court }} }
+                </span>
+                <span class="member-card__cta">View dashboard →</span>
+            </button>
         </div>
     </section>
+    }
+
+    @if (authService.currentUser() && upcomingEvents().length) {
+    <section class="member-strip" aria-label="Upcoming group events">
+        <div class="wrap">
+            <button type="button" class="member-card member-card--events" (click)="goToGroups()">
+                <span class="member-card__head">
+                    <span class="pill pill--ball">Upcoming events</span>
+                    <span class="member-card__cta">My groups →</span>
+                </span>
+                @for (item of upcomingEvents(); track item.event.event_id) {
+                <span class="event-row">
+                    <span class="event-row__when">
+                        <strong>{{ formatEventDate(item.event.date) }}</strong>
+                        @if (item.event.time) {<span class="mono">{{ formatEventTime(item.event.time) }}</span>}
+                    </span>
+                    <span class="event-row__info">
+                        <span class="member-card__name">{{ item.event.title }}</span>
+                        @if (item.event.place) {<span class="member-card__sub">{{ item.event.place }}</span>}
+                    </span>
+                    <span class="event-row__meta mono">
+                        {{ item.groupName }}
+                        @if (inCount(item.event)) { · {{ inCount(item.event) }} in }
+                    </span>
+                </span>
+                }
+            </button>
+        </div>
+    </section>
+    }
+
+    <!-- ───────────── Metrics band ───────────── -->
+    <section class="metrics" aria-label="Platform metrics" spReveal>
+        <div class="wrap">
+            <div class="metrics__grid">
+                @for (m of metrics; track m.label) {
+                <div class="metric">
+                    <div class="metric__value display" [spCountUp]="m.value" [decimals]="m.decimals"
+                        [suffix]="m.suffix" data-testid="metric-value">{{ m.value }}{{ m.suffix }}</div>
+                    <div class="metric__label mono">{{ m.label }}</div>
+                </div>
+                }
+            </div>
+            <!-- TODO(content): placeholder club names -->
+            <div class="logos" aria-label="Clubs using StackedPaddle">
+                @for (name of clubLogos; track name) {
+                <span class="logo">{{ name }}</span>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- ───────────── Feature: Leagues ───────────── -->
+    <section class="feature" id="leagues" aria-labelledby="leagues-title" spReveal>
+        <div class="wrap feature__grid">
+            <div class="feature__copy">
+                <p class="eyebrow">League administration</p>
+                <h2 class="h2" id="leagues-title">Every division, standing, and schedule in one place.</h2>
+                <p class="lede">
+                    Spin up a season, drop in your roster, and StackedPaddle builds the rounds, keeps the
+                    table honest, and tells every player where to be and when.
+                </p>
+                <ul class="checks">
+                    <li>Auto-generated round-robin or ladder play, split by DUPR tier.</li>
+                    <li>Live standings with point differential and tie-breakers baked in.</li>
+                    <li>Players enter their own scores; you approve with one tap.</li>
+                </ul>
+                <button type="button" class="link-cta" (click)="startAdminDemo()" [disabled]="demoLoading()">
+                    See it in a demo <span aria-hidden="true">→</span>
+                </button>
+            </div>
+            <div class="feature__visual">
+                <div class="panel">
+                    <div class="panel__head">
+                        <span class="panel__title">Active Seasons</span>
+                        <span class="panel__meta mono">3 running</span>
+                    </div>
+                    @for (s of seasons; track s.name) {
+                    <div class="season">
+                        <div class="season__row">
+                            <div class="season__info">
+                                <div class="season__name">{{ s.name }}</div>
+                                <div class="season__meta mono">{{ s.meta }}</div>
+                            </div>
+                            <span class="season__status mono" [class.is-good]="s.tone === 'good'"
+                                [class.is-coral]="s.tone === 'coral'">{{ s.status }}</span>
+                        </div>
+                        <div class="bar" role="progressbar" [attr.aria-valuenow]="s.pct" aria-valuemin="0"
+                            aria-valuemax="100" [attr.aria-label]="s.name + ' progress'">
+                            <span class="bar__fill" [class.is-coral]="s.tone === 'coral'" [style.width.%]="s.pct"></span>
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ───────────── Feature: Smart Slotting (signature, reversed) ───────────── -->
+    <section class="feature feature--alt feature--reverse" id="slotting" aria-labelledby="slotting-title" spReveal>
+        <div class="wrap feature__grid">
+            <div class="feature__copy">
+                <p class="eyebrow eyebrow--coral">Smart Slotting™</p>
+                <h2 class="h2" id="slotting-title">Balanced matchups, generated in one tap.</h2>
+                <p class="lede">
+                    Smart Slotting reads DUPR, availability, and who has already played whom, then fills every
+                    court with pairings that are actually competitive — so nobody sits, and nobody gets rolled.
+                </p>
+                <ul class="checks">
+                    <li>Targets a ±0.15 DUPR spread on every court.</li>
+                    <li>Respects availability, no-repeat partners, and your real court count.</li>
+                    <li>Someone drops out? Re-slot the night in one tap.</li>
+                </ul>
+                <button type="button" class="link-cta" (click)="startAdminDemo()" [disabled]="demoLoading()">
+                    See it in a demo <span aria-hidden="true">→</span>
+                </button>
+            </div>
+            <div class="feature__visual">
+                <app-smart-slotting-demo></app-smart-slotting-demo>
+            </div>
+        </div>
+    </section>
+
+    <!-- ───────────── Feature: Ratings ───────────── -->
+    <section class="feature" id="ratings" aria-labelledby="ratings-title" spReveal>
+        <div class="wrap feature__grid">
+            <div class="feature__copy">
+                <p class="eyebrow">Ratings &amp; player stats</p>
+                <h2 class="h2" id="ratings-title">DUPR-native tracking your players actually check.</h2>
+                <p class="lede">
+                    Every league and tournament match feeds a player profile that shows the number they care
+                    about, how it is moving, and who they play best with.
+                </p>
+                <ul class="checks">
+                    <li>Official DUPR sync — no double entry, no stale ratings.</li>
+                    <li>Trends, streaks, and head-to-head history for every matchup.</li>
+                    <li>Shareable player cards for the group chat.</li>
+                </ul>
+                <button type="button" class="link-cta" (click)="startAdminDemo()" [disabled]="demoLoading()">
+                    See it in a demo <span aria-hidden="true">→</span>
+                </button>
+            </div>
+            <div class="feature__visual">
+                <div class="player-card">
+                    <div class="player-card__head">
+                        <span class="avatar avatar--3 avatar--lg" aria-hidden="true">MC</span>
+                        <div>
+                            <div class="player-card__name">Maya Chen</div>
+                            <div class="player-card__club mono">Metro Paddle Club · 4.0 Division</div>
+                        </div>
+                    </div>
+                    <div class="player-card__dupr">
+                        <div class="dupr">
+                            <span class="dupr__value display">4.12</span>
+                            <span class="dupr__label mono">DUPR</span>
+                        </div>
+                        <div class="dupr__delta mono">▲0.24 last 10 matches</div>
+                    </div>
+                    <svg class="trend" viewBox="0 0 320 80" aria-hidden="true" focusable="false">
+                        <defs>
+                            <linearGradient id="trend-fill" x1="0" x2="0" y1="0" y2="1">
+                                <stop offset="0" stop-color="var(--good)" stop-opacity="0.3" />
+                                <stop offset="1" stop-color="var(--good)" stop-opacity="0" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M0 62 L36 58 L72 60 L108 46 L144 50 L180 36 L216 40 L252 22 L288 18 L320 10 V80 H0 Z"
+                            fill="url(#trend-fill)" />
+                        <polyline points="0,62 36,58 72,60 108,46 144,50 180,36 216,40 252,22 288,18 320,10"
+                            fill="none" stroke="var(--good)" stroke-width="2.5" stroke-linejoin="round"
+                            stroke-linecap="round" />
+                        <circle cx="320" cy="10" r="4" fill="var(--good)" />
+                    </svg>
+                    <dl class="stats">
+                        <div class="stats__row">
+                            <dt>Season record</dt>
+                            <dd class="mono">32–11</dd>
+                        </div>
+                        <div class="stats__row">
+                            <dt>Win streak</dt>
+                            <dd class="mono">6 <span aria-label="on fire">🔥</span></dd>
+                        </div>
+                        <div class="stats__row">
+                            <dt>Best partner</dt>
+                            <dd>Jordan L. <span class="mono is-good">82%</span></dd>
+                        </div>
+                        <div class="stats__row">
+                            <dt>Points / game</dt>
+                            <dd class="mono">9.4</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ───────────── Feature: Tournaments (reversed) ───────────── -->
+    <section class="feature feature--alt feature--reverse" id="tournaments" aria-labelledby="tournaments-title"
+        spReveal>
+        <div class="wrap feature__grid">
+            <div class="feature__copy">
+                <p class="eyebrow eyebrow--coral">Tournament brackets</p>
+                <h2 class="h2" id="tournaments-title">From sign-up sheet to trophy ceremony.</h2>
+                <p class="lede">
+                    Open registration, seed by rating, and run the whole day from a phone. Brackets update the
+                    second a score goes in, and spectators can follow along on their own.
+                </p>
+                <ul class="checks">
+                    <li>Auto-seeding with consolation and back-draw brackets.</li>
+                    <li>Live score entry advances winners instantly.</li>
+                    <li>Spectator view with court assignments and next-up calls.</li>
+                </ul>
+                <button type="button" class="link-cta" (click)="startAdminDemo()" [disabled]="demoLoading()">
+                    See it in a demo <span aria-hidden="true">→</span>
+                </button>
+            </div>
+            <div class="feature__visual">
+                <div class="bracket" role="group" aria-label="Sample tournament bracket">
+                    @for (col of bracket; track col.round) {
+                    <div class="bracket__col">
+                        <div class="bracket__round mono">{{ col.round }}</div>
+                        @for (m of col.matches; track $index) {
+                        <div class="bmatch" [class.bmatch--live]="m.live">
+                            @if (m.live) {<span class="bmatch__live mono">Live</span>}
+                            <div class="bmatch__team" [class.is-win]="m.top.win">
+                                <span class="seed mono">{{ m.top.seed || '–' }}</span>
+                                <span class="bmatch__name">{{ m.top.name }}</span>
+                            </div>
+                            <div class="bmatch__team" [class.is-win]="m.bot.win" [class.is-tbd]="m.bot.name === 'TBD'">
+                                <span class="seed mono">{{ m.bot.seed || '–' }}</span>
+                                <span class="bmatch__name">{{ m.bot.name }}</span>
+                            </div>
+                            <div class="bmatch__score mono">{{ m.score }}</div>
+                        </div>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ───────────── Testimonial ───────────── -->
+    <!-- TODO(content): placeholder testimonial — replace with a real customer quote -->
+    <section class="quote" aria-label="Customer testimonial" spReveal>
+        <div class="wrap quote__inner">
+            <span class="quote__mark display" aria-hidden="true">“</span>
+            <blockquote class="quote__text">
+                StackedPaddle cut our league night prep from
+                <span class="quote__hl">three hours to ten minutes</span>. Smart Slotting alone paid for the year.
+            </blockquote>
+            <div class="quote__who">
+                <span class="avatar avatar--1 avatar--lg" aria-hidden="true">DW</span>
+                <div>
+                    <div class="quote__name">Dana Whitfield</div>
+                    <div class="quote__role mono">Director, Metro Paddle Club</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ───────────── Mini features ───────────── -->
+    <section class="mini" aria-labelledby="mini-title" spReveal>
+        <div class="wrap">
+            <h2 class="h2 h2--center" id="mini-title">Built for the people who run the club.</h2>
+            <div class="mini__grid">
+                @for (f of miniFeatures; track f.title) {
+                <div class="mini-card">
+                    <span class="mini-card__icon" aria-hidden="true">
+                        @switch (f.icon) {
+                        @case ('calendar') {
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="3" />
+                            <path d="M16 2v4M8 2v4M3 10h18" />
+                        </svg>
+                        }
+                        @case ('card') {
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="5" width="20" height="14" rx="3" />
+                            <path d="M2 10h20M6 15h4" />
+                        </svg>
+                        }
+                        @default {
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.1-4.3A8 8 0 1 1 21 12z" />
+                        </svg>
+                        }
+                        }
+                    </span>
+                    <h3 class="mini-card__title">{{ f.title }}</h3>
+                    <p class="mini-card__body">{{ f.body }}</p>
+                </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- ───────────── Final CTA ───────────── -->
+    <section class="cta" aria-labelledby="cta-title" spReveal>
+        <div class="cta__glow" aria-hidden="true"></div>
+        <div class="wrap cta__inner">
+            <h2 class="cta__title display" id="cta-title">
+                See your league<br>
+                <span class="cta__title-ball">running in 20 min.</span>
+            </h2>
+            <p class="cta__sub">Bring your roster. We'll build a live season on the call and hand you the keys.</p>
+            <div class="cta__actions">
+                <a routerLink="/book-demo" class="sp-btn sp-btn--primary sp-btn--lg" data-testid="cta-book-demo">
+                    Book a demo
+                    <span aria-hidden="true">→</span>
+                </a>
+                <button type="button" class="sp-btn sp-btn--ghost sp-btn--lg" (click)="startPlayerDemo()"
+                    [disabled]="demoLoading()" data-testid="cta-tour-club">
+                    {{ demoLoading() === 'player' ? 'Loading…' : 'Tour a live club' }}
+                </button>
+            </div>
+            <p class="cta__fine mono">No credit card · Free club &amp; player demos · Cancel anytime</p>
+        </div>
+    </section>
+
+    <!-- ───────────── Footer ───────────── -->
+    <footer class="footer">
+        <div class="wrap footer__grid">
+            <div class="footer__brand">
+                <a class="nav__brand" href="/" (click)="scrollTo('top', $event)">
+                    <span class="nav__mark" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                            <ellipse cx="12" cy="9.5" rx="6.5" ry="7.5" fill="currentColor" />
+                            <rect x="10.4" y="15.5" width="3.2" height="6.5" rx="1.4" fill="currentColor" />
+                        </svg>
+                    </span>
+                    <span class="nav__name">StackedPaddle</span>
+                </a>
+                <p class="footer__blurb">
+                    League management for pickleball clubs — scheduling, DUPR tracking, and tournaments in
+                    one place.
+                </p>
+                <span class="lang-pill mono" aria-label="Available languages">EN · ES · 中文 · 한국어</span>
+            </div>
+            <nav class="footer__col" aria-label="Platform">
+                <h3 class="footer__heading mono">Platform</h3>
+                <a href="#leagues" (click)="scrollTo('leagues', $event)">Leagues</a>
+                <a href="#slotting" (click)="scrollTo('slotting', $event)">Smart Slotting</a>
+                <a href="#ratings" (click)="scrollTo('ratings', $event)">Ratings &amp; stats</a>
+                <a href="#tournaments" (click)="scrollTo('tournaments', $event)">Tournaments</a>
+            </nav>
+            <nav class="footer__col" aria-label="Clubs">
+                <h3 class="footer__heading mono">Clubs</h3>
+                <a routerLink="/admin/login">Club sign in</a>
+                <a routerLink="/admin/signup">Create a club</a>
+                <a routerLink="/book-demo" data-testid="footer-book-demo">Book a demo</a>
+                <button type="button" class="footer__btn" (click)="startAdminDemo()" [disabled]="demoLoading()">
+                    Club demo
+                </button>
+            </nav>
+            <nav class="footer__col" aria-label="Players">
+                <h3 class="footer__heading mono">Players</h3>
+                <a routerLink="/login">Player sign in</a>
+                <a routerLink="/signup">Create an account</a>
+                <button type="button" class="footer__btn" (click)="startPlayerDemo()" [disabled]="demoLoading()">
+                    Player demo
+                </button>
+            </nav>
+        </div>
+        <div class="wrap footer__bottom">
+            <span class="mono">© 2026 StackedPaddle</span>
+            <!-- TODO(content): wire Privacy / Terms / Status to real pages -->
+            <span class="footer__legal mono">
+                <a href="#top" (click)="scrollTo('top', $event)">Privacy</a>
+                <a href="#top" (click)="scrollTo('top', $event)">Terms</a>
+                <a href="#top" (click)="scrollTo('top', $event)">Status</a>
+            </span>
+        </div>
+    </footer>
 </div>

@@ -42,7 +42,7 @@
     @if (editing()) {
     <form #pf="ngForm" (ngSubmit)="saveProfile(pf)" (input)="clearProfileErrors()" novalidate
       style="margin-top: var(--space-md);">
-      <p style="color: var(--color-text-muted); margin-top: 0;">
+      <p style="color: HSL(var(--color-text-muted)); margin-top: 0;">
         Changing your email signs you in again automatically.
       </p>
 
@@ -298,7 +298,7 @@
   }
 
   .profile-view dt {
-    color: var(--color-text-muted);
+    color: HSL(var(--color-text-muted));
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 1px;
@@ -336,7 +336,7 @@
   .validation-checklist {
     margin-top: 0.5rem;
     font-size: 0.85rem;
-    color: var(--color-text-muted);
+    color: HSL(var(--color-text-muted));
     background: HSL(var(--color-bg-dark) / 0.4);
     padding: 0.75rem;
     border-radius: 8px;

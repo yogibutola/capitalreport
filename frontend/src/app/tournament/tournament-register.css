@@ -18,7 +18,7 @@
   letter-spacing: 0.08em;
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--color-text-muted);
+  color: HSL(var(--color-text-muted));
 }
 
 .reg-hero h1 {
@@ -28,7 +28,7 @@
 
 .reg-meta {
   margin: 0;
-  color: var(--color-text-muted);
+  color: HSL(var(--color-text-muted));
   font-size: 0.9rem;
 }
 
@@ -68,7 +68,7 @@ a.reg-link {
   background: HSL(var(--color-bg-dark) / 0.35);
   padding: 0.7rem 0.8rem;
   border-radius: 8px;
-  color: var(--color-text-muted);
+  color: HSL(var(--color-text-muted));
 }
 
 .reg-checklist div {
@@ -120,7 +120,7 @@ a.reg-link {
   margin: 0 auto var(--space-sm);
   border-radius: 50%;
   background: HSL(var(--color-brand-accent));
-  color: #fff;
+  color: var(--ball-ink);
   font-size: 1.6rem;
   display: flex;
   align-items: center;

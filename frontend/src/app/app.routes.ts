@@ -10,6 +10,9 @@ import { MatchHistoryComponent } from './matches/match-history';
 import { ProfileComponent } from './stats/profile';
 import { AccountProfileComponent } from './account/profile';
 import { DashboardComponent as AdminDashboardComponent } from './admin/dashboard';
+import { ActiveSeasonComponent } from './admin/active-season';
+import { LeaguesComponent as AdminLeaguesComponent } from './admin/leagues';
+import { TournamentsComponent as AdminTournamentsComponent } from './admin/tournaments';
 import { CreateLeagueComponent } from './admin/create-league';
 import { CreateTournamentComponent } from './admin/create-tournament';
 import { TournamentDetailsComponent } from './admin/tournament-details';
@@ -21,6 +24,7 @@ import { LeagueDetailsComponent } from './admin/league-details';
 import { AdminLoginComponent } from './admin/admin-login';
 import { ClubSignupComponent } from './admin/club-signup';
 import { HomeComponent } from './home/home';
+import { BookDemoComponent } from './home/book-demo';
 import { TournamentRegisterComponent } from './tournament/tournament-register';
 import { adminGuard } from './auth/admin.guard';
 import { superAdminGuard } from './auth/super-admin.guard';
@@ -30,6 +34,9 @@ import { MyGroupsComponent } from './groups/my-groups';
 
 export const routes: Routes = [
     { path: 'admin', component: AdminDashboardComponent, canActivate: [adminGuard] },
+    { path: 'admin/leagues', component: AdminLeaguesComponent, canActivate: [adminGuard] },
+    { path: 'admin/tournaments', component: AdminTournamentsComponent, canActivate: [adminGuard] },
+    { path: 'admin/season', component: ActiveSeasonComponent, canActivate: [adminGuard] },
     { path: 'admin/login', component: AdminLoginComponent },
     { path: 'admin/signup', component: ClubSignupComponent },
     { path: 'admin/create-league', component: CreateLeagueComponent, canActivate: [adminGuard] },
@@ -57,5 +64,6 @@ export const routes: Routes = [
     { path: 'stats', component: ProfileComponent },
     { path: 'groups', component: MyGroupsComponent },
     { path: 'register-tournament/:tournament_id', component: TournamentRegisterComponent },
+    { path: 'book-demo', component: BookDemoComponent },
     { path: '', component: HomeComponent }
 ];

@@ -56,7 +56,7 @@ export class CreateLeagueComponent {
       .subscribe({
         next: () => {
           this.isSubmitting = false;
-          this.router.navigate(['/admin']);
+          this.router.navigate(['/admin/leagues']);
         },
         error: (err: ParsedHttpError) => {
           this.isSubmitting = false;

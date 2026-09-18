@@ -26,6 +26,7 @@ test('Player Withdrawal E2E: seed → player withdraws → admin verifies exclus
     // STEP 2: Admin slots Round 1
     console.log('\n━━━ STEP 2: Admin slots Round 1 ━━━');
     await adminLogin(page, ADMIN_EMAIL, ADMIN_PASSWORD);
+    await page.goto('/admin/leagues');
     await page.waitForSelector('text=' + leagueName, { timeout: 15_000 });
     await page.locator('.admin-league-item').filter({ hasText: leagueName }).click();
     await page.waitForURL('**/admin/league/**', { timeout: 15_000 });

@@ -1,7 +1,7 @@
 <div class="container" style="padding-top: var(--space-lg); padding-bottom: var(--space-xl);">
     <div class="flex-center" style="justify-content: space-between; margin-bottom: var(--space-lg);">
         <h2 class="text-gradient">Create New Tournament</h2>
-        <a routerLink="/admin" class="btn btn-secondary">Back</a>
+        <a routerLink="/admin/tournaments" class="btn btn-secondary">Back</a>
     </div>
 
     <div class="card" style="max-width: 800px; margin: 0 auto;">
@@ -114,7 +114,7 @@
                         [appInvalidForce]="submitAttempted">
                     <small id="dupr-help" class="input-hint">Leave both blank to allow any rating</small>
                     @if (duprRangeInvalid || fieldErrors['dupr_max']) {
-                    <small class="input-hint" style="color: var(--color-danger, #d33);">
+                    <small class="input-hint" style="color: HSL(var(--color-error))));">
                         {{ fieldErrors['dupr_max'] || 'Max rating must be at least the min rating.' }}
                     </small>
                     }

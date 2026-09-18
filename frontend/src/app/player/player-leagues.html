@@ -21,10 +21,10 @@
             @for (league of playerLeagues(); track league.id) {
             <div class="match-card card" (click)="viewLeague(league.id)">
                 <div class="match-header">
-                    <h3 style="margin: 0; color: var(--color-primary);">{{ league.name }}</h3>
+                    <h3 style="margin: 0; color: HSL(var(--color-primary));">{{ league.name }}</h3>
                     <span class="league-status" [class]="'status-' + league.status">{{ league.status }}</span>
                 </div>
-                <div style="margin-top: var(--space-md); color: var(--color-text-muted);">
+                <div style="margin-top: var(--space-md); color: HSL(var(--color-text-muted));">
                     @if (league.clubName) { <p>🏛️ {{ league.clubName }}</p> }
                     @if (league.location) { <p>📍 {{ league.location }}</p> }
                     <p>Starts: {{ league.startDate | date }}</p>
@@ -33,7 +33,7 @@
                 <div class="match-footer" style="margin-top: var(--space-md);">
                     <span class="view-details">View Details →</span>
                     @if (!auth.isDemo()) {
-                    <button class="btn btn-secondary btn-xs" style="color: var(--color-error, #e74c3c); border-color: var(--color-error, #e74c3c);"
+                    <button class="btn btn-secondary btn-xs" style="color: HSL(var(--color-error)))); border-color: HSL(var(--color-error))));"
                             (click)="$event.stopPropagation(); unregister(league.id, league.name)">
                         Unregister
                     </button>

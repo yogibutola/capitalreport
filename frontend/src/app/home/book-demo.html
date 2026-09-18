@@ -1,0 +1,199 @@
+<div class="demo-page">
+    <!-- ───────────── Slim nav ───────────── -->
+    <header class="nav">
+        <div class="wrap nav__inner">
+            <a class="nav__brand" routerLink="/" aria-label="StackedPaddle — home">
+                <span class="nav__mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                        <ellipse cx="12" cy="9.5" rx="6.5" ry="7.5" fill="currentColor" />
+                        <rect x="10.4" y="15.5" width="3.2" height="6.5" rx="1.4" fill="currentColor" />
+                    </svg>
+                </span>
+                <span class="nav__name">StackedPaddle</span>
+            </a>
+            <div class="nav__actions">
+                <a routerLink="/admin/login" class="nav__signin" data-testid="demo-nav-club-signin">Club sign in</a>
+                <a routerLink="/" class="nav__back" data-testid="demo-nav-back">
+                    <span aria-hidden="true">←</span> Back to site
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="demo" aria-labelledby="demo-title">
+        <div class="demo__glow" aria-hidden="true"></div>
+
+        <div class="wrap demo__grid">
+            <!-- ───────────── Copy column ───────────── -->
+            <section class="demo__copy">
+                <p class="eyebrow">Book a demo</p>
+                <h1 class="demo__title display" id="demo-title">
+                    See your league<br>
+                    <span class="demo__title-ball">running in 20 min.</span>
+                </h1>
+                <p class="demo__lede">
+                    Bring your roster. We'll build a live season on the call, walk through Smart Slotting and
+                    hand you the keys — no slides, no pressure.
+                </p>
+
+                <ol class="agenda" aria-label="What happens on the call">
+                    @for (item of agenda; track item.title; let i = $index) {
+                    <li class="agenda__item">
+                        <span class="agenda__num mono" aria-hidden="true">0{{ i + 1 }}</span>
+                        <div>
+                            <h2 class="agenda__title">{{ item.title }}</h2>
+                            <p class="agenda__body">{{ item.body }}</p>
+                        </div>
+                    </li>
+                    }
+                </ol>
+
+                <div class="demo__facts mono" aria-label="Demo details">
+                    <span>20 min · video call</span>
+                    <span>No credit card</span>
+                    <span>Reply within 1 business day</span>
+                </div>
+            </section>
+
+            <!-- ───────────── Form column ───────────── -->
+            <section class="demo__form-col" aria-label="Demo request form">
+                <div class="panel">
+                    @if (!submitted()) {
+                    <div class="panel__head">
+                        <h2 class="panel__title">Tell us about your club</h2>
+                        <p class="panel__sub">We'll match you with someone who runs leagues like yours.</p>
+                    </div>
+
+                    <form #f="ngForm" (ngSubmit)="onSubmit(f)" (input)="clearServerErrors()" novalidate
+                        data-testid="book-demo-form">
+                        <app-form-summary [form]="f" [attempted]="submitAttempted()" [labels]="fieldLabels" />
+                        <app-form-banner [message]="formError()" />
+
+                        <div class="field-row">
+                            <div class="form-group">
+                                <label class="label" for="field-name">Your name</label>
+                                <input id="field-name" class="input-field" type="text" name="name"
+                                    [(ngModel)]="model.name" #nameCtrl="ngModel" required minlength="2"
+                                    autocomplete="name" placeholder="Dana Whitfield" aria-describedby="err-name"
+                                    [appInvalid]="nameCtrl" [appInvalidServer]="fieldErrors()['name']"
+                                    [appInvalidForce]="submitAttempted()">
+                                <app-field-error id="err-name" label="Your name" [control]="nameCtrl"
+                                    [serverError]="fieldErrors()['name']" [forceShow]="submitAttempted()" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="label" for="field-email">Work email</label>
+                                <input id="field-email" class="input-field" type="email" name="email"
+                                    [(ngModel)]="model.email" #emailCtrl="ngModel" required email
+                                    autocomplete="email" placeholder="you@yourclub.com"
+                                    aria-describedby="err-email" [appInvalid]="emailCtrl"
+                                    [appInvalidServer]="fieldErrors()['email']"
+                                    [appInvalidForce]="submitAttempted()">
+                                <app-field-error id="err-email" label="Work email" [control]="emailCtrl"
+                                    [serverError]="fieldErrors()['email']" [forceShow]="submitAttempted()" />
+                            </div>
+                        </div>
+
+                        <div class="field-row">
+                            <div class="form-group">
+                                <label class="label" for="field-clubName">Club name</label>
+                                <input id="field-clubName" class="input-field" type="text" name="clubName"
+                                    [(ngModel)]="model.clubName" #clubCtrl="ngModel" required minlength="2"
+                                    autocomplete="organization" placeholder="Metro Paddle Club"
+                                    aria-describedby="err-clubName" [appInvalid]="clubCtrl"
+                                    [appInvalidServer]="fieldErrors()['clubName']"
+                                    [appInvalidForce]="submitAttempted()">
+                                <app-field-error id="err-clubName" label="Club name" [control]="clubCtrl"
+                                    [serverError]="fieldErrors()['clubName']" [forceShow]="submitAttempted()" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="label" for="field-phone">
+                                    Phone <span class="label__opt">optional</span>
+                                </label>
+                                <input id="field-phone" class="input-field" type="tel" name="phone"
+                                    [(ngModel)]="model.phone" #phoneCtrl="ngModel" autocomplete="tel"
+                                    placeholder="+1 555 0100" maxlength="40" aria-describedby="err-phone"
+                                    [appInvalid]="phoneCtrl" [appInvalidServer]="fieldErrors()['phone']"
+                                    [appInvalidForce]="submitAttempted()">
+                                <app-field-error id="err-phone" label="Phone" [control]="phoneCtrl"
+                                    [serverError]="fieldErrors()['phone']" [forceShow]="submitAttempted()" />
+                            </div>
+                        </div>
+
+                        <div class="field-row">
+                            <div class="form-group">
+                                <label class="label" for="field-clubSize">
+                                    Club size <span class="label__opt">optional</span>
+                                </label>
+                                <select id="field-clubSize" class="input-field" name="clubSize"
+                                    [(ngModel)]="model.clubSize">
+                                    <option value="">Select a range</option>
+                                    @for (size of clubSizes; track size) {
+                                    <option [value]="size">{{ size }}</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="label" for="field-preferredTime">
+                                    Preferred time <span class="label__opt">optional</span>
+                                </label>
+                                <input id="field-preferredTime" class="input-field" type="text"
+                                    name="preferredTime" [(ngModel)]="model.preferredTime" maxlength="120"
+                                    placeholder="Weekday mornings, PT">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="label" for="field-message">
+                                Anything else? <span class="label__opt">optional</span>
+                            </label>
+                            <textarea id="field-message" class="input-field input-field--area" name="message"
+                                [(ngModel)]="model.message" rows="4" maxlength="2000"
+                                placeholder="How you run leagues today, what's painful, what you'd like to see."></textarea>
+                        </div>
+
+                        <button type="submit" class="sp-btn sp-btn--primary sp-btn--block"
+                            [disabled]="isSubmitting()" data-testid="book-demo-submit">
+                            {{ isSubmitting() ? 'Sending…' : 'Request my demo' }}
+                            @if (!isSubmitting()) { <span aria-hidden="true">→</span> }
+                        </button>
+                        <p class="panel__fine mono">
+                            We'll only use this to schedule your demo. No newsletters.
+                        </p>
+                    </form>
+                    } @else {
+                    <div class="done" role="status" data-testid="book-demo-success">
+                        <span class="done__mark" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor"
+                                stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12.5l4.5 4.5L19 7.5" />
+                            </svg>
+                        </span>
+                        <h2 class="panel__title">You're on the calendar queue</h2>
+                        <p class="panel__sub">{{ submitted()!.message }}</p>
+                        <p class="done__ref mono">Ref · {{ submitted()!.request_id }}</p>
+                        <div class="done__actions">
+                            <a routerLink="/" class="sp-btn sp-btn--ghost">Back to site</a>
+                            <a routerLink="/admin/signup" class="sp-btn sp-btn--primary">
+                                Set up a club now <span aria-hidden="true">→</span>
+                            </a>
+                        </div>
+                    </div>
+                    }
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="foot">
+        <div class="wrap foot__inner mono">
+            <span>© 2026 StackedPaddle</span>
+            <span class="foot__links">
+                <a routerLink="/login">Player sign in</a>
+                <a routerLink="/admin/signup">Create a club</a>
+            </span>
+        </div>
+    </footer>
+</div>

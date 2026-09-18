@@ -26,14 +26,14 @@
                 View and Slot
             </a>
             }
-            <a routerLink="/admin" class="btn btn-secondary">Back to Admin</a>
+            <a routerLink="/admin/leagues" class="btn btn-secondary">Back to Leagues</a>
         </div>
     </div>
 
     <!-- Loading State -->
     @if (loading()) {
     <div class="card text-center">
-        <p style="color: var(--color-text-muted);">Loading league details...</p>
+        <p style="color: HSL(var(--color-text-muted));">Loading league details...</p>
     </div>
     }
 
@@ -56,7 +56,7 @@
         <!-- League Information Card -->
         <div class="card" style="padding: var(--space-sm) var(--space-md);">
             <div class="flex-center" style="justify-content: flex-start; gap: var(--space-lg); flex-wrap: wrap;">
-                <h3 style="margin: 0; font-size: 1.1rem; color: var(--color-accent);">League Information</h3>
+                <h3 style="margin: 0; font-size: 1.1rem; color: HSL(var(--color-accent));">League Information</h3>
 
                 <div class="flex-center" style="gap: var(--space-md); flex-wrap: wrap;">
                     @if (league.club_name) {
@@ -140,7 +140,7 @@
                 </table>
             </div>
             } @else {
-            <p style="color: var(--color-text-muted); text-align: center; padding: var(--space-lg);">
+            <p style="color: HSL(var(--color-text-muted)); text-align: center; padding: var(--space-lg);">
                 No players registered yet
             </p>
             }

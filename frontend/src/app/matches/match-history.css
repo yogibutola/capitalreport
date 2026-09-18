@@ -111,7 +111,7 @@
 }
 
 .match-card__team-score {
-    font-family: 'Chivo Mono', monospace;
+    font-family: var(--font-mono);
     font-weight: 900;
     font-size: 1.4rem;
     color: HSL(var(--color-text-muted));

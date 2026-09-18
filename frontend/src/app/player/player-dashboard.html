@@ -71,8 +71,8 @@
       <div class="matches-grid">
         @if (viewedUpcomingMatches().length === 0) {
         <div class="empty-state panel-card">
-          <h3 style="font-family: 'Anton', sans-serif; font-size: 2rem; text-transform: uppercase;">NO UPCOMING MATCHES</h3>
-          <p style="color: var(--color-text-muted);">Check back later or select a different league.</p>
+          <h3 style="font-family: var(--font-display); font-size: 2rem; text-transform: uppercase;">NO UPCOMING MATCHES</h3>
+          <p style="color: HSL(var(--color-text-muted));">Check back later or select a different league.</p>
         </div>
         }
         @for (match of viewedUpcomingMatches(); track match.id; let i = $index) {
@@ -222,7 +222,7 @@
           </tbody>
         </table>
         } @else {
-        <div style="text-align: center; color: var(--color-text-muted); padding: var(--space-md);">
+        <div style="text-align: center; color: HSL(var(--color-text-muted)); padding: var(--space-md);">
           No completed matches in this group yet.
         </div>
         }
@@ -253,8 +253,8 @@
       <div class="matches-grid">
         @if (viewedCompletedMatches().length === 0) {
         <div class="empty-state panel-card">
-          <h3 style="font-family: 'Anton', sans-serif; font-size: 2rem; text-transform: uppercase;">NO COMPLETED MATCHES</h3>
-          <p style="color: var(--color-text-muted);">
+          <h3 style="font-family: var(--font-display); font-size: 2rem; text-transform: uppercase;">NO COMPLETED MATCHES</h3>
+          <p style="color: HSL(var(--color-text-muted));">
             @if (selectedRound()) { No matches found for this round. } @else { As you finish matches, they will appear here. }
           </p>
         </div>
@@ -378,8 +378,8 @@
     @if (selectedLeague(); as league) {
     <div class="panel-card" style="margin-bottom: var(--space-xl);">
       <div class="flex-center" style="gap: var(--space-lg); flex-wrap: wrap;">
-        <h3 style="margin: 0; color: var(--color-primary);">League Information</h3>
-        <div class="flex-center" style="gap: var(--space-md); flex-wrap: wrap; color: var(--color-text-muted);">
+        <h3 style="margin: 0; color: HSL(var(--color-primary));">League Information</h3>
+        <div class="flex-center" style="gap: var(--space-md); flex-wrap: wrap; color: HSL(var(--color-text-muted));">
           @if (league.startDate) { <div><strong>Start:</strong> {{ league.startDate | date }}</div> }
           @if (league.endDate)   { <div><strong>End:</strong> {{ league.endDate | date }}</div> }
           @if (league.duration)  { <div><strong>Duration:</strong> {{ league.duration }} weeks</div> }
@@ -406,7 +406,7 @@
               @if (day.withdrawn) {
               <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
                 <span class="badge status-completed" style="border-radius: 4px; padding: 2px 8px; font-size: 0.8rem; font-weight: bold;">Withdrawn</span>
-                @if (day.reason) { <small style="color: var(--color-text-muted);">{{ day.reason }}</small> }
+                @if (day.reason) { <small style="color: HSL(var(--color-text-muted));">{{ day.reason }}</small> }
               </div>
               } @else {
               <button class="btn btn-secondary" style="padding: 6px 16px; font-size: 0.9rem;"
@@ -421,7 +421,7 @@
           }
           @if (getPlayDays().length === 0) {
           <tr>
-            <td colspan="3" style="text-align: center; padding: var(--space-lg); color: var(--color-text-muted);">No play days scheduled yet.</td>
+            <td colspan="3" style="text-align: center; padding: var(--space-lg); color: HSL(var(--color-text-muted));">No play days scheduled yet.</td>
           </tr>
           }
         </tbody>

@@ -2,7 +2,7 @@
   <div class="reg-shell">
 
     @if (loading()) {
-    <div class="card"><p style="margin: 0; color: var(--color-text-muted);">Loading tournament…</p></div>
+    <div class="card"><p style="margin: 0; color: HSL(var(--color-text-muted));">Loading tournament…</p></div>
     } @else if (loadError()) {
     <div class="card">
       <app-form-banner [message]="loadError()" />
@@ -24,7 +24,7 @@
         @if (t.location) { · 📍 {{ t.location }} }
       </p>
       @if (t.tournament_description) {
-      <p style="margin: var(--space-sm) 0 0; color: var(--color-text-muted);">{{ t.tournament_description }}</p>
+      <p style="margin: var(--space-sm) 0 0; color: HSL(var(--color-text-muted));">{{ t.tournament_description }}</p>
       }
     </div>
 
@@ -33,7 +33,7 @@
     <div class="card reg-success">
       <div class="reg-check">✓</div>
       <h2 style="margin: 0 0 var(--space-xs);">You're registered!</h2>
-      <p style="color: var(--color-text-muted); margin: 0 0 var(--space-md);">
+      <p style="color: HSL(var(--color-text-muted)); margin: 0 0 var(--space-md);">
         We've created your account and added you to <strong>{{ t.tournament_name }}</strong>.
         @if (isDoubles() && partnerChoice() === 'looking') {
         You'll be paired with a partner when the organiser generates the draw.
@@ -44,7 +44,7 @@
     } @else if (isClosed()) {
     <div class="card">
       <app-form-banner message="Registration is closed for this tournament." />
-      <p style="color: var(--color-text-muted); margin: var(--space-sm) 0 0;">
+      <p style="color: HSL(var(--color-text-muted)); margin: var(--space-sm) 0 0;">
         The organiser has already generated the draw. Get in touch with them if you think this is a mistake.
       </p>
     </div>
@@ -53,7 +53,7 @@
     <!-- Registration form -->
     <div class="card">
       <h2 style="margin: 0 0 var(--space-xs);">Create your account &amp; register</h2>
-      <p style="color: var(--color-text-muted); margin: 0 0 var(--space-lg); font-size: 0.9rem;">
+      <p style="color: HSL(var(--color-text-muted)); margin: 0 0 var(--space-lg); font-size: 0.9rem;">
         Already have an account?
         <a [routerLink]="['/login']" [queryParams]="{ redirect: '/register-tournament/' + tournamentId }"
           class="reg-link">Sign in to register</a>.

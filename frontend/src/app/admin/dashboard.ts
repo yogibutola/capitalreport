@@ -3,10 +3,12 @@ import { RouterLink } from '@angular/router';
 import { AdminService } from './admin';
 import { TournamentService } from './tournament';
 import { AuthService } from '../auth/auth';
-import { ToastService } from '../shared/toast.service';
-import { ConfirmService } from '../shared/confirm.service';
-import { parseHttpError } from '../shared/http-error';
 
+/**
+ * Club "Manage" tab — an overview hub. The full league and tournament lists live
+ * on their own tabs (/admin/leagues, /admin/tournaments); this page shows counts
+ * and a short preview of each with links through.
+ */
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
@@ -18,11 +20,27 @@ export class DashboardComponent implements OnInit {
   adminService = inject(AdminService);
   tournamentService = inject(TournamentService);
   auth = inject(AuthService);
-  private toast = inject(ToastService);
-  private confirm = inject(ConfirmService);
   leagues = this.adminService.leagues;
   tournaments = this.tournamentService.tournaments;
+
+  static readonly PREVIEW_SIZE = 3;
+
   activeLeagueCount = computed(() => this.leagues().filter(l => l.league_status === 'active').length);
+  activeTournamentCount = computed(
+    () => this.tournaments().filter(t => t.tournament_status === 'active').length
+  );
+
+  // Active items first so the hub surfaces what is in play right now.
+  leaguePreview = computed(() =>
+    [...this.leagues()]
+      .sort((a, b) => Number(b.league_status === 'active') - Number(a.league_status === 'active'))
+      .slice(0, DashboardComponent.PREVIEW_SIZE)
+  );
+  tournamentPreview = computed(() =>
+    [...this.tournaments()]
+      .sort((a, b) => Number(b.tournament_status === 'active') - Number(a.tournament_status === 'active'))
+      .slice(0, DashboardComponent.PREVIEW_SIZE)
+  );
 
   ngOnInit() {
     // AdminService is a singleton whose leagues signal is cached from whichever
@@ -30,29 +48,5 @@ export class DashboardComponent implements OnInit {
     // visit so switching between clubs doesn't show stale/wrong-club data.
     this.adminService.fetchLeagues();
     this.tournamentService.fetchTournaments();
-  }
-
-  async deleteTournament(event: Event, tournamentId: string) {
-    event.stopPropagation();
-    const confirmed = await this.confirm.ask({
-      title: 'Delete this tournament?',
-      message:
-        'The bracket, seeding, and every recorded result will be permanently deleted. This cannot be undone.',
-      confirmLabel: 'Delete Tournament',
-      cancelLabel: 'Keep Tournament',
-    });
-    if (!confirmed) return;
-    this.tournamentService.deleteTournament(tournamentId).subscribe({
-      next: () => {
-        this.tournamentService.fetchTournaments();
-        this.toast.success('Tournament deleted.');
-      },
-      error: (err) => this.toast.error(parseHttpError(err).message),
-    });
-  }
-
-  deleteLeague(event: Event, leagueId: string) {
-    event.stopPropagation();
-    this.adminService.deleteLeague(leagueId);
   }
 }
