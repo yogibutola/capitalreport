@@ -44,13 +44,13 @@
     align-items: center;
     gap: 10px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(87, 217, 163, 0.15);
+    box-shadow: 0 4px 12px rgba(var(--good-rgb), 0.15);
     transition: all var(--transition-fast);
 }
 
 .special-offer-pill:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(87, 217, 163, 0.3);
+    box-shadow: 0 6px 16px rgba(var(--good-rgb), 0.3);
 }
 
 .offer-gift-icon {
@@ -74,8 +74,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: rgba(var(--tint-rgb), 0.03);
+    border: 1px solid rgba(var(--tint-rgb), 0.05);
     border-radius: var(--radius-md);
     padding: var(--space-sm) var(--space-md);
     flex-wrap: wrap;
@@ -108,7 +108,7 @@
 
 .control-pill-btn:hover {
     color: var(--text);
-    background-color: rgba(255, 255, 255, 0.06);
+    background-color: rgba(var(--tint-rgb), 0.06);
 }
 
 
@@ -116,7 +116,7 @@
     background-color: HSL(var(--color-ace-lime));
     border-color: HSL(var(--color-ace-lime));
     color: var(--ball-ink);
-    box-shadow: 0 4px 12px rgba(205, 240, 58, 0.2);
+    box-shadow: 0 4px 12px rgba(var(--ball-rgb), 0.2);
 }
 
 /* Slider Checkbox Switch */
@@ -211,14 +211,14 @@ input:checked + .slider:before {
     justify-content: space-between;
     height: 200px;
     box-sizing: border-box;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 30px rgba(var(--shadow-rgb), calc(0.15 * var(--shadow-k)));
+    border: 1px solid rgba(var(--tint-rgb), 0.05);
     transition: all var(--transition-fast);
 }
 
 .promo-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 16px 36px rgba(var(--shadow-rgb), calc(0.25 * var(--shadow-k)));
 }
 
 .card-icon-header {
@@ -231,7 +231,7 @@ input:checked + .slider:before {
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(var(--tint-rgb), 0.15);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -280,7 +280,7 @@ input:checked + .slider:before {
 }
 
 .gradient-lavender .icon-circle {
-    background-color: rgba(205, 240, 58, 0.08);
+    background-color: rgba(var(--ball-rgb), 0.08);
 }
 
 .gradient-lavender .card-small-tag,
@@ -331,12 +331,12 @@ input:checked + .slider:before {
     background: var(--surface-2);
     border: 1px solid var(--line-soft);
     color: var(--text);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 14px 40px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 1px 0 rgba(var(--tint-rgb), 0.03) inset, 0 14px 40px rgba(var(--shadow-rgb), calc(0.35 * var(--shadow-k)));
 }
 
-.gradient-purple .icon-circle { background-color: rgba(87, 217, 163, 0.14); }
-.gradient-deep .icon-circle { background-color: rgba(255, 106, 69, 0.14); }
-.gradient-green .icon-circle { background-color: rgba(205, 240, 58, 0.14); }
+.gradient-purple .icon-circle { background-color: rgba(var(--good-rgb), 0.14); }
+.gradient-deep .icon-circle { background-color: rgba(var(--coral-rgb), 0.14); }
+.gradient-green .icon-circle { background-color: rgba(var(--ball-rgb), 0.14); }
 
 .gradient-purple .card-small-tag { color: var(--good); }
 .gradient-deep .card-small-tag { color: var(--coral); }
@@ -382,7 +382,7 @@ input:checked + .slider:before {
 
 .card-action-btn-white:hover {
     transform: var(--lift);
-    box-shadow: 0 6px 18px rgba(205, 240, 58, 0.28);
+    box-shadow: 0 6px 18px rgba(var(--ball-rgb), 0.28);
 }
 
 /* ─── Right Sidebar: Events ─── */
@@ -453,7 +453,7 @@ input:checked + .slider:before {
 }
 
 .events-coming-soon-btn {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(var(--tint-rgb), 0.08);
     color: HSL(var(--color-text-muted));
 }
 
@@ -479,7 +479,7 @@ input:checked + .slider:before {
 }
 
 .event-item:hover {
-    background-color: rgba(255, 255, 255, 0.06);
+    background-color: rgba(var(--tint-rgb), 0.06);
 }
 
 .event-date-chip {
@@ -496,7 +496,7 @@ input:checked + .slider:before {
 }
 
 .event-date-chip {
-    background-color: rgba(87, 217, 163, 0.25);
+    background-color: rgba(var(--good-rgb), 0.25);
     color: HSL(var(--color-rally-green));
 }
 
@@ -575,7 +575,7 @@ input:checked + .slider:before {
 }
 
 .event-in-chip {
-    background-color: rgba(205, 240, 58, 0.25);
+    background-color: rgba(var(--ball-rgb), 0.25);
     color: HSL(var(--color-ace-lime));
 }
 
@@ -596,7 +596,7 @@ input:checked + .slider:before {
 }
 
 .events-view-groups-btn {
-    background-color: rgba(87, 217, 163, 0.85);
+    background-color: rgba(var(--good-rgb), 0.85);
 }
 
 .events-view-groups-btn:hover {
@@ -622,7 +622,7 @@ input:checked + .slider:before {
 }
 
 .sidebar-card-footer {
-    border-top-color: rgba(255, 255, 255, 0.05);
+    border-top-color: rgba(var(--tint-rgb), 0.05);
 }
 
 /* ─── Bottom Panel: Record Score Form (Send Money style) ─── */
@@ -658,7 +658,7 @@ input:checked + .slider:before {
 }
 
 .score-card-header {
-    border-bottom-color: rgba(255, 255, 255, 0.05);
+    border-bottom-color: rgba(var(--tint-rgb), 0.05);
 }
 
 .panel-section-title {
@@ -725,7 +725,7 @@ input:checked + .slider:before {
 
 .search-text-input {
     border-color: var(--card-border);
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(var(--shadow-rgb), calc(0.2 * var(--shadow-k)));
     color: var(--text);
 }
 
@@ -736,7 +736,7 @@ input:checked + .slider:before {
 
 .search-text-input:focus {
     border-color: HSL(var(--color-ace-lime));
-    box-shadow: 0 0 0 3px rgba(205, 240, 58, 0.15);
+    box-shadow: 0 0 0 3px rgba(var(--ball-rgb), 0.15);
 }
 
 .proceed-score-btn {
@@ -751,13 +751,13 @@ input:checked + .slider:before {
     font-family: var(--font-body);
     cursor: pointer;
     transition: all var(--transition-fast);
-    box-shadow: 0 4px 12px rgba(205, 240, 58, 0.25);
+    box-shadow: 0 4px 12px rgba(var(--ball-rgb), 0.25);
     box-sizing: border-box;
 }
 
 .proceed-score-btn:hover {
     background-color: var(--surface-2);
-    box-shadow: 0 6px 16px rgba(205, 240, 58, 0.35);
+    box-shadow: 0 6px 16px rgba(var(--ball-rgb), 0.35);
 }
 
 .proceed-score-btn:disabled {
@@ -792,7 +792,7 @@ input:checked + .slider:before {
 }
 
 .clear-search-btn:hover {
-    background-color: rgba(255,255,255,0.05);
+    background-color: rgba(var(--tint-rgb),0.05);
 }
 
 /* Search Results */
@@ -836,11 +836,11 @@ input:checked + .slider:before {
 
 .search-result-item:hover {
     border-color: HSL(var(--color-ace-lime));
-    box-shadow: 0 2px 8px rgba(205, 240, 58, 0.1);
+    box-shadow: 0 2px 8px rgba(var(--ball-rgb), 0.1);
 }
 
 .search-result-item {
-    background-color: rgba(255,255,255,0.03);
+    background-color: rgba(var(--tint-rgb),0.03);
     border-color: var(--card-border);
 }
 
@@ -896,9 +896,9 @@ input:checked + .slider:before {
     gap: 2px;
     flex-shrink: 0;
     padding: 6px 10px;
-    background: rgba(205, 240, 58, 0.07);
+    background: rgba(var(--ball-rgb), 0.07);
     border-radius: 8px;
-    border: 1px solid rgba(205, 240, 58, 0.15);
+    border: 1px solid rgba(var(--ball-rgb), 0.15);
     min-width: 52px;
 }
 
@@ -937,6 +937,6 @@ input:checked + .slider:before {
 }
 
 .alert-error {
-    background-color: rgba(239, 68, 68, 0.1);
-    border-color: rgba(239, 68, 68, 0.2);
+    background-color: HSL(var(--color-error) / 0.12);
+    border-color: HSL(var(--color-error) / 0.3);
 }

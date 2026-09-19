@@ -9,7 +9,6 @@ import { MatchEntryComponent } from './matches/match-entry';
 import { MatchHistoryComponent } from './matches/match-history';
 import { ProfileComponent } from './stats/profile';
 import { AccountProfileComponent } from './account/profile';
-import { DashboardComponent as AdminDashboardComponent } from './admin/dashboard';
 import { ActiveSeasonComponent } from './admin/active-season';
 import { LeaguesComponent as AdminLeaguesComponent } from './admin/leagues';
 import { TournamentsComponent as AdminTournamentsComponent } from './admin/tournaments';
@@ -33,7 +32,8 @@ import { PlatformConsoleComponent } from './platform/platform-console';
 import { MyGroupsComponent } from './groups/my-groups';
 
 export const routes: Routes = [
-    { path: 'admin', component: AdminDashboardComponent, canActivate: [adminGuard] },
+    // The club hub ("Manage" tab) was removed; Leagues is the club landing page.
+    { path: 'admin', redirectTo: 'admin/leagues', pathMatch: 'full' },
     { path: 'admin/leagues', component: AdminLeaguesComponent, canActivate: [adminGuard] },
     { path: 'admin/tournaments', component: AdminTournamentsComponent, canActivate: [adminGuard] },
     { path: 'admin/season', component: ActiveSeasonComponent, canActivate: [adminGuard] },

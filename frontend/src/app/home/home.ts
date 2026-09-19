@@ -7,8 +7,10 @@ import { GroupsService, GroupEvent } from '../groups/groups.service';
 import { ToastService } from '../shared/toast.service';
 import { parseHttpError } from '../shared/http-error';
 import { SmartSlottingDemoComponent } from './smart-slotting-demo';
-import { CountUpDirective } from './count-up.directive';
 import { RevealDirective } from './reveal.directive';
+import { BrandLogoComponent } from '../shared/brand-logo';
+import { BrandMarkComponent } from '../shared/brand-mark';
+import { ThemeToggleComponent } from '../shared/theme-toggle';
 
 interface UpcomingGroupEvent {
     groupId: string;
@@ -16,7 +18,7 @@ interface UpcomingGroupEvent {
     event: GroupEvent;
 }
 
-// TODO(content): standings, seasons, bracket, metrics, logos and the testimonial
+// TODO(content): standings, seasons, bracket and the testimonial
 // are placeholder marketing data — swap for real numbers/quotes before launch.
 const STANDINGS = [
     { team: 'Dink Dynasty', w: 11, l: 1, pts: 33, diff: '+64', lead: true },
@@ -31,15 +33,6 @@ const SEASONS = [
     { name: 'Ladder · 3.5 & under', meta: '38 players', pct: 50, status: 'Week 3 / 6', tone: 'muted' },
     { name: 'Summer Mixed Doubles', meta: '18 teams', pct: 0, status: 'Starts Mon', tone: 'coral' },
 ];
-
-const METRICS = [
-    { value: 500, suffix: '+', label: 'Clubs running live', decimals: 0 },
-    { value: 18, suffix: 'k', label: 'Matches scheduled', decimals: 0 },
-    { value: 97, suffix: '%', label: 'Less admin time', decimals: 0 },
-    { value: 4.9, suffix: '★', label: 'Avg club rating', decimals: 1 },
-];
-
-const CLUB_LOGOS = ['Metro Paddle Club', 'Harbor Dinks', 'Northside PB', 'Kitchen Collective', 'Rally Point SC'];
 
 interface BracketMatch {
     top: { seed: number; name: string; win: boolean };
@@ -94,7 +87,7 @@ const MINI_FEATURES = [
 @Component({
     selector: 'app-home',
     standalone: true,
-    imports: [RouterLink, CommonModule, SmartSlottingDemoComponent, CountUpDirective, RevealDirective],
+    imports: [RouterLink, CommonModule, SmartSlottingDemoComponent, RevealDirective, BrandLogoComponent, BrandMarkComponent, ThemeToggleComponent],
     templateUrl: './home.html',
     styleUrl: './home.css'
 })
@@ -108,8 +101,6 @@ export class HomeComponent {
 
     readonly standings = STANDINGS;
     readonly seasons = SEASONS;
-    readonly metrics = METRICS;
-    readonly clubLogos = CLUB_LOGOS;
     readonly bracket = BRACKET;
     readonly miniFeatures = MINI_FEATURES;
 
@@ -219,7 +210,7 @@ export class HomeComponent {
     // "Book a demo" CTAs are routerLinks to /book-demo (BookDemoComponent);
     // the in-section "See it in a demo" links launch the instant read-only club demo.
     startAdminDemo() {
-        this.startDemo('admin', '/admin');
+        this.startDemo('admin', '/admin/leagues');
     }
 
     startPlayerDemo() {

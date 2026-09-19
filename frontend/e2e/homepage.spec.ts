@@ -11,6 +11,13 @@ test.describe('Landing page', () => {
         await page.waitForLoadState('networkidle');
     });
 
+    // The wordmark's construction is covered across every page in brand-logo.spec.ts.
+    test('nav brand is the shared wordmark and links to the top', async ({ page }) => {
+        const brandLink = page.locator('header.nav .nav__brand');
+        await expect(brandLink.locator('app-brand-logo')).toBeVisible();
+        await expect(brandLink).toHaveAttribute('aria-label', 'StackedPaddle — top of page');
+    });
+
     test('renders nav, hero headline and CTAs', async ({ page }) => {
         const nav = page.locator('header.nav');
         await expect(nav).toBeVisible();
@@ -48,14 +55,14 @@ test.describe('Landing page', () => {
         await expect(page.locator('footer.footer').getByRole('link', { name: 'Club sign in' })).toHaveAttribute('href', '/admin/login');
     });
 
-    test('metrics count up to their final values when scrolled into view', async ({ page }) => {
-        const values = page.getByTestId('metric-value');
-        await expect(values).toHaveCount(4);
-        await values.first().scrollIntoViewIfNeeded();
-        await expect(values.nth(0)).toHaveText('500+');
-        await expect(values.nth(1)).toHaveText('18k');
-        await expect(values.nth(2)).toHaveText('97%');
-        await expect(values.nth(3)).toHaveText('4.9★');
+    test('the placeholder metrics band and testimonial are gone', async ({ page }) => {
+        await expect(page.getByTestId('metric-value')).toHaveCount(0);
+        await expect(page.locator('section.metrics')).toHaveCount(0);
+        await expect(page.getByText('Clubs running live')).toHaveCount(0);
+        await expect(page.getByText('Metro Paddle Club', { exact: true })).toHaveCount(0);
+
+        await expect(page.locator('section.quote')).toHaveCount(0);
+        await expect(page.getByText('Dana Whitfield')).toHaveCount(0);
     });
 
     test('Smart Slotting re-slot reshuffles pairings and keeps the status line', async ({ page }) => {

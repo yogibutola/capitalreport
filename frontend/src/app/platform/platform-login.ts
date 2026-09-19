@@ -4,11 +4,13 @@ import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../auth/auth';
 import { FORM_ERROR_UI, ParsedHttpError } from '../shared/form-error-ui';
+import { BrandLogoComponent } from '../shared/brand-logo';
+import { BrandMarkComponent } from '../shared/brand-mark';
 
 @Component({
     selector: 'app-platform-login',
     standalone: true,
-    imports: [FormsModule, ...FORM_ERROR_UI],
+    imports: [FormsModule, ...FORM_ERROR_UI, BrandLogoComponent, BrandMarkComponent],
     templateUrl: './platform-login.html',
     styleUrl: '../auth/login.css',
 })

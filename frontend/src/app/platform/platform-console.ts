@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../auth/auth';
+import { BrandMarkComponent } from '../shared/brand-mark';
 import { FORM_ERROR_UI, ParsedHttpError } from '../shared/form-error-ui';
 import { PlatformPlayer, PlatformClub, PlatformService } from './platform.service';
 
@@ -11,7 +12,7 @@ type Tab = 'clubs' | 'players' | 'activity';
 @Component({
     selector: 'app-platform-console',
     standalone: true,
-    imports: [FormsModule, DatePipe, ...FORM_ERROR_UI],
+    imports: [FormsModule, DatePipe, ...FORM_ERROR_UI, BrandMarkComponent],
     templateUrl: './platform-console.html',
     styleUrl: './platform-console.css',
 })

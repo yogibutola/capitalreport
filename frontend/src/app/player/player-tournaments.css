@@ -40,19 +40,19 @@
 
 .nav-pill-btn:hover {
     color: HSL(var(--color-text-main));
-    background-color: rgba(0, 0, 0, 0.04);
+    background-color: rgba(var(--shadow-rgb), calc(0.04 * var(--shadow-k)));
 }
 
 .nav-pill-btn:hover {
     color: var(--text);
-    background-color: rgba(255, 255, 255, 0.07);
+    background-color: rgba(var(--tint-rgb), 0.07);
 }
 
 .nav-pill-btn.active {
     background: linear-gradient(135deg, HSL(var(--color-ace-lime)), HSL(var(--color-ace-lime)));
     border-color: transparent;
     color: var(--ball-ink);
-    box-shadow: 0 4px 12px rgba(205, 240, 58, 0.3);
+    box-shadow: 0 4px 12px rgba(var(--ball-rgb), 0.3);
 }
 
 /* ─── Grid + Cards ─── */
@@ -88,7 +88,7 @@
 
 .tournament-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 12px 28px rgba(var(--shadow-rgb), calc(0.25 * var(--shadow-k)));
     border-color: HSL(var(--color-ace-lime));
 }
 
@@ -100,7 +100,7 @@
     align-items: center;
     gap: var(--space-sm);
     padding-bottom: var(--space-md);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    border-bottom: 1px solid rgba(var(--tint-rgb), 0.07);
 }
 
 
@@ -126,7 +126,7 @@
     align-items: center;
     gap: var(--space-sm);
     padding-top: var(--space-sm);
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(var(--tint-rgb), 0.05);
 }
 
 
@@ -161,9 +161,9 @@
     white-space: nowrap;
 }
 
-.tournament-status.status-active    { background: rgba(205, 240, 58, 0.15); color: HSL(var(--color-ace-lime)); }
-.tournament-status.status-pending   { background: rgba(255, 106, 69, 0.15); color: HSL(var(--color-accent)); }
-.tournament-status.status-completed  { background: rgba(255, 255, 255, 0.08); color: HSL(var(--color-text-muted)); }
+.tournament-status.status-active    { background: rgba(var(--ball-rgb), 0.15); color: HSL(var(--color-ace-lime)); }
+.tournament-status.status-pending   { background: rgba(var(--coral-rgb), 0.15); color: HSL(var(--color-accent)); }
+.tournament-status.status-completed  { background: rgba(var(--tint-rgb), 0.08); color: HSL(var(--color-text-muted)); }
 
 .empty-tournaments {
     text-align: center;
@@ -196,12 +196,12 @@
 }
 
 .format-badge {
-    background: rgba(205, 240, 58, 0.15);
+    background: rgba(var(--ball-rgb), 0.15);
     color: HSL(var(--color-rally-green));
 }
 
 .dupr-badge {
-    background: rgba(87, 217, 163, 0.15);
+    background: rgba(var(--good-rgb), 0.15);
     color: HSL(var(--color-ace-lime));
     margin-left: 0.35rem;
 }
@@ -210,7 +210,7 @@
 .register-panel {
     margin-top: 0.85rem;
     padding-top: 0.85rem;
-    border-top: 1px solid var(--card-border, rgba(0, 0, 0, 0.1));
+    border-top: 1px solid var(--card-border, rgba(var(--shadow-rgb), calc(0.1 * var(--shadow-k))));
     display: flex;
     flex-direction: column;
     gap: 0.5rem;

@@ -104,9 +104,9 @@ const INITIAL_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
       border-radius: var(--radius-card);
       padding: 18px;
       box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.03) inset,
-        0 18px 50px rgba(0, 0, 0, 0.45),
-        0 4px 14px rgba(0, 0, 0, 0.3);
+        0 1px 0 rgba(var(--tint-rgb), 0.03) inset,
+        0 18px 50px rgba(var(--shadow-rgb), calc(0.45 * var(--shadow-k))),
+        0 4px 14px rgba(var(--shadow-rgb), calc(0.3 * var(--shadow-k)));
     }
     .sched__head {
       display: flex;
@@ -126,10 +126,10 @@ const INITIAL_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
       border-radius: var(--radius-pill);
       padding: 8px 14px;
       cursor: pointer;
-      box-shadow: 0 6px 18px rgba(205, 240, 58, 0.28);
+      box-shadow: 0 6px 18px rgba(var(--ball-rgb), 0.28);
       transition: transform var(--ease-lift), box-shadow var(--ease-lift);
     }
-    .sched__reslot:hover { transform: var(--lift); box-shadow: 0 10px 24px rgba(205, 240, 58, 0.36); }
+    .sched__reslot:hover { transform: var(--lift); box-shadow: 0 10px 24px rgba(var(--ball-rgb), 0.36); }
     .sched__reslot:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
     .sched__grid { display: grid; gap: 6px; }
     .sched__row { display: grid; grid-template-columns: 52px repeat(3, minmax(0, 1fr)); gap: 6px; }
@@ -152,8 +152,8 @@ const INITIAL_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
       transition: opacity 220ms ease, border-color 220ms ease, background-color 220ms ease, transform 220ms ease;
     }
     .sched__cell--balanced {
-      border-color: rgba(205, 240, 58, 0.55);
-      background: rgba(205, 240, 58, 0.06);
+      border-color: rgba(var(--ball-rgb), 0.55);
+      background: rgba(var(--ball-rgb), 0.06);
     }
     .sched__cell--balanced .sched__dupr { color: var(--ball); }
     .sched__names {
@@ -179,7 +179,7 @@ const INITIAL_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
     .sched__dot {
       width: 8px; height: 8px; border-radius: 50%;
       background: var(--ball);
-      box-shadow: 0 0 10px rgba(205, 240, 58, 0.6);
+      box-shadow: 0 0 10px rgba(var(--ball-rgb), 0.6);
     }
     @media (max-width: 480px) {
       .sched { padding: 14px; }

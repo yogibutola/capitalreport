@@ -3,13 +3,8 @@
     <header class="nav" [class.nav--open]="menuOpen()">
         <div class="wrap nav__inner">
             <a class="nav__brand" href="/" (click)="scrollTo('top', $event)" aria-label="StackedPaddle — top of page">
-                <span class="nav__mark" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                        <ellipse cx="12" cy="9.5" rx="6.5" ry="7.5" fill="currentColor" />
-                        <rect x="10.4" y="15.5" width="3.2" height="6.5" rx="1.4" fill="currentColor" />
-                    </svg>
-                </span>
-                <span class="nav__name">StackedPaddle</span>
+                <app-brand-mark />
+                <app-brand-logo class="nav__name" />
             </a>
 
             <nav class="nav__links" aria-label="Product sections">
@@ -20,6 +15,7 @@
             </nav>
 
             <div class="nav__actions">
+                <app-theme-toggle />
                 <a routerLink="/login" class="nav__signin" data-testid="nav-player-signin">Player sign in</a>
                 <a routerLink="/admin/login" class="nav__signin nav__signin--club" data-testid="nav-club-signin">
                     Club sign in
@@ -236,27 +232,6 @@
     </section>
     }
 
-    <!-- ───────────── Metrics band ───────────── -->
-    <section class="metrics" aria-label="Platform metrics" spReveal>
-        <div class="wrap">
-            <div class="metrics__grid">
-                @for (m of metrics; track m.label) {
-                <div class="metric">
-                    <div class="metric__value display" [spCountUp]="m.value" [decimals]="m.decimals"
-                        [suffix]="m.suffix" data-testid="metric-value">{{ m.value }}{{ m.suffix }}</div>
-                    <div class="metric__label mono">{{ m.label }}</div>
-                </div>
-                }
-            </div>
-            <!-- TODO(content): placeholder club names -->
-            <div class="logos" aria-label="Clubs using StackedPaddle">
-                @for (name of clubLogos; track name) {
-                <span class="logo">{{ name }}</span>
-                }
-            </div>
-        </div>
-    </section>
-
     <!-- ───────────── Feature: Leagues ───────────── -->
     <section class="feature" id="leagues" aria-labelledby="leagues-title" spReveal>
         <div class="wrap feature__grid">
@@ -446,25 +421,6 @@
         </div>
     </section>
 
-    <!-- ───────────── Testimonial ───────────── -->
-    <!-- TODO(content): placeholder testimonial — replace with a real customer quote -->
-    <section class="quote" aria-label="Customer testimonial" spReveal>
-        <div class="wrap quote__inner">
-            <span class="quote__mark display" aria-hidden="true">“</span>
-            <blockquote class="quote__text">
-                StackedPaddle cut our league night prep from
-                <span class="quote__hl">three hours to ten minutes</span>. Smart Slotting alone paid for the year.
-            </blockquote>
-            <div class="quote__who">
-                <span class="avatar avatar--1 avatar--lg" aria-hidden="true">DW</span>
-                <div>
-                    <div class="quote__name">Dana Whitfield</div>
-                    <div class="quote__role mono">Director, Metro Paddle Club</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- ───────────── Mini features ───────────── -->
     <section class="mini" aria-labelledby="mini-title" spReveal>
         <div class="wrap">
@@ -532,13 +488,8 @@
         <div class="wrap footer__grid">
             <div class="footer__brand">
                 <a class="nav__brand" href="/" (click)="scrollTo('top', $event)">
-                    <span class="nav__mark" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                            <ellipse cx="12" cy="9.5" rx="6.5" ry="7.5" fill="currentColor" />
-                            <rect x="10.4" y="15.5" width="3.2" height="6.5" rx="1.4" fill="currentColor" />
-                        </svg>
-                    </span>
-                    <span class="nav__name">StackedPaddle</span>
+                    <app-brand-mark />
+                    <app-brand-logo class="nav__name" />
                 </a>
                 <p class="footer__blurb">
                     League management for pickleball clubs — scheduling, DUPR tracking, and tournaments in

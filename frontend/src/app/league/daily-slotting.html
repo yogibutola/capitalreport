@@ -31,7 +31,7 @@
                 @for (level of getGroupLevelsForRound(round); track level) {
                 <div class="card" style="padding: 0; overflow: hidden;">
                     <div class="flex-center" (click)="toggleGroup(round.roundId, level)"
-                        style="justify-content: space-between; padding: var(--space-md); cursor: pointer; background: rgba(255,255,255,0.02); transition: background 0.2s;">
+                        style="justify-content: space-between; padding: var(--space-md); cursor: pointer; background: rgba(var(--tint-rgb),0.02); transition: background 0.2s;">
                         <div class="flex-center gap-md">
                             <h3 style="margin: 0;">Group {{ level }}</h3>
                             <span class="badge" style="background: HSL(var(--color-accent));">Round {{ round.roundId }}</span>
@@ -48,12 +48,12 @@
                     </div>
 
                     @if (!isGroupCollapsed(round.roundId, level)) {
-                    <div class="flex-col gap-lg" style="padding: var(--space-md); border-top: 1px solid rgba(255,255,255,0.1);">
+                    <div class="flex-col gap-lg" style="padding: var(--space-md); border-top: 1px solid rgba(var(--tint-rgb),0.1);">
                         <!-- Matches -->
                         <div class="flex-col gap-md">
                             @for (match of round.matches.get(level) || []; track match.id; let i = $index) {
                             <div class="match-box"
-                                style="background: rgba(255,255,255,0.05); padding: var(--space-md); border-radius: var(--radius-md); border-left: 4px solid HSL(var(--color-accent));">
+                                style="background: rgba(var(--tint-rgb),0.05); padding: var(--space-md); border-radius: var(--radius-md); border-left: 4px solid HSL(var(--color-accent));">
                                 <div
                                     style="font-size: 0.7rem; color: HSL(var(--color-text-muted)); text-transform: uppercase; margin-bottom: 8px; font-weight: bold;">
                                     Match {{ i + 1 }}
@@ -85,7 +85,7 @@
                                 @if (round.sitting.get(level)?.[i]; as sittingArr) {
                                   @if (sittingArr.length > 0) {
                                   <div
-                                      style="font-size: 0.8rem; text-align: center; color: HSL(var(--color-text-muted)); border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; margin-top: 8px;">
+                                      style="font-size: 0.8rem; text-align: center; color: HSL(var(--color-text-muted)); border-top: 1px solid rgba(var(--tint-rgb),0.05); padding-top: 8px; margin-top: 8px;">
                                       <span style="opacity: 0.7;">Sitting Out:</span> <span style="color: HSL(var(--color-accent));">{{ sittingArr[0].firstName || sittingArr[0].name }}</span>
                                   </div>
                                   }
@@ -105,8 +105,8 @@
 
 <style>
     .score-input {
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(var(--shadow-rgb), calc(0.3 * var(--shadow-k)));
+        border: 1px solid rgba(var(--tint-rgb), 0.1);
         color: var(--text);
         text-align: center;
         padding: 4px;

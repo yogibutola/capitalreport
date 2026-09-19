@@ -115,6 +115,16 @@ Three roles, all carried in the JWT `role` claim: `player`, `admin` (**= a club*
 
 Angular standalone components, signals, SSR enabled. Routes in [frontend/src/app/app.routes.ts](frontend/src/app/app.routes.ts); `/admin/*` routes are behind `adminGuard`. `AdminService` ([frontend/src/app/admin/admin.ts](frontend/src/app/admin/admin.ts)) is a singleton whose `leagues` signal is cached — components that can switch clubs must refetch in `ngOnInit`. Prettier config (100 cols, single quotes) is in `frontend/package.json`.
 
+#### Theming (dark + light)
+
+Both themes are one token set in [frontend/src/styles.css](frontend/src/styles.css): `:root` is dark (the original design and the default), `:root[data-theme='light']` redefines the same tokens. **Component CSS must never name a literal colour** — always a token — or it won't follow the toggle; an e2e test asserts every referenced custom property resolves in both themes.
+
+- Colours used at partial alpha go through channel tokens: `rgba(var(--tint-rgb), 0.06)`, not `rgba(255,255,255,0.06)`. `--tint-rgb` flips white→ink, so elevation washes and hairlines invert instead of vanishing on a light page. `--shadow-k` scales every shadow's alpha at once.
+- `--ball` (brand lime) deepens to olive in light, and `--ball-ink` flips light to match, so `background: var(--ball); color: var(--ball-ink)` stays legible in both. The legacy lime HSL triplets (`--color-ace-lime` etc.) shift with it.
+- `ThemeService` ([frontend/src/app/theme.service.ts](frontend/src/app/theme.service.ts)) resolves stored choice → OS `prefers-color-scheme` → dark, and `App` mirrors it onto `<html data-theme>`. An inline script in [frontend/src/index.html](frontend/src/index.html) applies the stored theme before first paint (SSR renders dark, so without it light users get a flash) — keep its storage key and resolution order in sync with the service.
+- `<app-theme-toggle>` ([frontend/src/app/shared/theme-toggle.ts](frontend/src/app/shared/theme-toggle.ts)) is mounted in the signed-in header and both public navs.
+- The app is zoneless, so `data-theme` lands on the next tick — e2e assertions about the applied theme must poll, not read once.
+
 ## Repo hygiene notes
 
 - The repo root has many ad-hoc `verify_*.py` and `test_*.py` / `debug_*.py` scripts — these are one-off manual checks, not part of the `tests/` suite.

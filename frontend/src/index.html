@@ -7,6 +7,28 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!--
+    Apply the saved theme before first paint. SSR renders the default (dark), so
+    without this a light-theme user sees a dark flash until hydration runs the
+    equivalent effect in App. Must stay in sync with ThemeService: same storage
+    key, same resolution order (stored choice, else OS preference, else dark).
+  -->
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('sp-theme');
+        var theme =
+          stored === 'light' || stored === 'dark'
+            ? stored
+            : window.matchMedia('(prefers-color-scheme: light)').matches
+              ? 'light'
+              : 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
 </head>
 
 <body>

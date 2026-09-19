@@ -12,6 +12,13 @@
   margin-bottom: var(--space-lg);
 }
 
+/* Brand mark sits beside the title — the console is outside the global header. */
+.pc-header-title {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
 .pc-metrics {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -20,8 +27,8 @@
 }
 
 .pc-metric {
-  background: var(--color-surface, rgba(255, 255, 255, 0.04));
-  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+  background: var(--color-surface, rgba(var(--tint-rgb), 0.04));
+  border: 1px solid var(--color-border, rgba(var(--tint-rgb), 0.1));
   border-radius: var(--radius-md, 10px);
   padding: var(--space-sm) var(--space-md);
   display: flex;
@@ -54,7 +61,7 @@
 
 .pc-tabs button {
   background: transparent;
-  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.15));
+  border: 1px solid var(--color-border, rgba(var(--tint-rgb), 0.15));
   color: HSL(var(--color-text-muted));
   padding: 6px 14px;
   border-radius: 999px;
@@ -78,7 +85,7 @@
 }
 
 .pc-form {
-  border: 1px dashed var(--color-border, rgba(255, 255, 255, 0.15));
+  border: 1px dashed var(--color-border, rgba(var(--tint-rgb), 0.15));
   border-radius: var(--radius-md, 10px);
   padding: var(--space-md);
   margin-bottom: var(--space-md);
@@ -132,7 +139,7 @@
 .pc-table td {
   text-align: left;
   padding: 8px 10px;
-  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
+  border-bottom: 1px solid var(--color-border, rgba(var(--tint-rgb), 0.08));
   white-space: nowrap;
 }
 

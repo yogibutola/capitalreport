@@ -409,11 +409,14 @@
         flex: 1;
     }
 
+    /* vertical padding (not gap) keeps adjacent wraps touching, so the
+       connector lines stay continuous, while the capsules sit apart */
     .bracket-match-wrap {
         display: flex;
         align-items: center;
         flex: 1;
         position: relative;
+        padding-block: var(--space-sm);
     }
 
     .bracket-match {

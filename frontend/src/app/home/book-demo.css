@@ -94,15 +94,15 @@
     background: var(--ball);
     color: var(--ball-ink);
     box-shadow:
-        0 8px 24px rgba(205, 240, 58, 0.28),
-        0 2px 6px rgba(0, 0, 0, 0.25);
+        0 8px 24px rgba(var(--ball-rgb), 0.28),
+        0 2px 6px rgba(var(--shadow-rgb), calc(0.25 * var(--shadow-k)));
 }
 
 .sp-btn--primary:hover {
     transform: var(--lift);
     box-shadow:
-        0 12px 30px rgba(205, 240, 58, 0.38),
-        0 3px 8px rgba(0, 0, 0, 0.3);
+        0 12px 30px rgba(var(--ball-rgb), 0.38),
+        0 3px 8px rgba(var(--shadow-rgb), calc(0.3 * var(--shadow-k)));
 }
 
 .sp-btn--ghost {
@@ -139,7 +139,7 @@
     position: sticky;
     top: 0;
     z-index: 50;
-    background: rgba(11, 22, 32, 0.72);
+    background: rgba(var(--ground-rgb), 0.72);
     -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--line-soft);
@@ -170,15 +170,9 @@
     border-radius: 6px;
 }
 
-.nav__mark {
-    display: grid;
-    place-items: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 9px;
-    background: var(--ball);
-    color: var(--ball-ink);
-    box-shadow: 0 4px 14px rgba(205, 240, 58, 0.3);
+.nav__name {
+    /* Two-line lockup: keep the wordmark from crowding a 68px nav bar. */
+    font-size: 1rem;
 }
 
 .nav__actions {
@@ -231,7 +225,7 @@
     width: 720px;
     height: 720px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(205, 240, 58, 0.14) 0%, rgba(205, 240, 58, 0.04) 38%, transparent 64%);
+    background: radial-gradient(circle, rgba(var(--ball-rgb), 0.14) 0%, rgba(var(--ball-rgb), 0.04) 38%, transparent 64%);
     pointer-events: none;
 }
 
@@ -424,9 +418,9 @@ select.input-field {
     height: 64px;
     margin: 0 auto 20px;
     border-radius: 50%;
-    background: rgba(205, 240, 58, 0.14);
+    background: rgba(var(--ball-rgb), 0.14);
     color: var(--ball);
-    box-shadow: 0 0 0 8px rgba(205, 240, 58, 0.06);
+    box-shadow: 0 0 0 8px rgba(var(--ball-rgb), 0.06);
 }
 
 .done__ref {
@@ -501,6 +495,14 @@ select.input-field {
     .nav__back {
         padding-left: 0;
         border-left: 0;
+    }
+
+    /* Below ~420px the wordmark needs the row: the arrow alone still reads as
+       "Back to site" thanks to the link's aria-label. */
+    @media (max-width: 420px) {
+        .nav__back-label {
+            display: none;
+        }
     }
 
     .panel {

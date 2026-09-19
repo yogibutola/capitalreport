@@ -13,6 +13,20 @@
   gap: var(--space-lg);
 }
 
+/* This page is public, so it carries its own brand lockup — there is no app header. */
+.reg-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.reg-brand-name {
+  font-size: 1.15rem;
+}
+
 .reg-eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.08em;

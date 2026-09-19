@@ -4,11 +4,13 @@ import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../auth/auth';
 import { FORM_ERROR_UI, ParsedHttpError } from '../shared/form-error-ui';
+import { BrandLogoComponent } from '../shared/brand-logo';
+import { BrandMarkComponent } from '../shared/brand-mark';
 
 @Component({
     selector: 'app-admin-login',
     standalone: true,
-    imports: [FormsModule, RouterLink, ...FORM_ERROR_UI],
+    imports: [FormsModule, RouterLink, ...FORM_ERROR_UI, BrandLogoComponent, BrandMarkComponent],
     templateUrl: './admin-login.html',
     styleUrl: '../auth/login.css' // Reuse login styles
 })
@@ -41,7 +43,7 @@ export class AdminLoginComponent {
             next: (success) => {
                 if (!success) return;
                 if (this.authService.isAdmin()) {
-                    this.router.navigate(['/admin']);
+                    this.router.navigate(['/admin/leagues']);
                 } else {
                     this.authService.logout();
                     this.formError.set(

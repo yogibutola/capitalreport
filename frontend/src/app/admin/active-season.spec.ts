@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isActiveStatus, summarizeLeague } from './season-progress';
-import { isManageUrl, isLeaguesUrl, isTournamentsUrl } from '../nav-urls';
+import { isLeaguesUrl, isTournamentsUrl } from '../nav-urls';
 import type { MatchItem } from '../league/league';
 
 function match(round_id: number, match_status?: string): MatchItem {
@@ -86,30 +86,6 @@ describe('summarizeLeague', () => {
   });
 });
 
-describe('isManageUrl (club nav highlighting)', () => {
-  it('lights up Manage only on the /admin hub', () => {
-    expect(isManageUrl('/admin')).toBe(true);
-    expect(isManageUrl('/admin?tab=x')).toBe(true);
-  });
-
-  it('does not light up Manage on the Leagues / Tournaments / Active Season tabs', () => {
-    expect(isManageUrl('/admin/leagues')).toBe(false);
-    expect(isManageUrl('/admin/tournaments')).toBe(false);
-    expect(isManageUrl('/admin/league/Spring%20Ladder')).toBe(false);
-    expect(isManageUrl('/admin/tournament/abc123')).toBe(false);
-    expect(isManageUrl('/admin/create-league')).toBe(false);
-    expect(isManageUrl('/admin/season')).toBe(false);
-    expect(isManageUrl('/admin/season?x=1')).toBe(false);
-    expect(isManageUrl('/admin/season/anything')).toBe(false);
-  });
-
-  it('ignores non-admin routes', () => {
-    expect(isManageUrl('/profile')).toBe(false);
-    expect(isManageUrl('/administrator')).toBe(false);
-    expect(isManageUrl('/')).toBe(false);
-  });
-});
-
 describe('isLeaguesUrl / isTournamentsUrl (club nav highlighting)', () => {
   it('lights up Leagues for the list, create form, and league detail pages', () => {
     expect(isLeaguesUrl('/admin/leagues')).toBe(true);
@@ -125,7 +101,7 @@ describe('isLeaguesUrl / isTournamentsUrl (club nav highlighting)', () => {
     expect(isTournamentsUrl('/admin/tournament/abc123')).toBe(true);
   });
 
-  it('never lights up both tabs, and neither on the hub or season tab', () => {
+  it('never lights up both tabs, and neither on bare /admin (pre-redirect) or the season tab', () => {
     for (const url of ['/admin', '/admin/season', '/profile', '/', '/player/leagues', '/player/tournaments']) {
       expect(isLeaguesUrl(url)).toBe(false);
       expect(isTournamentsUrl(url)).toBe(false);

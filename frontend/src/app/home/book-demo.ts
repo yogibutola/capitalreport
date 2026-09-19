@@ -4,6 +4,9 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { catchError, finalize, throwError } from 'rxjs';
 import { FORM_ERROR_UI, parseHttpError, ParsedHttpError } from '../shared/form-error-ui';
+import { BrandLogoComponent } from '../shared/brand-logo';
+import { BrandMarkComponent } from '../shared/brand-mark';
+import { ThemeToggleComponent } from '../shared/theme-toggle';
 
 export interface DemoRequestPayload {
     name: string;
@@ -32,7 +35,7 @@ const AGENDA = [
 @Component({
     selector: 'app-book-demo',
     standalone: true,
-    imports: [FormsModule, RouterLink, ...FORM_ERROR_UI],
+    imports: [FormsModule, RouterLink, ...FORM_ERROR_UI, BrandLogoComponent, BrandMarkComponent, ThemeToggleComponent],
     templateUrl: './book-demo.html',
     styleUrl: './book-demo.css'
 })

@@ -6,8 +6,8 @@ const ADMIN_PASSWORD = 'Password@123';
 const PLAYER_PASSWORD = 'Password@123';
 
 /**
- * Club "Active Season" tab — sits next to "Manage" in the club header nav and
- * lists the club's active leagues/tournaments with round progress.
+ * Club "Active Season" tab — sits after "Leagues" / "Tournaments" in the club header
+ * nav and lists the club's active leagues/tournaments with round progress.
  * Requires the backend + Mongo; seeds an active league via test_data_seeder.py.
  */
 test.describe('Active Season tab (club)', () => {
@@ -17,34 +17,33 @@ test.describe('Active Season tab (club)', () => {
         leagueName = runSeeder();
     });
 
-    test('tab sits next to Manage and only one of them is highlighted at a time', async ({ page }) => {
+    test('tab sits after Leagues / Tournaments and only one tab is highlighted at a time', async ({ page }) => {
         await adminLogin(page, ADMIN_EMAIL, ADMIN_PASSWORD);
 
         const tabs = page.locator('.header-nav-tabs .nav-tab-link');
-        const manage = tabs.filter({ hasText: 'Manage' });
+        const leagues = tabs.filter({ hasText: 'Leagues' });
         const season = tabs.filter({ hasText: 'Active Season' });
-        await expect(tabs.nth(0)).toHaveText('Manage');
-        await expect(tabs.nth(1)).toHaveText('Leagues');
-        await expect(tabs.nth(2)).toHaveText('Tournaments');
-        await expect(tabs.nth(3)).toHaveText('Active Season');
-        await expect(tabs.nth(4)).toHaveText('Club Profile');
+        await expect(tabs.filter({ hasText: 'Manage' })).toHaveCount(0);
+        await expect(tabs.nth(0)).toHaveText('Leagues');
+        await expect(tabs.nth(1)).toHaveText('Tournaments');
+        await expect(tabs.nth(2)).toHaveText('Active Season');
+        await expect(tabs.nth(3)).toHaveText('Club Profile');
         await expect(season).toHaveAttribute('href', '/admin/season');
 
-        // On /admin only Manage is active
-        await expect(manage).toHaveClass(/\bactive\b/);
+        // After login (on /admin/leagues) only Leagues is active
+        await expect(leagues).toHaveClass(/\bactive\b/);
         await expect(season).not.toHaveClass(/\bactive\b/);
 
         await season.click();
         await page.waitForURL('**/admin/season', { timeout: 15_000 });
         await expect(season).toHaveClass(/\bactive\b/);
-        await expect(manage).not.toHaveClass(/\bactive\b/);
+        await expect(leagues).not.toHaveClass(/\bactive\b/);
 
-        // League detail pages highlight the Leagues tab, never Manage or the season tab
+        // League detail pages highlight the Leagues tab, never the season tab
         await page.goto('/admin/leagues');
         await page.locator('.admin-league-item').filter({ hasText: leagueName }).click();
         await page.waitForURL('**/admin/league/**', { timeout: 15_000 });
-        await expect(tabs.filter({ hasText: 'Leagues' })).toHaveClass(/\bactive\b/);
-        await expect(manage).not.toHaveClass(/\bactive\b/);
+        await expect(leagues).toHaveClass(/\bactive\b/);
         await expect(season).not.toHaveClass(/\bactive\b/);
     });
 

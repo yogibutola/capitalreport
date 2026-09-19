@@ -36,7 +36,7 @@
 }
 
 .players-table thead {
-    background: rgba(24, 45, 59, 0.2);
+    background: rgba(var(--surface-2-rgb), 0.2);
 }
 
 .players-table th {
@@ -57,7 +57,7 @@
 }
 
 .players-table th.sortable:hover {
-    background: rgba(24, 45, 59, 0.3);
+    background: rgba(var(--surface-2-rgb), 0.3);
     color: HSL(var(--color-ace-lime));
 }
 
@@ -72,7 +72,7 @@
 }
 
 .players-table tbody tr:hover {
-    background: rgba(24, 45, 59, 0.12);
+    background: rgba(var(--surface-2-rgb), 0.12);
 }
 
 /* DUPR-style prominent rating badge — Ball Yellow */

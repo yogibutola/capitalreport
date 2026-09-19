@@ -33,9 +33,9 @@ test('Full league E2E: seed → slot round1 → score all matches → verify aut
 
     await adminLogin(page, ADMIN_EMAIL, ADMIN_PASSWORD);
 
-    // Click the league card on admin dashboard
+    // Click the league card on the club Leagues page (the post-login landing)
     await page.waitForSelector('text=' + leagueName, { timeout: 15_000 });
-    await page.locator('.interactive-card').filter({ hasText: leagueName }).click();
+    await page.locator('.admin-league-item').filter({ hasText: leagueName }).click();
     await page.waitForURL('**/admin/league/**', { timeout: 15_000 });
 
     // Click "View and Slot"
@@ -82,7 +82,7 @@ test('Full league E2E: seed → slot round1 → score all matches → verify aut
 
     // Go to league details
     await page.waitForSelector('text=' + leagueName, { timeout: 15_000 });
-    await page.locator('.interactive-card').filter({ hasText: leagueName }).click();
+    await page.locator('.admin-league-item').filter({ hasText: leagueName }).click();
     await page.waitForURL('**/admin/league/**', { timeout: 15_000 });
 
     // Check that round 2 exists — the league-details page shows rounds

@@ -42,7 +42,8 @@ export async function adminLogin(page: Page, email: string, password: string) {
     await page.fill('input[type="email"]', email);
     await page.fill('input[type="password"]', password);
     await page.click('button[type="submit"]');
-    await page.waitForURL('**/admin', { timeout: 20_000 });
+    // Clubs land on the Leagues tab (there is no separate "Manage" hub).
+    await page.waitForURL('**/admin/leagues', { timeout: 20_000 });
 }
 
 export async function platformLogin(page: Page, email: string, password: string) {

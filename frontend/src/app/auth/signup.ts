@@ -3,11 +3,13 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from './auth';
 import { FORM_ERROR_UI, ParsedHttpError } from '../shared/form-error-ui';
+import { BrandLogoComponent } from '../shared/brand-logo';
+import { BrandMarkComponent } from '../shared/brand-mark';
 
 @Component({
   selector: 'app-signup',
   standalone: true,
-  imports: [FormsModule, RouterLink, ...FORM_ERROR_UI],
+  imports: [FormsModule, RouterLink, ...FORM_ERROR_UI, BrandLogoComponent, BrandMarkComponent],
   templateUrl: './signup.html',
   styleUrl: './signup.css'
 })

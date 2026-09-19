@@ -4,11 +4,13 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from './auth';
 import { FORM_ERROR_UI, ParsedHttpError } from '../shared/form-error-ui';
+import { BrandLogoComponent } from '../shared/brand-logo';
+import { BrandMarkComponent } from '../shared/brand-mark';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, RouterLink, ...FORM_ERROR_UI],
+  imports: [FormsModule, RouterLink, ...FORM_ERROR_UI, BrandLogoComponent, BrandMarkComponent],
   templateUrl: './login.html',
   styleUrl: './login.css'
 })

@@ -1,6 +1,11 @@
 <div class="reg-page">
   <div class="reg-shell">
 
+    <a class="reg-brand" routerLink="/" aria-label="StackedPaddle — home">
+      <app-brand-mark />
+      <app-brand-logo class="reg-brand-name" />
+    </a>
+
     @if (loading()) {
     <div class="card"><p style="margin: 0; color: HSL(var(--color-text-muted));">Loading tournament…</p></div>
     } @else if (loadError()) {

@@ -28,9 +28,9 @@
 }
 
 .demo-mode-exit {
-    background: rgba(42, 15, 8, 0.14);
+    background: rgba(var(--coral-ink-rgb), 0.14);
     color: var(--coral-ink);
-    border: 1px solid rgba(42, 15, 8, 0.4);
+    border: 1px solid rgba(var(--coral-ink-rgb), 0.4);
     border-radius: var(--radius-pill);
     padding: 0.25rem 0.85rem;
     font-size: 0.85rem;
@@ -40,7 +40,7 @@
 }
 
 .demo-mode-exit:hover {
-    background: rgba(42, 15, 8, 0.24);
+    background: rgba(var(--coral-ink-rgb), 0.24);
 }
 
 /* ─── Signed-in header ─── */
@@ -87,33 +87,15 @@
     user-select: none;
 }
 
-.logo-icon {
+/* The tile itself lives in <app-brand-mark>; the header only stops it shrinking. */
+.logo-box app-brand-mark {
     flex-shrink: 0;
-    width: 30px;
-    height: 30px;
-    padding: 5px;
-    box-sizing: border-box;
-    border-radius: 9px;
-    background: var(--ball);
-    color: var(--ball-ink);
-    box-shadow: 0 4px 14px rgba(205, 240, 58, 0.3);
 }
 
-.logo-dink {
+/* Same wordmark component as the landing nav, so the logo is identical on every page. */
+.logo-wordmark {
     color: var(--text);
-    font-size: 1.25rem;
-}
-
-.logo-sep {
-    color: var(--ball);
-    font-size: 0.85rem;
-    opacity: 0.5;
-    font-family: var(--font-body);
-}
-
-.logo-league {
-    color: var(--ball);
-    font-size: 1.25rem;
+    font-size: 1.15rem;
 }
 
 .header-welcome-block {
@@ -169,7 +151,7 @@
 
 .icon-utility-btn:hover {
     color: var(--text);
-    background-color: rgba(255, 255, 255, 0.06);
+    background-color: rgba(var(--tint-rgb), 0.06);
 }
 
 .icon-utility-btn:focus-visible,
@@ -209,7 +191,7 @@
 }
 
 .header-nav-row {
-    background-color: rgba(0, 0, 0, 0.18);
+    background-color: rgba(var(--shadow-rgb), calc(0.18 * var(--shadow-k)));
     border-top: 1px solid var(--line-soft);
     display: flex;
     justify-content: space-between;
@@ -338,7 +320,7 @@
         border-top: 1px solid var(--line-soft);
         padding: var(--space-xs) 0;
         padding-bottom: max(var(--space-xs), env(safe-area-inset-bottom));
-        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 -8px 24px rgba(var(--shadow-rgb), calc(0.35 * var(--shadow-k)));
     }
 
     .mobile-nav-item {

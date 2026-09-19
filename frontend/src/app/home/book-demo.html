@@ -3,18 +3,15 @@
     <header class="nav">
         <div class="wrap nav__inner">
             <a class="nav__brand" routerLink="/" aria-label="StackedPaddle — home">
-                <span class="nav__mark" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                        <ellipse cx="12" cy="9.5" rx="6.5" ry="7.5" fill="currentColor" />
-                        <rect x="10.4" y="15.5" width="3.2" height="6.5" rx="1.4" fill="currentColor" />
-                    </svg>
-                </span>
-                <span class="nav__name">StackedPaddle</span>
+                <app-brand-mark />
+                <app-brand-logo class="nav__name" />
             </a>
             <div class="nav__actions">
+                <app-theme-toggle />
                 <a routerLink="/admin/login" class="nav__signin" data-testid="demo-nav-club-signin">Club sign in</a>
-                <a routerLink="/" class="nav__back" data-testid="demo-nav-back">
-                    <span aria-hidden="true">←</span> Back to site
+                <a routerLink="/" class="nav__back" data-testid="demo-nav-back" aria-label="Back to site">
+                    <span aria-hidden="true">←</span>
+                    <span class="nav__back-label">Back to site</span>
                 </a>
             </div>
         </div>

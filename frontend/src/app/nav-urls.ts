@@ -14,13 +14,10 @@ export function isMarketingUrl(url: string): boolean {
 }
 
 /**
- * The club "Manage" tab is the overview hub at /admin only. Its league and
- * tournament sub-pages have their own tabs (see isLeaguesUrl / isTournamentsUrl)
- * and /admin/season has the "Active Season" tab, so none of those light up Manage.
+ * Club nav: /admin redirects to /admin/leagues (there is no separate "Manage" hub),
+ * so the Leagues and Tournaments tabs below cover every club page except
+ * /admin/season ("Active Season") and /profile ("Club Profile").
  */
-export function isManageUrl(url: string): boolean {
-  return urlPath(url) === '/admin';
-}
 
 /** "Leagues" tab: the league list, the create form, and every league detail page. */
 export function isLeaguesUrl(url: string): boolean {

@@ -28,7 +28,7 @@
     flex-direction: column;
     align-items: center;
     padding: var(--space-sm) var(--space-md);
-    background: rgba(0, 0, 0, 0.15);
+    background: rgba(var(--shadow-rgb), calc(0.15 * var(--shadow-k)));
     border-radius: var(--radius-md);
     min-width: 72px;
 }
@@ -79,7 +79,7 @@
     align-items: flex-start;
     gap: var(--space-md);
     padding-bottom: var(--space-md);
-    border-bottom: 1px solid rgba(205, 240, 58, 0.1);
+    border-bottom: 1px solid rgba(var(--ball-rgb), 0.1);
 }
 
 .admin-card-title-row {

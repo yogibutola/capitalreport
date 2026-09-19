@@ -5,6 +5,8 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../auth/auth';
 import { ToastService } from '../shared/toast.service';
+import { BrandLogoComponent } from '../shared/brand-logo';
+import { BrandMarkComponent } from '../shared/brand-mark';
 import { FORM_ERROR_UI, ParsedHttpError, parseHttpError } from '../shared/form-error-ui';
 
 interface PublicTournament {
@@ -32,7 +34,7 @@ interface PublicTournament {
 @Component({
   selector: 'app-tournament-register',
   standalone: true,
-  imports: [FormsModule, RouterLink, ...FORM_ERROR_UI],
+  imports: [FormsModule, RouterLink, ...FORM_ERROR_UI, BrandLogoComponent, BrandMarkComponent],
   templateUrl: './tournament-register.html',
   styleUrl: './tournament-register.css',
 })

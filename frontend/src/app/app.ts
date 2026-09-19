@@ -7,16 +7,19 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { PlayerService } from './player/player';
 import { ToastHostComponent } from './shared/toast-host';
 import { ConfirmHostComponent } from './shared/confirm-host';
+import { BrandLogoComponent } from './shared/brand-logo';
+import { BrandMarkComponent } from './shared/brand-mark';
+import { ThemeToggleComponent } from './shared/theme-toggle';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs/operators';
-import { isMarketingUrl, isManageUrl, isLeaguesUrl, isTournamentsUrl } from './nav-urls';
+import { isMarketingUrl, isLeaguesUrl, isTournamentsUrl } from './nav-urls';
 
-export { isMarketingUrl, isManageUrl, isLeaguesUrl, isTournamentsUrl };
+export { isMarketingUrl, isLeaguesUrl, isTournamentsUrl };
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, RouterLink, RouterLinkActive, ToastHostComponent, ConfirmHostComponent],
+  imports: [RouterOutlet, CommonModule, RouterLink, RouterLinkActive, ToastHostComponent, ConfirmHostComponent, BrandLogoComponent, BrandMarkComponent, ThemeToggleComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -45,7 +48,6 @@ export class App {
   );
   // Full-bleed marketing pages that paint their own chrome (no app header/footer).
   isLandingPage = computed(() => isMarketingUrl(this.currentUrl()));
-  isManageActive = computed(() => isManageUrl(this.currentUrl()));
   isLeaguesActive = computed(() => isLeaguesUrl(this.currentUrl()));
   isTournamentsActive = computed(() => isTournamentsUrl(this.currentUrl()));
 
