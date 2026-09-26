@@ -247,7 +247,8 @@
                     <li>Live standings with point differential and tie-breakers baked in.</li>
                     <li>Players enter their own scores; you approve with one tap.</li>
                 </ul>
-                <button type="button" class="link-cta" (click)="startAdminDemo()" [disabled]="demoLoading()">
+                <button type="button" class="link-cta" (click)="startAdminDemo()" [disabled]="demoLoading()"
+                    data-testid="cta-admin-demo">
                     See it in a demo <span aria-hidden="true">→</span>
                 </button>
             </div>

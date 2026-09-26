@@ -492,16 +492,28 @@
   overflow: hidden;
 }
 
+/* The parent .discussion-section is `overflow: hidden`, so without a scroller
+   here the second tab is clipped and unreachable on a phone rather than merely
+   cramped. Same pattern as .events-scroll below. */
 .discussion-tabs {
   display: flex;
   gap: 4px;
   padding: 10px 20px 0;
   border-bottom: 1px solid rgba(var(--tint-rgb), 0.06);
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+}
+
+.discussion-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .disc-tab {
   display: flex;
   align-items: center;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
   gap: 8px;
   padding: 10px 16px;
   border-radius: 8px 8px 0 0;
@@ -1260,5 +1272,10 @@
 
   .message-bubble {
     max-width: 90%;
+  }
+
+  /* Leave more of the tab row for the labels themselves. */
+  .tab-event-name {
+    max-width: 90px;
   }
 }

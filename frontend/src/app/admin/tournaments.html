@@ -43,8 +43,10 @@
               {{ tournament.tournament_status }}
             </span>
           </div>
-          <span class="admin-league-meta">
-            {{ tournament.player_count }} players
+          <span class="admin-league-meta" data-testid="tournament-meta">
+            {{ formatMatchFormat(tournament.match_format) }}
+            @if (formatAgeGroup(tournament)) { · {{ formatAgeGroup(tournament) }} }
+            · {{ tournament.player_count }} players
             @if (tournament.tournament_start_date) { · {{ tournament.tournament_start_date }} }
           </span>
           @if (tournament.club_name || tournament.location) {

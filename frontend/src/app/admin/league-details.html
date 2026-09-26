@@ -1,6 +1,6 @@
 <div class="container" style="padding-top: var(--space-lg);">
     <!-- Header -->
-    <div class="flex-center" style="justify-content: space-between; margin-bottom: var(--space-lg);">
+    <div class="page-header">
         <div>
             <h2 class="text-gradient">
                 {{ leagueDetails()?.league_name || 'League Details' }}
@@ -12,7 +12,7 @@
             </span>
             }
         </div>
-        <div class="flex-center gap-md">
+        <div class="page-header-actions">
             @if (leagueDetails()) {
             <!-- <a [routerLink]="isRound1Slotted() ? null : ['/league/slotting']"
                 [queryParams]="isRound1Slotted() ? null : {league_id: leagueId()}" class="btn btn-primary"

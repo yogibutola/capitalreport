@@ -79,6 +79,9 @@ class PBTournamentStore:
             "match_format": 1,
             "dupr_min": 1,
             "dupr_max": 1,
+            "age_group": 1,
+            "age_min": 1,
+            "age_max": 1,
             "players": 1,
         }
         return list(collection.find(query, projection))
@@ -96,6 +99,9 @@ class PBTournamentStore:
             "match_format": doc.get("match_format"),
             "dupr_min": doc.get("dupr_min"),
             "dupr_max": doc.get("dupr_max"),
+            "age_group": doc.get("age_group"),
+            "age_min": doc.get("age_min"),
+            "age_max": doc.get("age_max"),
             "player_count": len(doc.get("players", []) or []),
         }
 

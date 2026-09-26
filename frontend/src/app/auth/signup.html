@@ -16,7 +16,7 @@
             <app-form-banner [message]="formError()" />
 
             <!-- Name Fields -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
+            <div class="grid-2">
                 <div class="form-group">
                     <label for="field-firstName" style="display: block; margin-bottom: var(--space-xs);">First Name</label>
                     <input id="field-firstName" type="text" [(ngModel)]="firstName" name="firstName" #firstNameCtrl="ngModel"

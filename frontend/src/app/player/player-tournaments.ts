@@ -1,7 +1,13 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TournamentService, TournamentSummary } from '../admin/tournament';
+import {
+  formatAgeGroup,
+  formatMatchFormat,
+  isDoublesFormat,
+  TournamentService,
+  TournamentSummary,
+} from '../admin/tournament';
 import { LeagueService } from '../league/league';
 import { AuthService } from '../auth/auth';
 import { ToastService } from '../shared/toast.service';
@@ -62,9 +68,14 @@ export class PlayerTournamentsComponent implements OnInit {
     return `DUPR ${t.dupr_min ?? '0'}–${t.dupr_max ?? '8'}`;
   }
 
+  // Exposed for the tournament cards.
+  formatMatchFormat = formatMatchFormat;
+  ageGroup = formatAgeGroup;
+
   /** Entry point from the "Register" button — branches on format. */
   async startRegister(t: TournamentSummary) {
-    if (t.match_format === 'doubles') {
+    // Doubles and mixed doubles both open the partner panel.
+    if (isDoublesFormat(t.match_format)) {
       this.resetPanel();
       this.registeringId.set(t.tournament_id);
       return;

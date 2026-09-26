@@ -282,18 +282,36 @@
 
     .header-nav-row {
         padding: 0 8px;
+        position: relative;
     }
 
-    .user-name {
-        display: none;
+    /* The tab strip scrolls but hides its scrollbar. Fade the trailing edge so
+       a partially-scrolled tab reads as cut off rather than absent. */
+    .header-nav-row::after {
+        content: '';
+        position: absolute;
+        inset: 0 0 0 auto;
+        width: 28px;
+        pointer-events: none;
+        background: linear-gradient(to right, rgba(var(--ground-rgb), 0), var(--header-bg));
     }
 
-    .header-nav {
-        display: none;
+    .header-nav-tabs {
+        scroll-snap-type: x proximity;
+        scroll-padding-inline: var(--space-sm);
     }
 
-    .header-league-select {
-        display: none;
+    .nav-tab-link {
+        display: inline-flex;
+        align-items: center;
+        padding: 12px 14px;
+        scroll-snap-align: start;
+    }
+
+    /* Keep the active underline aligned with the tightened padding. */
+    .nav-tab-link::after {
+        left: 14px;
+        right: 14px;
     }
 
     .main-content {
@@ -358,7 +376,10 @@
         font-family: var(--font-mono);
     }
 
-    .main-content {
+    /* Only reserve room when the bar is actually rendered — app.html hides it
+       from clubs, superadmins and signed-out visitors, who were getting 70px
+       of dead space at the foot of every page. */
+    .app-container:has(.mobile-bottom-nav) .main-content {
         padding-bottom: calc(70px + env(safe-area-inset-bottom));
     }
 }

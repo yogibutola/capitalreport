@@ -185,6 +185,7 @@
 
 /* ─── Format / DUPR badges ─── */
 .format-badge,
+.age-badge,
 .dupr-badge {
     display: inline-block;
     padding: 0.1rem 0.5rem;
@@ -198,6 +199,12 @@
 .format-badge {
     background: rgba(var(--ball-rgb), 0.15);
     color: HSL(var(--color-rally-green));
+}
+
+.age-badge {
+    background: rgba(var(--tint-rgb), 0.10);
+    color: HSL(var(--color-text-muted));
+    margin-left: 0.35rem;
 }
 
 .dupr-badge {

@@ -2,7 +2,12 @@ import { Component, computed, inject, PLATFORM_ID, signal } from '@angular/core'
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TournamentService } from './tournament';
+import {
+  formatAgeGroup,
+  formatMatchFormat,
+  isDoublesFormat,
+  TournamentService,
+} from './tournament';
 import { AuthService } from '../auth/auth';
 import { ConfirmService } from '../shared/confirm.service';
 import { ToastService } from '../shared/toast.service';
@@ -98,6 +103,9 @@ interface TournamentDetail {
   match_format?: string;
   dupr_min?: number | null;
   dupr_max?: number | null;
+  age_group?: string | null;
+  age_min?: number | null;
+  age_max?: number | null;
   club_name?: string;
   location?: string;
   registrations: TournamentRegistration[];
@@ -131,7 +139,10 @@ export class TournamentDetailsComponent {
   isAdminView = this.route.snapshot.url.some((s) => s.path === 'admin');
   backLink = this.isAdminView ? '/admin/tournaments' : '/player/tournaments';
 
-  isDoubles = computed(() => this.tournament()?.match_format === 'doubles');
+  /** Doubles and mixed doubles both have partners/teams. */
+  isDoubles = computed(() => isDoublesFormat(this.tournament()?.match_format));
+  formatLabel = computed(() => formatMatchFormat(this.tournament()?.match_format));
+  ageGroupLabel = computed(() => formatAgeGroup(this.tournament()));
   isPending = computed(() => (this.tournament()?.tournament_status ?? 'pending') === 'pending');
 
   /** Public share link that new players use to register (embed behind a flyer image). */

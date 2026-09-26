@@ -1,5 +1,5 @@
 <div class="container" style="padding-top: var(--space-lg);">
-    <div class="flex-center" style="justify-content: space-between; margin-bottom: var(--space-lg);">
+    <div class="page-header">
         <div>
             <h2 class="text-gradient">Games Slotting: {{ league()?.league_name || 'Loading...' }}</h2>
             <div class="flex-center gap-sm">
@@ -10,7 +10,7 @@
                     style="width: auto;">
             </div>
         </div>
-        <div class="flex-center gap-md">
+        <div class="page-header-actions">
             @if (!auth.isDemo()) {
             <button class="btn btn-primary" [disabled]="!canSlotNextRound()" (click)="slotNextRound()">
                 Slot Round {{ nextRoundId() }}
@@ -102,26 +102,3 @@
         }
     </div>
 </div>
-
-<style>
-    .score-input {
-        background: rgba(var(--shadow-rgb), calc(0.3 * var(--shadow-k)));
-        border: 1px solid rgba(var(--tint-rgb), 0.1);
-        color: var(--text);
-        text-align: center;
-        padding: 4px;
-        border-radius: 4px;
-    }
-
-    .score-input:focus {
-        border-color: HSL(var(--color-accent));
-        outline: none;
-    }
-
-    .badge {
-        font-size: 0.75rem;
-        padding: 2px 8px;
-        border-radius: 10px;
-        color: var(--text);
-    }
-</style>

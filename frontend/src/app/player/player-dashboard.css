@@ -637,6 +637,31 @@ tr.currentUser .player-name, tr.currentUser .pos-cell { color: HSL(var(--color-a
     .section-header-row { flex-direction: column; align-items: flex-start; }
 }
 
+/* Standings stay a table on phones — their value is scanning a column, which
+   card-stacking would destroy. Tightening density gets the six columns inside
+   390px in the common case; .table-scroll covers long player names. */
+@media (max-width: 480px) {
+    .standings-table { font-size: 0.85rem; }
+
+    .standings-mini-table { font-size: 0.78rem; }
+
+    .standings-table th,
+    .standings-table td,
+    .standings-mini-table th,
+    .standings-mini-table td {
+        padding-left: var(--space-sm);
+        padding-right: var(--space-sm);
+    }
+
+    /* Numeric columns must not wrap onto two lines. */
+    .standings-table .text-center,
+    .standings-table .text-right,
+    .standings-mini-table .text-center,
+    .standings-mini-table .text-right {
+        white-space: nowrap;
+    }
+}
+
 .viewing-player-banner {
     display: flex;
     align-items: center;

@@ -1,0 +1,37 @@
+/* Moved verbatim out of the template's trailing <style> block — identical
+   encapsulation, but the component now has a stylesheet that media queries
+   can live in. */
+.score-input {
+    background: rgba(var(--shadow-rgb), calc(0.3 * var(--shadow-k)));
+    border: 1px solid rgba(var(--tint-rgb), 0.1);
+    color: var(--text);
+    text-align: center;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.score-input:focus {
+    border-color: HSL(var(--color-accent));
+    outline: none;
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    color: var(--text);
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding-left: var(--space-sm);
+        padding-right: var(--space-sm);
+    }
+
+    /* The play-day line carries a date picker beside its label; let it drop to
+       a second line rather than push the page wider than the phone. */
+    .page-header .flex-center.gap-sm {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+}

@@ -1,0 +1,16 @@
+/* Shared by create-league and create-tournament — create-tournament.ts points
+   its styleUrl here. Component-scoped, so .container/.card elsewhere are
+   unaffected.
+
+   The column grids these forms use (.grid-2/.grid-3) are global primitives in
+   src/styles.css and already collapse to one column below 769px. */
+@media (max-width: 768px) {
+    .container {
+        padding-left: var(--space-sm);
+        padding-right: var(--space-sm);
+    }
+
+    .card {
+        padding: var(--space-md);
+    }
+}

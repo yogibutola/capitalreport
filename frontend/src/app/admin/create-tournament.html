@@ -1,5 +1,5 @@
 <div class="container" style="padding-top: var(--space-lg); padding-bottom: var(--space-xl);">
-    <div class="flex-center" style="justify-content: space-between; margin-bottom: var(--space-lg);">
+    <div class="page-header">
         <h2 class="text-gradient">Create New Tournament</h2>
         <a routerLink="/admin/tournaments" class="btn btn-secondary">Back</a>
     </div>
@@ -9,6 +9,9 @@
             <app-form-summary [form]="f" [attempted]="submitAttempted" [labels]="{
                     name: 'Tournament name',
                     startDate: 'Start date',
+                    ageGroup: 'Age group',
+                    ageMin: 'Min age',
+                    ageMax: 'Max age',
                     poolSize: 'Pool size',
                     advancersPerPool: 'Advancers per pool'
                 }" />
@@ -66,15 +69,59 @@
             <h3
                 style="margin-top: var(--space-lg); margin-bottom: var(--space-md); border-bottom: 1px solid var(--card-border); padding-bottom: var(--space-sm);">
                 Format Configuration</h3>
-            <div class="grid-3">
+            <div class="grid-2">
                 <div class="form-group">
                     <label for="field-format" style="display: block; margin-bottom: var(--space-xs);">Match Format</label>
                     <select id="field-format" [(ngModel)]="format" name="format" class="input-field" required>
                         <option value="doubles">Doubles</option>
                         <option value="singles">Singles</option>
+                        <option value="mixed-doubles">Mixed Doubles</option>
                     </select>
                 </div>
 
+                <div class="form-group">
+                    <label for="field-ageGroup" style="display: block; margin-bottom: var(--space-xs);">Age Group</label>
+                    <select id="field-ageGroup" [(ngModel)]="ageGroup" name="ageGroup" class="input-field" required
+                        (ngModelChange)="onAgeGroupChange()" aria-describedby="ageGroup-help">
+                        @for (g of ageGroups; track g.value) {
+                        <option [value]="g.value">{{ g.label }}</option>
+                        }
+                    </select>
+                    <small id="ageGroup-help" class="input-hint">Shown on the tournament listing</small>
+                    @if (fieldErrors['age_group']) {
+                    <small class="input-hint" style="color: HSL(var(--color-error));">
+                        {{ fieldErrors['age_group'] }}
+                    </small>
+                    }
+                </div>
+            </div>
+
+            @if (isCustomAgeGroup) {
+            <div class="grid-2" data-testid="custom-age-range">
+                <div class="form-group">
+                    <label for="field-ageMin" style="display: block; margin-bottom: var(--space-xs);">Min Age
+                        (optional)</label>
+                    <input id="field-ageMin" type="number" [(ngModel)]="ageMin" name="ageMin" class="input-field"
+                        min="5" max="120" step="1" placeholder="e.g. 30" aria-describedby="age-help">
+                </div>
+                <div class="form-group">
+                    <label for="field-ageMax" style="display: block; margin-bottom: var(--space-xs);">Max Age
+                        (optional)</label>
+                    <input id="field-ageMax" type="number" [(ngModel)]="ageMax" name="ageMax" #ageMaxCtrl="ngModel"
+                        class="input-field" min="5" max="120" step="1" placeholder="e.g. 45"
+                        [appInvalid]="ageMaxCtrl" [appInvalidServer]="fieldErrors['age_max']"
+                        [appInvalidForce]="submitAttempted">
+                    <small id="age-help" class="input-hint">Set at least one end of the range</small>
+                    @if (ageRangeInvalid || fieldErrors['age_max']) {
+                    <small class="input-hint" style="color: HSL(var(--color-error));">
+                        {{ fieldErrors['age_max'] || 'Max age must be at least the min age.' }}
+                    </small>
+                    }
+                </div>
+            </div>
+            }
+
+            <div class="grid-2">
                 <div class="form-group">
                     <label for="field-poolSize" style="display: block; margin-bottom: var(--space-xs);">Pool Size</label>
                     <input id="field-poolSize" type="number" [(ngModel)]="poolSize" name="poolSize" #poolSizeCtrl="ngModel"
@@ -114,7 +161,7 @@
                         [appInvalidForce]="submitAttempted">
                     <small id="dupr-help" class="input-hint">Leave both blank to allow any rating</small>
                     @if (duprRangeInvalid || fieldErrors['dupr_max']) {
-                    <small class="input-hint" style="color: HSL(var(--color-error))));">
+                    <small class="input-hint" style="color: HSL(var(--color-error));">
                         {{ fieldErrors['dupr_max'] || 'Max rating must be at least the min rating.' }}
                     </small>
                     }
@@ -127,18 +174,3 @@
         </form>
     </div>
 </div>
-
-<style>
-    .grid-2 {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: var(--space-md);
-    }
-
-    .grid-3 {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: var(--space-md);
-    }
-
-</style>

@@ -5,7 +5,62 @@ import { catchError, map } from 'rxjs/operators';
 import { LeagueService, Player } from '../league/league';
 import { AuthService } from '../auth/auth';
 
-export interface TournamentSummary {
+export type MatchFormat = 'doubles' | 'singles' | 'mixed-doubles';
+
+/** Age division. `NN+` presets mean "NN and older"; `custom` carries an explicit range. */
+export type AgeGroupKey = 'open' | '19+' | '35+' | '50+' | '60+' | '70+' | 'custom';
+
+/** Options for the age-group dropdown, in the order clubs expect to see them. */
+export const AGE_GROUP_OPTIONS: { value: AgeGroupKey; label: string }[] = [
+  { value: 'open', label: 'Open (all ages)' },
+  { value: '19+', label: '19+' },
+  { value: '35+', label: '35+' },
+  { value: '50+', label: '50+' },
+  { value: '60+', label: '60+' },
+  { value: '70+', label: '70+' },
+  { value: 'custom', label: 'Custom…' },
+];
+
+/** A tournament's age division, or null for Open (so metadata strips stay clean). */
+export interface AgeDivision {
+  age_group?: string | null;
+  age_min?: number | null;
+  age_max?: number | null;
+}
+
+/**
+ * True for any format played in pairs. Mirrors `is_doubles_format` in
+ * app/vo/pb/tournament.py — unknown/missing falls back to doubles, the default.
+ */
+export function isDoublesFormat(fmt?: string | null): boolean {
+  return (fmt || 'doubles') !== 'singles';
+}
+
+export function formatMatchFormat(fmt?: string | null): string {
+  switch (fmt || 'doubles') {
+    case 'singles':
+      return 'Singles';
+    case 'mixed-doubles':
+      return 'Mixed Doubles';
+    default:
+      return 'Doubles';
+  }
+}
+
+/** Display label for an age division, or null when it is open to all ages. */
+export function formatAgeGroup(t?: AgeDivision | null): string | null {
+  const group = t?.age_group;
+  if (!group || group === 'open') return null;
+  if (group !== 'custom') return group;
+  const min = t?.age_min ?? null;
+  const max = t?.age_max ?? null;
+  if (min != null && max != null) return `${min}–${max}`;
+  if (min != null) return `${min}+`;
+  if (max != null) return `Up to ${max}`;
+  return null;
+}
+
+export interface TournamentSummary extends AgeDivision {
   tournament_id: string;
   tournament_name: string;
   tournament_status: string;
@@ -13,7 +68,7 @@ export interface TournamentSummary {
   tournament_end_date?: string;
   club_name?: string;
   location?: string;
-  match_format?: 'doubles' | 'singles';
+  match_format?: MatchFormat;
   dupr_min?: number | null;
   dupr_max?: number | null;
   player_count: number;
@@ -25,9 +80,12 @@ export interface CreateTournamentInput {
   location?: string;
   start_date: Date;
   end_date?: Date;
-  match_format: 'doubles' | 'singles';
+  match_format: MatchFormat;
   dupr_min?: number | null;
   dupr_max?: number | null;
+  age_group: AgeGroupKey;
+  age_min?: number | null;
+  age_max?: number | null;
   pool_size: number;
   advancers_per_pool: number;
   player_ids: string[];
@@ -59,6 +117,9 @@ function toSummary(t: any): TournamentSummary {
     match_format: t.match_format ?? undefined,
     dupr_min: t.dupr_min ?? null,
     dupr_max: t.dupr_max ?? null,
+    age_group: t.age_group ?? undefined,
+    age_min: t.age_min ?? null,
+    age_max: t.age_max ?? null,
     player_count: Number(t.player_count ?? 0),
   };
 }
@@ -189,6 +250,9 @@ export class TournamentService {
       match_format: input.match_format,
       dupr_min: input.dupr_min ?? undefined,
       dupr_max: input.dupr_max ?? undefined,
+      age_group: input.age_group,
+      age_min: input.age_min ?? undefined,
+      age_max: input.age_max ?? undefined,
       pool_size: input.pool_size,
       advancers_per_pool: input.advancers_per_pool,
       tournament_status: 'pending',

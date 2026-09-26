@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { runPlatformSeeder, platformLogin, SUPERADMIN } from './helpers';
+import { PHONE, expectNoHorizontalOverflow } from './mobile-helpers';
 
 /**
  * Hidden application-admin console at /x9k2-console.
@@ -71,6 +72,28 @@ test.describe('Platform console', () => {
         expect(page.url()).toContain('/x9k2-console');
         expect(page.url()).not.toContain('/x9k2-console/login');
         await expect(page.locator('h2', { hasText: 'Platform Console' })).toBeVisible();
+    });
+
+    // The console had no responsive rules at all: its filter row alone (a 220px
+    // minimum input plus two buttons) was wider than a phone.
+    test('fits a 390px phone, with its tables scrolling instead of the page', async ({ page }) => {
+        await page.setViewportSize(PHONE);
+        await platformLogin(page, SUPERADMIN.email, SUPERADMIN.password);
+        await page.waitForLoadState('networkidle');
+
+        await expectNoHorizontalOverflow(page, 'platform console (clubs)');
+
+        await page.click('.pc-tabs button:has-text("Activity")');
+        await page.waitForLoadState('networkidle');
+        await expectNoHorizontalOverflow(page, 'platform console (activity)');
+
+        // The filter input must drop onto its own line rather than shove the
+        // Filter/Clear buttons off screen.
+        const input = (await page.locator('input[placeholder="Filter by user email"]').boundingBox())!;
+        const filterBtn = (await page.locator('button:has-text("Filter")').first().boundingBox())!;
+        expect(filterBtn.y, 'the filter controls are still crammed onto one row').toBeGreaterThan(
+            input.y + input.height - 2
+        );
     });
 
     test('the console URL is not reachable without the superadmin role', async ({ page }) => {

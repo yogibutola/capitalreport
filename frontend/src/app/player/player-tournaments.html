@@ -27,11 +27,10 @@
                     </span>
                 </div>
                 <div class="tournament-card-body">
-                    @if (tournament.match_format) {
-                    <p><span class="format-badge">{{ tournament.match_format }}</span>
+                    <p><span class="format-badge">{{ formatMatchFormat(tournament.match_format) }}</span>
+                        @if (ageGroup(tournament)) { <span class="age-badge">{{ ageGroup(tournament) }}</span> }
                         @if (duprRange(tournament)) { <span class="dupr-badge">{{ duprRange(tournament) }}</span> }
                     </p>
-                    }
                     @if (tournament.club_name) { <p>🏛️ {{ tournament.club_name }}</p> }
                     @if (tournament.location) { <p>📍 {{ tournament.location }}</p> }
                     <p>👥 {{ tournament.player_count }} players</p>
@@ -74,11 +73,10 @@
                     </span>
                 </div>
                 <div class="tournament-card-body">
-                    @if (tournament.match_format) {
-                    <p><span class="format-badge">{{ tournament.match_format }}</span>
+                    <p><span class="format-badge">{{ formatMatchFormat(tournament.match_format) }}</span>
+                        @if (ageGroup(tournament)) { <span class="age-badge">{{ ageGroup(tournament) }}</span> }
                         @if (duprRange(tournament)) { <span class="dupr-badge">{{ duprRange(tournament) }}</span> }
                     </p>
-                    }
                     @if (tournament.club_name) { <p>🏛️ {{ tournament.club_name }}</p> }
                     @if (tournament.location) { <p>📍 {{ tournament.location }}</p> }
                     <p>👥 {{ tournament.player_count }} players</p>
@@ -105,7 +103,7 @@
 
                 @if (registeringId() === tournament.tournament_id) {
                 <div class="register-panel">
-                    <p class="register-panel-title">Doubles registration</p>
+                    <p class="register-panel-title">{{ formatMatchFormat(tournament.match_format) }} registration</p>
                     <label class="register-radio">
                         <input type="radio" name="pm-{{ tournament.tournament_id }}"
                             [checked]="partnerMode() === 'looking'" (change)="partnerMode.set('looking')" />

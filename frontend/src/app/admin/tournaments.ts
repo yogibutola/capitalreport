@@ -1,6 +1,6 @@
 import { Component, inject, computed, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TournamentService } from './tournament';
+import { formatAgeGroup, formatMatchFormat, TournamentService } from './tournament';
 import { AuthService } from '../auth/auth';
 import { ToastService } from '../shared/toast.service';
 import { ConfirmService } from '../shared/confirm.service';
@@ -26,6 +26,10 @@ export class TournamentsComponent implements OnInit {
   activeTournamentCount = computed(
     () => this.tournaments().filter(t => t.tournament_status === 'active').length
   );
+
+  // Exposed for the template's meta row.
+  formatMatchFormat = formatMatchFormat;
+  formatAgeGroup = formatAgeGroup;
 
   ngOnInit() {
     this.tournamentService.fetchTournaments();

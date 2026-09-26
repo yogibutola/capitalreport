@@ -8,6 +8,12 @@ import { ToastService } from '../shared/toast.service';
 import { BrandLogoComponent } from '../shared/brand-logo';
 import { BrandMarkComponent } from '../shared/brand-mark';
 import { FORM_ERROR_UI, ParsedHttpError, parseHttpError } from '../shared/form-error-ui';
+import {
+  formatAgeGroup,
+  formatMatchFormat,
+  isDoublesFormat,
+  MatchFormat,
+} from '../admin/tournament';
 
 interface PublicTournament {
   tournament_id: string;
@@ -16,9 +22,12 @@ interface PublicTournament {
   tournament_status?: string;
   tournament_start_date?: string;
   tournament_end_date?: string;
-  match_format?: 'singles' | 'doubles';
+  match_format?: MatchFormat;
   dupr_min?: number | null;
   dupr_max?: number | null;
+  age_group?: string | null;
+  age_min?: number | null;
+  age_max?: number | null;
   club_name?: string;
   location?: string;
 }
@@ -72,7 +81,10 @@ export class TournamentRegisterComponent implements OnInit {
   // The registrant already has an account — point them at sign-in instead.
   accountExists = signal(false);
 
-  isDoubles = computed(() => this.tournament()?.match_format === 'doubles');
+  /** Doubles and mixed doubles both need a partner choice. */
+  isDoubles = computed(() => isDoublesFormat(this.tournament()?.match_format));
+  formatLabel = computed(() => formatMatchFormat(this.tournament()?.match_format));
+  ageGroupLabel = computed(() => formatAgeGroup(this.tournament()));
   isClosed = computed(
     () => !!this.tournament() && (this.tournament()!.tournament_status ?? 'pending') !== 'pending'
   );

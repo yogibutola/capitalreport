@@ -284,6 +284,76 @@ h1, h2, h3, h4, h5, h6, .app-title {
   gap: var(--space-sm);
 }
 
+/* ─── Responsive primitives ───────────────────────────────────────────────
+ * Breakpoint convention for NEW rules: 768px is the mobile breakpoint;
+ * 480px is reserved for density-only tweaks. Media queries can't read custom
+ * properties, hence a comment rather than a token.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/* Title left, actions right, wrapping instead of overflowing. Replaces the
+   `class="flex-center" style="justify-content: space-between"` idiom, which
+   has no flex-wrap and so forces the page wider than the phone. */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.page-header > * {
+  min-width: 0;
+}
+
+.page-header h1,
+.page-header h2,
+.page-header h3 {
+  margin: 0;
+  /* League and club names are user-supplied and can be one long unbroken word. */
+  overflow-wrap: anywhere;
+}
+
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+/* A table too wide for the screen scrolls in its own box, so the *page*
+   never scrolls sideways. */
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Direct child only, so a div-based pseudo-table never picks this up. */
+.table-scroll > table {
+  min-width: max-content;
+}
+
+/* Form grids: one column on phones, N columns above the breakpoint.
+   Mobile-first, so a new page is correct before anyone writes a query. */
+.grid-2,
+.grid-3 {
+  display: grid;
+  gap: var(--space-md);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 769px) {
+  .grid-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .grid-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
 /* Components */
 .btn {
   padding: 10px 22px;
@@ -348,6 +418,10 @@ h1, h2, h3, h4, h5, h6, .app-title {
 }
 
 .card {
+  /* Without this, `width: 100%` on a card resolves to the parent's width *plus*
+     48px of padding and 2px of border, pushing the page sideways on a phone.
+     Every `max-width` on a card in the app reads as an outer width too. */
+  box-sizing: border-box;
   background-color: var(--surface);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);

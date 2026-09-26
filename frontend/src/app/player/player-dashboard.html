@@ -193,6 +193,7 @@
 
       <div class="group-standings-mini panel-card">
         @if (currentGroupStandings().length > 0) {
+        <div class="table-scroll">
         <table class="standings-mini-table">
           <thead>
             <tr>
@@ -221,6 +222,7 @@
             }
           </tbody>
         </table>
+        </div>
         } @else {
         <div style="text-align: center; color: HSL(var(--color-text-muted)); padding: var(--space-md);">
           No completed matches in this group yet.
@@ -325,6 +327,7 @@
         <p>No matches completed yet. Standings appear after the first score is recorded.</p>
       </div>
       } @else {
+      <div class="table-scroll">
       <table class="standings-table">
         <thead>
           <tr>
@@ -355,6 +358,7 @@
           }
         </tbody>
       </table>
+      </div>
       }
     </div>
     } @else {
@@ -388,7 +392,10 @@
     </div>
 
     <h3 class="content-section-title" style="font-size: 1rem; margin-bottom: var(--space-md);">Play Days</h3>
-    <div class="panel-card" style="padding: 0; overflow: hidden;">
+    <!-- The clipping lives on .table-scroll, not the card: `overflow: hidden`
+         on the parent would stop the wrapper scrolling at all. -->
+    <div class="panel-card" style="padding: 0;">
+      <div class="table-scroll" style="border-radius: var(--radius-card);">
       <table class="leagues-table" style="width: 100%; border-collapse: collapse;">
         <thead>
           <tr>
@@ -426,6 +433,7 @@
           }
         </tbody>
       </table>
+      </div>
     </div>
     } @else {
     <div class="empty-state panel-card">

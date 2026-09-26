@@ -13,7 +13,7 @@ from app.services.tournament_bracket import (
 from app.store.mongo.pb_player_store import PBPlayerStore
 from app.store.mongo.pb_tournament_store import PBTournamentStore
 from app.vo.pb.player import Player, PlayerSignup
-from app.vo.pb.tournament import KnockoutRound, Pool, Tournament
+from app.vo.pb.tournament import KnockoutRound, Pool, Tournament, is_doubles_format
 from app.vo.pb.tournament_match_score_payload import TournamentMatchScorePayload
 from app.vo.pb.tournament_registration_payload import (
     PublicTournamentRegistrationPayload,
@@ -227,7 +227,7 @@ class PBTournamentService:
             "team_id": None,
         }
 
-        if (doc.get("match_format") or "doubles") == "doubles":
+        if is_doubles_format(doc.get("match_format")):
             self._apply_partner_choice(reg, payload, doc, email, taken)
 
         registrations.append(reg)
@@ -408,6 +408,7 @@ class PBTournamentService:
             pools = build_pools(entrants, pool_size)
             summary = {"format": "singles", "players": len(entrants)}
         else:
+            # doubles and mixed-doubles both play in pairs and share this path.
             solos = []
             for reg in registrations:
                 if reg.get("partner_email"):
@@ -425,7 +426,7 @@ class PBTournamentService:
                 raise ValueError("Need at least 2 teams to generate the draw")
             pools = build_team_pools(teams, pool_size)
             summary = {
-                "format": "doubles",
+                "format": fmt,
                 "teams": len(teams),
                 "auto_paired": auto_paired,
                 "unresolved_invites": sum(

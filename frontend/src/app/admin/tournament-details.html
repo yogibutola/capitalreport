@@ -1,5 +1,5 @@
 <div class="container" style="padding-top: var(--space-lg); padding-bottom: var(--space-xl);">
-    <div class="flex-center" style="justify-content: space-between; margin-bottom: var(--space-lg);">
+    <div class="page-header">
         <h2 class="text-gradient">{{ tournament()?.tournament_name || 'Tournament' }}</h2>
         <a [routerLink]="backLink" class="btn btn-secondary">Back</a>
     </div>
@@ -18,8 +18,9 @@
     } @else if (tournament(); as t) {
 
     <div class="card" style="margin-bottom: var(--space-lg);">
-        <p style="margin: 0; color: HSL(var(--color-text-muted));">
-            <span style="text-transform: capitalize;">{{ t.match_format }}</span>
+        <p data-testid="tournament-meta" style="margin: 0; color: HSL(var(--color-text-muted));">
+            <span>{{ formatLabel() }}</span>
+            @if (ageGroupLabel()) { · {{ ageGroupLabel() }} }
             @if (t.dupr_min != null || t.dupr_max != null) {
             · DUPR {{ t.dupr_min ?? '0' }}–{{ t.dupr_max ?? '8' }}
             }

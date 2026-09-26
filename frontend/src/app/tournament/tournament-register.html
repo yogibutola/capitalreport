@@ -20,7 +20,8 @@
       <span class="reg-eyebrow">Tournament registration</span>
       <h1 class="text-gradient" style="margin: var(--space-xs) 0 var(--space-sm);">{{ t.tournament_name }}</h1>
       <p class="reg-meta">
-        <span style="text-transform: capitalize;">{{ t.match_format || 'doubles' }}</span>
+        <span>{{ formatLabel() }}</span>
+        @if (ageGroupLabel()) { · {{ ageGroupLabel() }} }
         @if (duprRange()) { · DUPR {{ duprRange() }} }
         @if (t.tournament_start_date) { · 📅 {{ formatDate(t.tournament_start_date) }}
           @if (t.tournament_end_date) { – {{ formatDate(t.tournament_end_date) }} }
@@ -141,7 +142,7 @@
 
         @if (isDoubles()) {
         <fieldset class="reg-fieldset">
-          <legend>Partner (doubles)</legend>
+          <legend>Partner ({{ formatLabel() }})</legend>
           <label class="reg-radio">
             <input type="radio" name="partnerChoice" [checked]="partnerChoice() === 'looking'"
               (change)="partnerChoice.set('looking')" />

@@ -1,5 +1,5 @@
 <div class="container" style="padding-top: var(--space-lg); max-width: 720px;">
-  <div class="flex-center" style="justify-content: space-between; margin-bottom: var(--space-lg);">
+  <div class="page-header">
     <h2 class="text-gradient">{{ isClub() ? 'Club Profile' : 'My Profile' }}</h2>
     <a routerLink="/league" class="btn btn-secondary">Back</a>
   </div>
@@ -103,7 +103,7 @@
       </div>
       } @else {
       <!-- ===== Player edit fields ===== -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
+      <div class="grid-2">
         <div class="form-group">
           <label for="field-firstName" style="display:block; margin-bottom: var(--space-xs);">First Name</label>
           <input id="field-firstName" type="text" name="firstName" [(ngModel)]="firstName" #firstNameCtrl="ngModel"
@@ -135,7 +135,7 @@
           [serverError]="profileFieldErrors()['email']" [forceShow]="profileAttempted()" />
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
+      <div class="grid-2">
         <div class="form-group">
           <label for="field-age" style="display:block; margin-bottom: var(--space-xs);">Age</label>
           <input id="field-age" type="number" name="age" [(ngModel)]="age" #ageCtrl="ngModel"
@@ -159,7 +159,7 @@
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
+      <div class="grid-2">
         <div class="form-group">
           <label for="field-state" style="display:block; margin-bottom: var(--space-xs);">State</label>
           <input id="field-state" type="text" name="state" [(ngModel)]="state" #stateCtrl="ngModel"

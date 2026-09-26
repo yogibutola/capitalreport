@@ -8,6 +8,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: var(--space-md);
   margin-bottom: var(--space-lg);
 }
@@ -37,7 +38,7 @@
 }
 
 .pc-metric--warn {
-  border-color: HSL(HSL(var(--color-error)));
+  border-color: HSL(var(--color-error));
 }
 
 .pc-metric-n {
@@ -118,6 +119,7 @@
 .pc-filter {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-xs);
 }
 
@@ -156,7 +158,7 @@
 }
 
 .pc-table tr.err td {
-  color: HSL(HSL(var(--color-error)));
+  color: HSL(var(--color-error));
 }
 
 .pc-empty {
@@ -181,5 +183,40 @@
 }
 
 .link-btn.danger {
-  color: HSL(HSL(var(--color-error)));
+  color: HSL(var(--color-error));
+}
+
+/* The console sits outside the global header and had no mobile rules at all. */
+@media (max-width: 768px) {
+  .pc {
+    padding: var(--space-md) var(--space-sm);
+  }
+
+  /* 220px of fixed minimum is wider than the room left beside the buttons. */
+  .pc-filter .input-field {
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+
+  .pc-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pc-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .pc-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pc-tabs button {
+    flex: 0 0 auto;
+  }
+
+  .row-actions {
+    flex-wrap: wrap;
+  }
 }
