@@ -1,5 +1,5 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from app.vo.pb.player import Player
 from app.vo.pb.round import Round
 
@@ -30,9 +30,25 @@ class   League(BaseModel):
     group_size: int = Field(..., gt=0, description="Size of the group, must be positive")
     league_status: Optional[str] = None
     match_format: str = Field(..., min_length=1, description="Format of the match")
+    dupr_min: Optional[float] = Field(
+        None, ge=0.0, le=8.0, description="Lowest DUPR rating allowed to register"
+    )
+    dupr_max: Optional[float] = Field(
+        None, ge=0.0, le=8.0, description="Highest DUPR rating allowed to register"
+    )
     players: Optional[List[Player]] = Field(default_factory=list)
     rounds: Optional[List[Round]] = Field(default_factory=list)
     withdrawals: Optional[List[Withdrawal]] = Field(default_factory=list, description="List of player withdrawals per play day")
+
+    @model_validator(mode="after")
+    def check_dupr_range(self):
+        if (
+            self.dupr_min is not None
+            and self.dupr_max is not None
+            and self.dupr_max < self.dupr_min
+        ):
+            raise ValueError("dupr_max must be greater than or equal to dupr_min")
+        return self
 
     @property
     def player_emails(self) -> List[str]:

@@ -63,9 +63,9 @@
         }
         @if (isAdmin()) {
         <!-- Leagues/Tournaments stay highlighted on their create + detail pages -->
+        <a class="nav-tab-link" routerLink="/admin/season" routerLinkActive="active">Active Season</a>
         <a class="nav-tab-link" routerLink="/admin/leagues" [class.active]="isLeaguesActive()">Leagues</a>
         <a class="nav-tab-link" routerLink="/admin/tournaments" [class.active]="isTournamentsActive()">Tournaments</a>
-        <a class="nav-tab-link" routerLink="/admin/season" routerLinkActive="active">Active Season</a>
         <a class="nav-tab-link" routerLink="/profile" routerLinkActive="active">Club Profile</a>
         }
       </nav>

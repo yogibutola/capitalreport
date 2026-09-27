@@ -138,7 +138,12 @@ class PBLeagueService:
         if not league_doc:
             raise ValueError(f"League with ID {league_id} not found")
 
-        # 3. Add player to league collection
+        # 3. Reject players outside the league's DUPR band, if it declares one
+        dupr_error = self._dupr_error(player_doc.get("dupr_rating"), league_doc)
+        if dupr_error:
+            raise ValueError(dupr_error)
+
+        # 4. Add player to league collection
         player_data = {
             "firstName": player_doc["firstName"],
             "lastName": player_doc["lastName"],
@@ -147,7 +152,7 @@ class PBLeagueService:
         }
         self.pb_league_store.add_player_to_league(league_id, player_data)
 
-        # 4. Update player record with league info
+        # 5. Update player record with league info
         league_info = {
             "league_id": str(league_doc["_id"]),
             "league_name": league_doc["league_name"],
@@ -648,6 +653,23 @@ class PBLeagueService:
     def delete_league(self, league_id: str):
         # 1. Delete associated matches
         self.pb_match_store.delete_matches_by_league(league_id)
-        
+
         # 2. Delete the league
         return self.pb_league_store.delete_league(league_id)
+
+    @staticmethod
+    def _dupr_error(rating, league_doc: dict) -> str | None:
+        """Explain why ``rating`` is not eligible for this league, or None if it is.
+
+        A league with neither bound set accepts any rating, including a missing one.
+        """
+        lo, hi = league_doc.get("dupr_min"), league_doc.get("dupr_max")
+        if lo is None and hi is None:
+            return None
+        if rating is None:
+            return "A DUPR rating is required to register for this league"
+        if lo is not None and rating < lo:
+            return f"DUPR rating {rating} is below this league's minimum of {lo}"
+        if hi is not None and rating > hi:
+            return f"DUPR rating {rating} is above this league's maximum of {hi}"
+        return None

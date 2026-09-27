@@ -18,6 +18,8 @@ export interface League {
   league_duration: number; // Internal number
   group_size: number;
   match_format: 'round-robin' | 'other';
+  dupr_min?: number | null; // Eligibility band; null/undefined = any rating
+  dupr_max?: number | null;
   player_ids: string[]; // Internal usage
 }
 
@@ -51,6 +53,8 @@ export class AdminService {
           league_duration: Number(l.league_duration),
           group_size: l.group_size,
           match_format: l.match_format,
+          dupr_min: l.dupr_min ?? null,
+          dupr_max: l.dupr_max ?? null,
           player_ids: l.players ? l.players.map((p: any) => p.email) : []
         }));
         this.leagues.set(mappedLeagues);
@@ -104,6 +108,8 @@ export class AdminService {
       group_size: newLeague.group_size,
       league_status: newLeague.league_status,
       match_format: newLeague.match_format,
+      dupr_min: newLeague.dupr_min ?? null,
+      dupr_max: newLeague.dupr_max ?? null,
       players: selectedPlayers.map(p => ({
         firstName: p.firstName,
         lastName: p.lastName,

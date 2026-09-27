@@ -14,9 +14,10 @@ export function isMarketingUrl(url: string): boolean {
 }
 
 /**
- * Club nav: /admin redirects to /admin/leagues (there is no separate "Manage" hub),
- * so the Leagues and Tournaments tabs below cover every club page except
- * /admin/season ("Active Season") and /profile ("Club Profile").
+ * Club nav, in tab order: /admin/season ("Active Season"), Leagues, Tournaments,
+ * /profile ("Club Profile"). /admin redirects to /admin/leagues (there is no separate
+ * "Manage" hub), so the Leagues and Tournaments predicates below cover every club page
+ * except the season and profile pages.
  */
 
 /** "Leagues" tab: the league list, the create form, and every league detail page. */

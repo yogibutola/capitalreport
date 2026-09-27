@@ -22,11 +22,18 @@ export class CreateLeagueComponent {
   durationWeeks = 10;
   groupSize = 5;
   format: 'round-robin' | 'other' = 'round-robin';
+  duprMin: number | null = null;
+  duprMax: number | null = null;
 
   isSubmitting = false;
   submitAttempted = false;
   formError: string | null = null;
   fieldErrors: Record<string, string> = {};
+
+  /** Both bounds are optional, but an inverted range is never valid. */
+  get duprRangeInvalid(): boolean {
+    return this.duprMin != null && this.duprMax != null && this.duprMax < this.duprMin;
+  }
 
   clearServerErrors() {
     this.formError = null;
@@ -37,7 +44,7 @@ export class CreateLeagueComponent {
     this.submitAttempted = true;
     this.clearServerErrors();
     if (this.isSubmitting) return;
-    if (form.invalid) {
+    if (form.invalid || this.duprRangeInvalid) {
       return;
     }
 
@@ -51,6 +58,8 @@ export class CreateLeagueComponent {
         league_duration: this.durationWeeks,
         group_size: this.groupSize,
         match_format: this.format,
+        dupr_min: this.duprMin,
+        dupr_max: this.duprMax,
         player_ids: []
       })
       .subscribe({

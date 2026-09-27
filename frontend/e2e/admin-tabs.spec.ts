@@ -6,8 +6,9 @@ const ADMIN_PASSWORD = 'Password@123';
 const PLAYER_PASSWORD = 'Password@123';
 
 /**
- * Club nav: "Leagues" is the first tab and the post-login landing page; "Tournaments"
- * sits next to it. There is no "Manage" hub tab any more — /admin redirects to /admin/leagues.
+ * Club nav: "Active Season" is the first tab, then "Leagues" / "Tournaments". The
+ * post-login landing page is still /admin/leagues. There is no "Manage" hub tab any
+ * more — /admin redirects to /admin/leagues.
  * Requires the backend + Mongo; seeds a league via test_data_seeder.py.
  */
 test.describe('Leagues / Tournaments tabs (club)', () => {
@@ -17,7 +18,7 @@ test.describe('Leagues / Tournaments tabs (club)', () => {
         leagueName = runSeeder();
     });
 
-    test('Leagues is the first tab and the landing page; Tournaments routes to its own page', async ({ page }) => {
+    test('Active Season leads the tabs, Leagues is the landing page, Tournaments routes to its own page', async ({ page }) => {
         await adminLogin(page, ADMIN_EMAIL, ADMIN_PASSWORD);
 
         const tabs = page.locator('.header-nav-tabs .nav-tab-link');
@@ -27,9 +28,9 @@ test.describe('Leagues / Tournaments tabs (club)', () => {
         // No Manage tab anywhere in the club nav
         await expect(tabs.filter({ hasText: 'Manage' })).toHaveCount(0);
         await expect(tabs).toHaveCount(4);
-        await expect(tabs.nth(0)).toHaveText('Leagues');
-        await expect(tabs.nth(1)).toHaveText('Tournaments');
-        await expect(tabs.nth(2)).toHaveText('Active Season');
+        await expect(tabs.nth(0)).toHaveText('Active Season');
+        await expect(tabs.nth(1)).toHaveText('Leagues');
+        await expect(tabs.nth(2)).toHaveText('Tournaments');
         await expect(tabs.nth(3)).toHaveText('Club Profile');
         await expect(leagues).toHaveAttribute('href', '/admin/leagues');
         await expect(tournaments).toHaveAttribute('href', '/admin/tournaments');

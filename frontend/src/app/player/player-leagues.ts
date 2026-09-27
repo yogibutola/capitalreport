@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { PlayerService } from './player';
+import { PlayerLeague, PlayerService } from './player';
 import { AuthService } from '../auth/auth';
 import { ToastService } from '../shared/toast.service';
 import { ConfirmService } from '../shared/confirm.service';
@@ -50,12 +50,9 @@ export class PlayerLeaguesComponent implements OnInit {
         });
         if (!confirmed) return;
 
-        this.playerService.registerForLeague(leagueId).subscribe(success => {
-            if (success) {
-                this.toast.success("You're registered for this league.");
-            } else {
-                this.toast.error("We couldn't complete your registration. Please try again or contact support.");
-            }
+        this.playerService.registerForLeague(leagueId).subscribe({
+            next: () => this.toast.success("You're registered for this league."),
+            error: (err) => this.toast.error(parseHttpError(err).message)
         });
     }
 
@@ -77,5 +74,11 @@ export class PlayerLeaguesComponent implements OnInit {
 
     formatDate(date: Date): string {
         return new Date(date).toLocaleDateString();
+    }
+
+    /** "DUPR 3–4" for a league that restricts ratings, null when it accepts anyone. */
+    duprRange(league: PlayerLeague): string | null {
+        if (league.duprMin == null && league.duprMax == null) return null;
+        return `DUPR ${league.duprMin ?? '0'}–${league.duprMax ?? '8'}`;
     }
 }

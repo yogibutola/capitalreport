@@ -61,6 +61,7 @@
                         <th>League Name</th>
                         <th>Club</th>
                         <th>Location</th>
+                        <th>DUPR</th>
                         <th>Status</th>
                         <th>Start Date</th>
                         <th>End Date</th>
@@ -77,6 +78,7 @@
                         </td>
                         <td>{{ league.clubName || '—' }}</td>
                         <td>{{ league.location || '—' }}</td>
+                        <td>{{ duprRange(league) || 'Any' }}</td>
                         <td>
                             <span class="status-badge" [class]="'status-' + league.status">
                                 {{ league.status }}

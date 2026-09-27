@@ -67,13 +67,15 @@ class PBLeagueStore:
     def get_all_leagues(self) -> list[dict]:
         collection = self.get_league_collection()
         leagues = list(collection.find({}, {"league_name": 1, "league_status": 1, "status": 1, "_id": 1,
-                                            "club_name": 1, "location": 1}))
+                                            "club_name": 1, "location": 1,
+                                            "dupr_min": 1, "dupr_max": 1}))
         return [self._league_summary(league) for league in leagues]
 
     def get_leagues_by_club(self, club_id: str) -> list[dict]:
         collection = self.get_league_collection()
         leagues = list(collection.find({"club_id": club_id}, {"league_name": 1, "league_status": 1, "status": 1, "_id": 1,
-                                                              "club_name": 1, "location": 1}))
+                                                              "club_name": 1, "location": 1,
+                                                              "dupr_min": 1, "dupr_max": 1}))
         return [self._league_summary(league) for league in leagues]
 
     @staticmethod
@@ -84,6 +86,8 @@ class PBLeagueStore:
             "league_id": str(league.get("_id")),
             "club_name": league.get("club_name"),
             "location": league.get("location"),
+            "dupr_min": league.get("dupr_min"),
+            "dupr_max": league.get("dupr_max"),
         }
 
     def get_league_by_status(self, status: str):

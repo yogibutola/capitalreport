@@ -6,8 +6,8 @@ const ADMIN_PASSWORD = 'Password@123';
 const PLAYER_PASSWORD = 'Password@123';
 
 /**
- * Club "Active Season" tab — sits after "Leagues" / "Tournaments" in the club header
- * nav and lists the club's active leagues/tournaments with round progress.
+ * Club "Active Season" tab — the first tab in the club header nav, ahead of
+ * "Leagues" / "Tournaments"; lists the club's active leagues/tournaments with round progress.
  * Requires the backend + Mongo; seeds an active league via test_data_seeder.py.
  */
 test.describe('Active Season tab (club)', () => {
@@ -17,16 +17,16 @@ test.describe('Active Season tab (club)', () => {
         leagueName = runSeeder();
     });
 
-    test('tab sits after Leagues / Tournaments and only one tab is highlighted at a time', async ({ page }) => {
+    test('tab sits first, ahead of Leagues / Tournaments, and only one tab is highlighted at a time', async ({ page }) => {
         await adminLogin(page, ADMIN_EMAIL, ADMIN_PASSWORD);
 
         const tabs = page.locator('.header-nav-tabs .nav-tab-link');
         const leagues = tabs.filter({ hasText: 'Leagues' });
         const season = tabs.filter({ hasText: 'Active Season' });
         await expect(tabs.filter({ hasText: 'Manage' })).toHaveCount(0);
-        await expect(tabs.nth(0)).toHaveText('Leagues');
-        await expect(tabs.nth(1)).toHaveText('Tournaments');
-        await expect(tabs.nth(2)).toHaveText('Active Season');
+        await expect(tabs.nth(0)).toHaveText('Active Season');
+        await expect(tabs.nth(1)).toHaveText('Leagues');
+        await expect(tabs.nth(2)).toHaveText('Tournaments');
         await expect(tabs.nth(3)).toHaveText('Club Profile');
         await expect(season).toHaveAttribute('href', '/admin/season');
 

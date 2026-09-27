@@ -3,8 +3,9 @@ import { LeagueRoundPayload, RoundItem, GroupItem, MatchItem, TeamItem, TeamMemb
 import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../auth/auth';
+import { parseHttpError } from '../shared/http-error';
 import { catchError, map } from 'rxjs/operators';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 
 export interface PlayerWithdrawal {
     league_id: string;
@@ -22,6 +23,8 @@ export interface PlayerLeague {
     duration?: string;
     clubName?: string;
     location?: string;
+    duprMin?: number | null;
+    duprMax?: number | null;
     withdrawals?: PlayerWithdrawal[];
 }
 
@@ -517,7 +520,9 @@ export class PlayerService {
                     endDate: new Date(l.endDate || l.league_end_date || new Date()),
                     duration: l.duration || l.league_duration || undefined,
                     clubName: l.club_name || l.clubName,
-                    location: l.location
+                    location: l.location,
+                    duprMin: l.dupr_min ?? null,
+                    duprMax: l.dupr_max ?? null
                 }));
             }),
             catchError(err => {
@@ -544,11 +549,8 @@ export class PlayerService {
                 this.fetchLeaguesForPlayer(user.email);
                 return true;
             }),
-            catchError(err => {
-                console.log('Registration failed: ' + err.message);
-                console.error('Registration error:', err);
-                return of(false);
-            })
+            // Rethrow so the caller can show why — e.g. a DUPR rating outside the league's band.
+            catchError(err => throwError(() => parseHttpError(err)))
         );
     }
 
