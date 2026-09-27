@@ -34,6 +34,7 @@
         <div><dt>DUPR Rating</dt><dd>{{ dupr_rating ?? '—' }}</dd></div>
         <div><dt>State</dt><dd>{{ state || '—' }}</dd></div>
         <div><dt>City</dt><dd>{{ city || '—' }}</dd></div>
+        <div><dt>ZIP Code</dt><dd>{{ zip_code || '—' }}</dd></div>
       </dl>
       }
     }
@@ -54,6 +55,7 @@
               dupr_rating: 'DUPR rating',
               state: 'State',
               city: 'City',
+              zip_code: 'ZIP code',
               clubName: 'Club name',
               address: 'Address',
               phone: 'Phone'
@@ -159,7 +161,7 @@
         </div>
       </div>
 
-      <div class="grid-2">
+      <div class="grid-3">
         <div class="form-group">
           <label for="field-state" style="display:block; margin-bottom: var(--space-xs);">State</label>
           <input id="field-state" type="text" name="state" [(ngModel)]="state" #stateCtrl="ngModel"
@@ -178,6 +180,18 @@
             [appInvalidForce]="profileAttempted()">
           <app-field-error id="err-city" label="City" [control]="cityCtrl"
             [serverError]="profileFieldErrors()['city']" [forceShow]="profileAttempted()" />
+        </div>
+
+        <div class="form-group">
+          <label for="field-zip_code" style="display:block; margin-bottom: var(--space-xs);">ZIP Code</label>
+          <input id="field-zip_code" type="text" name="zip_code" [(ngModel)]="zip_code" #zipCtrl="ngModel"
+            class="input-field" inputmode="numeric" maxlength="10" placeholder="e.g., 20147"
+            aria-describedby="err-zip_code zip-help"
+            [appInvalid]="zipCtrl" [appInvalidServer]="profileFieldErrors()['zip_code']"
+            [appInvalidForce]="profileAttempted()">
+          <small id="zip-help" class="input-hint">Used to find players near you</small>
+          <app-field-error id="err-zip_code" label="ZIP code" [control]="zipCtrl"
+            [serverError]="profileFieldErrors()['zip_code']" [forceShow]="profileAttempted()" />
         </div>
       </div>
       }

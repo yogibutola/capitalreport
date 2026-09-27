@@ -13,6 +13,7 @@ interface ProfileFields {
   dupr_rating: number | null;
   state: string;
   city: string;
+  zip_code: string;
   clubName: string;
   address: string;
   phone: string;
@@ -37,6 +38,7 @@ export class AccountProfileComponent implements OnInit {
   dupr_rating: number | null = null;
   state = '';
   city = '';
+  zip_code = '';
   // Club (admin) accounts
   clubName = '';
   address = '';
@@ -93,6 +95,7 @@ export class AccountProfileComponent implements OnInit {
     this.dupr_rating = p.dupr_rating ?? this.dupr_rating ?? null;
     this.state = p.state ?? this.state;
     this.city = p.city ?? this.city;
+    this.zip_code = p.zip_code ?? this.zip_code;
     this.clubName = p.clubName ?? this.clubName;
     this.address = p.address ?? this.address;
     this.phone = p.phone ?? this.phone;
@@ -108,6 +111,7 @@ export class AccountProfileComponent implements OnInit {
       dupr_rating: this.dupr_rating,
       state: this.state,
       city: this.city,
+      zip_code: this.zip_code,
       clubName: this.clubName,
       address: this.address,
       phone: this.phone,
@@ -193,6 +197,7 @@ export class AccountProfileComponent implements OnInit {
               : Number(this.dupr_rating),
           state: this.state.trim(),
           city: this.city.trim(),
+          zip_code: this.zip_code.trim(),
         };
 
     this.savingProfile.set(true);

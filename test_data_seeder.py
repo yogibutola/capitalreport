@@ -10,6 +10,24 @@ from app.services.pb_player_service import PBPlayerService
 from app.vo.pb.league import League
 from app.vo.pb.player import PlayerSignup
 
+# (city, state, zip) assigned round-robin to the seeded players, ordered roughly
+# nearest-to-farthest from the first entry, so a distance search has players both
+# inside and outside a radius. Approx miles from Ashburn (20147):
+#   Ashburn 0, Sterling 4, Herndon 8, Leesburg 8, Reston 11,
+#   Centreville 17, Fairfax 20, Alexandria 30, Baltimore 60.
+PLAYER_ZIPS = [
+    ("Ashburn", "VA", "20147"),
+    ("Sterling", "VA", "20164"),
+    ("Herndon", "VA", "20170"),
+    ("Leesburg", "VA", "20176"),
+    ("Reston", "VA", "20191"),
+    ("Centreville", "VA", "20121"),
+    ("Fairfax", "VA", "22030"),
+    ("Alexandria", "VA", "22314"),
+    ("Baltimore", "MD", "21201"),
+]
+
+
 def main():
     parser = argparse.ArgumentParser(description="Seed test league and test players.")
     parser.add_argument("--players", type=int, default=9, help="Number of test players to create and add to the league")
@@ -55,25 +73,37 @@ def main():
         first_name = p["first"]
         last_name = p["last"]
         email = f"{first_name.lower()}.{last_name.lower()}@test.com"
-        
+        # Spread across Northern Virginia so a radius search has players both
+        # inside and outside any given distance. PLAYER_ZIPS is ordered
+        # nearest-to-farthest from the first entry.
+        city, state, zip_code = PLAYER_ZIPS[(i - 1) % len(PLAYER_ZIPS)]
+
         signup_data = PlayerSignup(
             firstName=first_name,
             lastName=last_name,
             email=email,
             password=password,
-            dupr_rating=3.0 + (i * 0.1)  # slightly varied DUPR rating
+            dupr_rating=3.0 + (i * 0.1),  # slightly varied DUPR rating
+            city=city,
+            state=state,
+            zip_code=zip_code,
         )
 
         try:
             pb_player_service.register_player(signup_data)
-            print(f"Created player: {email} / Password: {password}")
+            print(f"Created player: {email} / Password: {password} / {city} {zip_code}")
         except HTTPException as e:
             if e.status_code == 409:
                 print(f"Player already exists: {email}. Will use existing player.")
             else:
                 print(f"Error creating player {email}: {e.detail}")
                 sys.exit(1)
-        
+
+        # Outside the try/except so re-running the seeder backfills location onto
+        # players created before this field existed.
+        pb_player_store.update_player_profile(
+            email, {"city": city, "state": state, "zip_code": zip_code})
+
         registered_emails.append(email)
 
     print("\n--- Creating League ---")

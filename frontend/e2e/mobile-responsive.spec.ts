@@ -79,6 +79,7 @@ test.describe('mobile layout at 390px — demo session', () => {
 
     const PLAYER_ROUTES = [
         '/player',
+        '/league',   // player home: the "Find a Player" filter grid lives here
         '/player/leagues',
         '/player/tournaments',
         '/matches/history',

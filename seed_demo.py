@@ -51,6 +51,19 @@ DEMO_CLUB_NAME = "StackedPaddle Demo Club"
 FILLER_COUNT = 40
 LEAGUE_FILLERS = 11        # + the demo player = 12 -> three groups of four
 TOURNAMENT_PLAYERS = 40    # demo player + 39 fillers -> 20 doubles teams
+# (city, state, zip) around Portland OR, to match the demo club's address.
+# Spread over ~0-45 miles so the "players within N miles" search has something
+# to include AND exclude. The demo player takes the first entry.
+DEMO_ZIPS = [
+    ("Portland", "OR", "97205"),
+    ("Portland", "OR", "97214"),
+    ("Beaverton", "OR", "97005"),
+    ("Lake Oswego", "OR", "97034"),
+    ("Gresham", "OR", "97030"),
+    ("Hillsboro", "OR", "97123"),
+    ("Vancouver", "WA", "98660"),
+    ("Salem", "OR", "97301"),
+]
 
 
 def _player_service() -> PBPlayerService:
@@ -64,11 +77,14 @@ def _mark_demo(email: str) -> None:
     )
 
 
-def _ensure_player(first: str, last: str, email: str, dupr: float) -> None:
+def _ensure_player(first: str, last: str, email: str, dupr: float,
+                   location: tuple[str, str, str] | None = None) -> None:
+    city, state, zip_code = location or (None, None, None)
     try:
         _player_service().register_player(
             PlayerSignup(firstName=first, lastName=last, email=email,
-                         password=PASSWORD, dupr_rating=dupr)
+                         password=PASSWORD, dupr_rating=dupr,
+                         city=city, state=state, zip_code=zip_code)
         )
         print(f"  created player {email}")
     except HTTPException as e:
@@ -76,6 +92,12 @@ def _ensure_player(first: str, last: str, email: str, dupr: float) -> None:
             print(f"  player {email} already exists")
         else:
             raise
+    # Applied outside the try/except so a reseed backfills location onto accounts
+    # created before the field existed. The demo is read-only (PUT /profile is
+    # 403'd), so a ZIP has to be seeded or distance search can't be demoed.
+    if location:
+        PBPlayerStore().update_player_profile(
+            email, {"city": city, "state": state, "zip_code": zip_code})
     _mark_demo(email)
 
 
@@ -96,8 +118,9 @@ def _ensure_accounts() -> list[str]:
             raise
     _mark_demo(DEMO_ADMIN_EMAIL)
 
-    # The account visitors sign in as for the player demo.
-    _ensure_player("Demo", "Player", DEMO_PLAYER_EMAIL, 3.5)
+    # The account visitors sign in as for the player demo. Anchored in Portland
+    # to match the demo club's address.
+    _ensure_player("Demo", "Player", DEMO_PLAYER_EMAIL, 3.5, DEMO_ZIPS[0])
 
     # Filler players — deterministic faker names, stable emails.
     fillers = []
@@ -106,7 +129,8 @@ def _ensure_accounts() -> list[str]:
         fake.seed_instance(f"demo-seed-{i}")
         email = f"demo.p{i:02d}@stackedpaddle.com"
         _ensure_player(fake.first_name(), fake.last_name(), email,
-                       round(2.8 + (i / FILLER_COUNT) * 1.8, 2))
+                       round(2.8 + (i / FILLER_COUNT) * 1.8, 2),
+                       DEMO_ZIPS[i % len(DEMO_ZIPS)])
         fillers.append(email)
     return fillers
 

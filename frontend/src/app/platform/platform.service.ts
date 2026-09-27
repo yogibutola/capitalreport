@@ -25,6 +25,7 @@ export interface PlatformPlayer {
   dupr_rating: number | null;
   state: string | null;
   city: string | null;
+  zip_code: string | null;
   league_count: number;
 }
 

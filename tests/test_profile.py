@@ -1,6 +1,7 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
+import pydantic
 from fastapi import HTTPException
 
 from app.services.pb_player_service import PBPlayerService
@@ -119,18 +120,84 @@ class TestClubProfile(unittest.TestCase):
         self.assertEqual(updates["address"], "2 Net Ave")
 
     def test_club_player_fields_are_ignored(self):
-        req = ProfileUpdateRequest(clubName="Downtown Dinkers", age=40, dupr_rating=5.0, state="CA")
+        req = ProfileUpdateRequest(clubName="Downtown Dinkers", age=40, dupr_rating=5.0,
+                                   state="CA", zip_code="20147")
         self.service.update_profile("club@example.com", req)
         _, updates = self.mock_store.update_player_profile.call_args[0]
         self.assertNotIn("age", updates)
         self.assertNotIn("dupr_rating", updates)
         self.assertNotIn("state", updates)
+        # A club's location is its street address, not a player ZIP.
+        self.assertNotIn("zip_code", updates)
 
     def test_blank_club_name_rejected(self):
         req = ProfileUpdateRequest(clubName="   ")
         with self.assertRaises(HTTPException) as ctx:
             self.service.update_profile("club@example.com", req)
         self.assertEqual(ctx.exception.status_code, 400)
+
+
+class TestProfileZipCode(unittest.TestCase):
+    """The ZIP is what anchors a player in distance search, so it is normalized on
+    the way in and has to name a real place."""
+
+    def setUp(self):
+        self.mock_store = MagicMock()
+        self.service = PBPlayerService(self.mock_store)
+        self.player = {
+            "_id": "abc123", "firstName": "Ada", "lastName": "Lovelace",
+            "email": "ada@example.com", "dupr_rating": 3.5, "role": "player",
+            "zip_code": "20147",
+        }
+        self.mock_store.find_player_by_email.return_value = self.player
+        self.mock_store.update_player_profile.side_effect = lambda email, updates: {
+            **self.player, **updates,
+        }
+
+    def update(self, req, known_zip=True):
+        with patch('app.services.pb_player_service.zip_is_known', return_value=known_zip):
+            return self.service.update_profile("ada@example.com", req)
+
+    def updates(self):
+        return self.mock_store.update_player_profile.call_args[0][1]
+
+    def test_zip_is_returned_on_the_profile(self):
+        self.assertEqual(self.service.get_profile("ada@example.com").zip_code, "20147")
+
+    def test_zip_plus_four_is_stored_as_five_digits(self):
+        self.update(ProfileUpdateRequest(zip_code="20147-1234"))
+        self.assertEqual(self.updates()["zip_code"], "20147")
+
+    def test_surrounding_whitespace_is_stripped(self):
+        self.update(ProfileUpdateRequest(zip_code="  20147  "))
+        self.assertEqual(self.updates()["zip_code"], "20147")
+
+    def test_empty_string_clears_the_zip(self):
+        """The profile form sends '' rather than null when a field is cleared, so
+        this is the only way a player can remove their ZIP."""
+        self.update(ProfileUpdateRequest(zip_code=""))
+        self.assertIsNone(self.updates()["zip_code"])
+
+    def test_a_malformed_zip_is_rejected_by_the_model(self):
+        with self.assertRaises(pydantic.ValidationError) as ctx:
+            ProfileUpdateRequest(zip_code="not-a-zip")
+        self.assertEqual(ctx.exception.errors()[0]["loc"], ("zip_code",))
+
+    def test_an_unrecognised_zip_is_a_422_on_the_zip_field(self):
+        with self.assertRaises(HTTPException) as ctx:
+            self.update(ProfileUpdateRequest(zip_code="00000"), known_zip=False)
+        self.assertEqual(ctx.exception.status_code, 422)
+        self.assertEqual(ctx.exception.detail[0]["loc"], ["body", "zip_code"])
+        self.mock_store.update_player_profile.assert_not_called()
+
+    def test_clearing_the_zip_does_not_trip_the_unknown_check(self):
+        with patch('app.services.pb_player_service.zip_is_known') as known:
+            self.service.update_profile("ada@example.com", ProfileUpdateRequest(zip_code=""))
+        known.assert_not_called()
+
+    def test_an_update_that_omits_the_zip_leaves_it_alone(self):
+        self.update(ProfileUpdateRequest(city="Ashburn"))
+        self.assertNotIn("zip_code", self.updates())
 
 
 if __name__ == "__main__":

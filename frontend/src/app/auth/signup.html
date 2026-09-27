@@ -11,7 +11,10 @@
                     lastName: 'Last name',
                     email: 'Email',
                     password: 'Password',
-                    dupr_rating: 'DUPR rating'
+                    dupr_rating: 'DUPR rating',
+                    city: 'City',
+                    state: 'State',
+                    zip_code: 'ZIP code'
                 }" />
             <app-form-banner [message]="formError()" />
 
@@ -98,6 +101,40 @@
                     [serverError]="fieldErrors()['dupr_rating']" [forceShow]="submitAttempted()"
                     [messages]="{ min: 'DUPR rating must be between 1.00 and 8.00.', max: 'DUPR rating must be between 1.00 and 8.00.' }" />
             </div>
+
+            <!-- Location: optional, and only used to find players near you -->
+            <label style="display: block; margin-bottom: var(--space-xs);">
+                Location
+                <span style="color: HSL(var(--color-text-muted)); font-size: 0.85rem; font-weight: normal;">(optional)</span>
+            </label>
+            <div class="grid-3">
+                <div class="form-group">
+                    <input id="field-city" type="text" [(ngModel)]="city" name="city" #cityCtrl="ngModel"
+                        class="input-field" maxlength="100" placeholder="City" aria-label="City"
+                        [appInvalid]="cityCtrl" [appInvalidServer]="fieldErrors()['city']"
+                        [appInvalidForce]="submitAttempted()">
+                    <app-field-error id="err-city" label="City" [control]="cityCtrl"
+                        [serverError]="fieldErrors()['city']" [forceShow]="submitAttempted()" />
+                </div>
+                <div class="form-group">
+                    <input id="field-state" type="text" [(ngModel)]="state" name="state" #stateCtrl="ngModel"
+                        class="input-field" maxlength="100" placeholder="State" aria-label="State"
+                        [appInvalid]="stateCtrl" [appInvalidServer]="fieldErrors()['state']"
+                        [appInvalidForce]="submitAttempted()">
+                    <app-field-error id="err-state" label="State" [control]="stateCtrl"
+                        [serverError]="fieldErrors()['state']" [forceShow]="submitAttempted()" />
+                </div>
+                <div class="form-group">
+                    <input id="field-zip_code" type="text" [(ngModel)]="zip_code" name="zip_code" #zipCtrl="ngModel"
+                        class="input-field" inputmode="numeric" maxlength="10" placeholder="ZIP" aria-label="ZIP code"
+                        aria-describedby="zip-help"
+                        [appInvalid]="zipCtrl" [appInvalidServer]="fieldErrors()['zip_code']"
+                        [appInvalidForce]="submitAttempted()">
+                    <app-field-error id="err-zip_code" label="ZIP code" [control]="zipCtrl"
+                        [serverError]="fieldErrors()['zip_code']" [forceShow]="submitAttempted()" />
+                </div>
+            </div>
+            <small id="zip-help" class="input-hint">Add a ZIP code to find players near you. You can set this later.</small>
 
             <button type="submit" class="btn" style="width: 100%; margin-top: var(--space-sm);" [disabled]="isSubmitting()">
                 {{ isSubmitting() ? 'Creating account…' : 'Sign Up' }}

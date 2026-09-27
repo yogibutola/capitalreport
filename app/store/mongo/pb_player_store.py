@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 from pymongo import MongoClient, ReturnDocument
@@ -53,6 +54,58 @@ class PBPlayerStore:
         """
         collection = self.get_players_collection()
         players = list(collection.find({"role": {"$ne": "admin"}}))
+        for player in players:
+            player["_id"] = str(player["_id"])
+        return players
+
+    def find_players(self, first_name: str = None, last_name: str = None,
+                     dupr_min: float = None, dupr_max: float = None,
+                     exclude_email: str = None) -> list[dict]:
+        """Search non-admin players by name substring and DUPR band.
+
+        Every filter is optional; passing none is equivalent to
+        ``get_all_players`` with a narrower projection. Names match
+        case-insensitively anywhere in the field.
+
+        A ``$gte``/``$lte`` on ``dupr_rating`` also drops documents where the
+        field is missing or null, which is exactly the intended behaviour: a
+        player with no rating is not "between 3.0 and 4.0".
+
+        Distance is NOT filtered here — Mongo has no coordinates to work with, so
+        the caller geocodes each ZIP and filters in Python.
+
+        There is deliberately no index on ``players``: this is a collection scan,
+        which at the current scale (hundreds to low thousands of accounts) costs
+        single-digit milliseconds. Add one if the roster grows by an order of
+        magnitude.
+        """
+        query: dict = {"role": {"$ne": "admin"}}
+
+        # re.escape so a name containing regex metacharacters is matched literally.
+        if first_name:
+            query["firstName"] = {"$regex": re.escape(first_name), "$options": "i"}
+        if last_name:
+            query["lastName"] = {"$regex": re.escape(last_name), "$options": "i"}
+
+        if dupr_min is not None or dupr_max is not None:
+            rating: dict = {}
+            if dupr_min is not None:
+                rating["$gte"] = dupr_min
+            if dupr_max is not None:
+                rating["$lte"] = dupr_max
+            query["dupr_rating"] = rating
+
+        if exclude_email:
+            query["email"] = {"$ne": exclude_email.lower()}
+
+        # Explicit projection so the password hash never leaves Mongo.
+        projection = {
+            "firstName": 1, "lastName": 1, "email": 1, "dupr_rating": 1,
+            "role": 1, "city": 1, "state": 1, "zip_code": 1,
+        }
+
+        collection = self.get_players_collection()
+        players = list(collection.find(query, projection))
         for player in players:
             player["_id"] = str(player["_id"])
         return players

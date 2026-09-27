@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, PLATFORM_ID, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { DatePipe, CommonModule, isPlatformBrowser } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { AuthService } from '../auth/auth';
 import { PlayerService } from '../player/player';
 import { FormsModule } from '@angular/forms';
@@ -19,9 +19,19 @@ interface PlayerResult {
     firstName: string;
     lastName: string;
     email: string;
-    dupr_rating: number;
+    dupr_rating: number | null;
     role: string;
-    leagues: { league_name: string }[];
+    city?: string | null;
+    state?: string | null;
+    /** Miles from the search origin; null unless a radius was applied. */
+    distance_miles?: number | null;
+}
+
+interface PlayerSearchResponse {
+    results: PlayerResult[];
+    count: number;
+    origin_zip: string | null;
+    radius_miles: number | null;
 }
 
 @Component({
@@ -48,14 +58,32 @@ export class DashboardComponent {
   // Premium banking visual states
   welcomeTimestamp = '';
 
-  // Player search
+  // Player search. Filtering happens server-side, so there is deliberately no
+  // client-side roster cache - it would silently ignore these filters.
   searchFirstName = '';
   searchLastName = '';
+  searchDuprMin: number | null = null;
+  searchDuprMax: number | null = null;
+  searchRadiusMiles: number | null = null;
+  /** A signal, not a plain field: it's written from async callbacks, and the app is
+   *  zoneless, so a plain field wouldn't repaint the input. */
+  searchZip = signal('');
   searchResults = signal<PlayerResult[]>([]);
-  private allPlayers = signal<PlayerResult[]>([]);
   isSearching = signal(false);
   searchError = signal<string | null>(null);
+  /** Set when the failure was about the origin ZIP, so it renders by that field. */
+  zipError = signal<string | null>(null);
   hasSearched = signal(false);
+  /** The radius the current results were actually filtered by. */
+  appliedRadius = signal<number | null>(null);
+  /** Prefill runs once per component, not once per effect pass. */
+  private zipLookedUp = false;
+
+  /** Both bounds are optional, but an inverted range is never valid. */
+  get duprRangeInvalid(): boolean {
+    return this.searchDuprMin != null && this.searchDuprMax != null
+      && this.searchDuprMax < this.searchDuprMin;
+  }
 
   get nextMatch() {
     const matches = this.upcomingMatches();
@@ -146,6 +174,27 @@ export class DashboardComponent {
       } else {
         this.groupsService.loadGroupsForCurrentUser();
         this.matchService.loadMatchesForPlayer(user.email);
+        // Prefill the distance search with where this player lives, so they can see
+        // and override the origin. Present already if they just signed up; signing
+        // in rebuilds the cached user from a response that carries no ZIP (and
+        // widening that response would expose every player's ZIP via /players),
+        // so fall back to the profile.
+        //
+        // Guarded by a plain flag, NOT by reading searchZip(): reading the signal
+        // here would make this effect depend on it, so writing it below would
+        // re-run the effect and re-issue the group/match loads above.
+        if (!this.zipLookedUp) {
+          this.zipLookedUp = true;
+          const cached = user.zip_code ?? '';
+          if (cached) {
+            this.searchZip.set(cached);
+          } else {
+            this.authService.getProfile().subscribe({
+              next: (profile) => this.searchZip.set(profile.zip_code ?? ''),
+              error: () => { /* Not fatal: they can type a ZIP, or omit the radius. */ },
+            });
+          }
+        }
       }
     });
 
@@ -212,47 +261,73 @@ export class DashboardComponent {
   }
 
   searchPlayers(): void {
-    const first = this.searchFirstName.trim().toLowerCase();
-    const last = this.searchLastName.trim().toLowerCase();
-    if (!first && !last) return;
+    const first = this.searchFirstName.trim();
+    const last = this.searchLastName.trim();
+    const radius = this.searchRadiusMiles;
+    const zip = this.searchZip().trim();
 
-    this.isSearching.set(true);
-    this.searchError.set(null);
-    this.hasSearched.set(true);
-
-    if (this.allPlayers().length > 0) {
-      this.filterPlayers(first, last);
-      this.isSearching.set(false);
+    // Every filter blank would just dump the whole roster.
+    if (!first && !last && this.searchDuprMin == null && this.searchDuprMax == null
+      && radius == null) {
       return;
     }
 
-    this.http.get<PlayerResult[]>('api/v1/players').subscribe({
-      next: (players) => {
-        this.allPlayers.set(players);
-        this.filterPlayers(first, last);
+    // The template renders duprRangeInvalid directly, so it appears as soon as the
+    // range goes bad and clears the moment it's fixed - don't mirror it into
+    // searchError, which would linger until the next submit. The backend enforces
+    // this too; skipping the request just saves a round-trip.
+    if (this.duprRangeInvalid) return;
+
+    let params = new HttpParams();
+    if (first) params = params.set('first_name', first);
+    if (last) params = params.set('last_name', last);
+    if (this.searchDuprMin != null) params = params.set('dupr_min', this.searchDuprMin);
+    if (this.searchDuprMax != null) params = params.set('dupr_max', this.searchDuprMax);
+    if (radius != null) params = params.set('radius_miles', radius);
+    // Only meaningful alongside a radius, and only when they typed one.
+    if (radius != null && zip) params = params.set('origin_zip', zip);
+
+    this.isSearching.set(true);
+    this.searchError.set(null);
+    this.zipError.set(null);
+    this.hasSearched.set(true);
+
+    this.http.get<PlayerSearchResponse>('api/v1/players/search', { params }).subscribe({
+      next: (resp) => {
+        this.searchResults.set(resp.results ?? []);
+        this.appliedRadius.set(resp.radius_miles ?? null);
+        // Show which ZIP the distances were measured from, including when it came
+        // from their profile rather than the box.
+        if (resp.origin_zip && !zip) this.searchZip.set(resp.origin_zip);
         this.isSearching.set(false);
       },
-      error: () => {
-        this.searchError.set('Unable to fetch players. Please try again.');
+      error: (err) => {
+        const detail = err?.error?.detail;
+        const code = detail?.code;
+        const message = detail?.message;
+        this.searchResults.set([]);
+        this.appliedRadius.set(null);
+        if (code === 'origin_zip_missing' || code === 'origin_zip_unknown') {
+          this.zipError.set(message ?? 'Enter a ZIP code to search by distance.');
+        } else {
+          this.searchError.set(message ?? 'Unable to search players. Please try again.');
+        }
         this.isSearching.set(false);
       }
     });
   }
 
-  private filterPlayers(first: string, last: string): void {
-    const filtered = this.allPlayers().filter(p => {
-      const firstMatch = !first || p.firstName.toLowerCase().includes(first);
-      const lastMatch = !last || p.lastName.toLowerCase().includes(last);
-      return firstMatch && lastMatch;
-    });
-    this.searchResults.set(filtered);
-  }
-
   clearSearch(): void {
     this.searchFirstName = '';
     this.searchLastName = '';
+    this.searchDuprMin = null;
+    this.searchDuprMax = null;
+    this.searchRadiusMiles = null;
+    // The ZIP is kept: it's where this player lives, not part of the query.
     this.searchResults.set([]);
+    this.appliedRadius.set(null);
     this.hasSearched.set(false);
     this.searchError.set(null);
+    this.zipError.set(null);
   }
 }

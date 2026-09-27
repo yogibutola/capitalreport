@@ -672,17 +672,71 @@ input:checked + .slider:before {
     color: var(--text);
 }
 
-.search-form-grid {
+.search-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+/* Inputs auto-fit, so adding a filter doesn't need a new column rule. The
+   buttons live outside this grid so the conditional Clear can't reflow them. */
+.search-filter-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 140px 140px;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: var(--space-md);
     align-items: end;
 }
 
+.search-actions {
+    display: flex;
+    gap: var(--space-md);
+}
+
+.search-actions .proceed-score-btn,
+.search-actions .clear-search-btn {
+    width: auto;
+    min-width: 140px;
+}
+
 @media (max-width: 768px) {
-    .search-form-grid {
+    .search-filter-grid {
         grid-template-columns: 1fr;
     }
+
+    .search-actions {
+        flex-direction: column;
+    }
+
+    .search-actions .proceed-score-btn,
+    .search-actions .clear-search-btn {
+        width: 100%;
+    }
+}
+
+/* Guidance beside the filters: a ZIP we couldn't use, or an invalid DUPR band. */
+.search-hint {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    background: rgba(var(--ball-rgb), 0.07);
+    border: 1px solid rgba(var(--ball-rgb), 0.15);
+    color: HSL(var(--color-text-muted));
+}
+
+.search-hint a {
+    color: HSL(var(--color-ace-lime));
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.search-hint a:hover {
+    text-decoration: underline;
+}
+
+.search-hint-error {
+    background: rgba(var(--tint-rgb), 0.06);
+    border-color: HSL(var(--color-error));
+    color: HSL(var(--color-error));
 }
 
 .form-field-wrapper {
@@ -881,7 +935,8 @@ input:checked + .slider:before {
     color: var(--text);
 }
 
-.player-email {
+.player-email,
+.player-location {
     font-size: 0.8rem;
     color: HSL(var(--color-text-muted));
     white-space: nowrap;
@@ -900,6 +955,25 @@ input:checked + .slider:before {
     border-radius: 8px;
     border: 1px solid rgba(var(--ball-rgb), 0.15);
     min-width: 52px;
+}
+
+/* Same shape as the DUPR badge, but neutral rather than lime so the rating stays
+   the primary signal on the row. */
+.player-distance-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    padding: 6px 10px;
+    background: rgba(var(--tint-rgb), 0.06);
+    border-radius: 8px;
+    border: 1px solid rgba(var(--tint-rgb), 0.12);
+    min-width: 52px;
+}
+
+.player-distance-badge .rating-label {
+    color: HSL(var(--color-text-muted));
 }
 
 .rating-label {

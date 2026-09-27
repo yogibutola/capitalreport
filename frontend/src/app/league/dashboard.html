@@ -168,48 +168,94 @@
         <h3 class="panel-section-title">Find a Player</h3>
       </div>
 
-      <form (submit)="searchPlayers(); $event.preventDefault();" class="search-form-grid">
-        <div class="form-field-wrapper">
-          <label class="field-label-text">First Name</label>
-          <div class="input-field-container">
-            <input type="text" placeholder="Enter first name" [(ngModel)]="searchFirstName" name="searchFirstName"
-              class="search-text-input" autocomplete="off" />
+      <form (submit)="searchPlayers(); $event.preventDefault();" class="search-form">
+        <div class="search-filter-grid">
+          <div class="form-field-wrapper">
+            <label class="field-label-text" for="search-first-name">First Name</label>
+            <div class="input-field-container">
+              <input id="search-first-name" type="text" placeholder="Enter first name"
+                [(ngModel)]="searchFirstName" name="searchFirstName" class="search-text-input"
+                autocomplete="off" />
+            </div>
+          </div>
+
+          <div class="form-field-wrapper">
+            <label class="field-label-text" for="search-last-name">Last Name</label>
+            <div class="input-field-container">
+              <input id="search-last-name" type="text" placeholder="Enter last name"
+                [(ngModel)]="searchLastName" name="searchLastName" class="search-text-input"
+                autocomplete="off" />
+            </div>
+          </div>
+
+          <div class="form-field-wrapper">
+            <label class="field-label-text" for="search-dupr-min">Min DUPR</label>
+            <div class="input-field-container">
+              <input id="search-dupr-min" type="number" placeholder="e.g. 3.0" [(ngModel)]="searchDuprMin"
+                name="searchDuprMin" class="search-text-input" min="0" max="8" step="0.25" />
+            </div>
+          </div>
+
+          <div class="form-field-wrapper">
+            <label class="field-label-text" for="search-dupr-max">Max DUPR</label>
+            <div class="input-field-container">
+              <input id="search-dupr-max" type="number" placeholder="e.g. 4.0" [(ngModel)]="searchDuprMax"
+                name="searchDuprMax" class="search-text-input" min="0" max="8" step="0.25" />
+            </div>
+          </div>
+
+          <div class="form-field-wrapper">
+            <label class="field-label-text" for="search-radius">Within (mi)</label>
+            <div class="input-field-container">
+              <input id="search-radius" type="number" placeholder="e.g. 25" [(ngModel)]="searchRadiusMiles"
+                name="searchRadiusMiles" class="search-text-input" min="1" max="500" step="1" />
+            </div>
+          </div>
+
+          <div class="form-field-wrapper">
+            <label class="field-label-text" for="search-zip">Near ZIP</label>
+            <div class="input-field-container">
+              <input id="search-zip" type="text" placeholder="e.g. 20147" [ngModel]="searchZip()"
+                (ngModelChange)="searchZip.set($event)"
+                name="searchZip" class="search-text-input" inputmode="numeric" maxlength="10"
+                autocomplete="off" />
+            </div>
           </div>
         </div>
 
-        <div class="form-field-wrapper">
-          <label class="field-label-text">Last Name</label>
-          <div class="input-field-container">
-            <input type="text" placeholder="Enter last name" [(ngModel)]="searchLastName" name="searchLastName"
-              class="search-text-input" autocomplete="off" />
-          </div>
-        </div>
+        @if (duprRangeInvalid) {
+        <div class="search-hint search-hint-error">Max rating must be at least the min rating.</div>
+        }
 
-        <div class="form-field-wrapper">
-          <label class="field-label-text">&nbsp;</label>
+        @if (zipError()) {
+        <div class="search-hint">
+          {{ zipError() }}
+          <a routerLink="/profile">Update your profile</a> to save it for next time.
+        </div>
+        }
+
+        <div class="search-actions">
           <button type="submit" class="proceed-score-btn" [disabled]="isSearching()">
             @if (isSearching()) { Searching… } @else { Search }
           </button>
-        </div>
-
-        @if (hasSearched()) {
-        <div class="form-field-wrapper">
-          <label class="field-label-text">&nbsp;</label>
+          @if (hasSearched()) {
           <button type="button" class="clear-search-btn" (click)="clearSearch()">Clear</button>
+          }
         </div>
-        }
       </form>
 
       @if (searchError()) {
       <div class="alert alert-error">⚠ {{ searchError() }}</div>
       }
 
-      @if (hasSearched() && !isSearching() && !searchError()) {
+      @if (hasSearched() && !isSearching() && !searchError() && !zipError()) {
       @if (searchResults().length === 0) {
-      <div class="search-empty-state">No players found matching "{{ searchFirstName }} {{ searchLastName }}"</div>
+      <div class="search-empty-state">No players match those filters.</div>
       } @else {
-      <div class="search-results-header">{{ searchResults().length }} player{{ searchResults().length !== 1 ? 's' : ''
-        }} found</div>
+      <div class="search-results-header">
+        {{ searchResults().length }} player{{ searchResults().length !== 1 ? 's' : '' }} found
+        @if (appliedRadius()) { within {{ appliedRadius() }} mi }
+      </div>
       <ul class="search-results-list">
         @for (player of searchResults(); track player.id) {
         <li class="search-result-item">
@@ -217,10 +263,21 @@
           <div class="player-info">
             <span class="player-name">{{ player.firstName }} {{ player.lastName }}</span>
             <span class="player-email">{{ player.email }}</span>
+            @if (player.city || player.state) {
+            <span class="player-location">📍 {{ player.city }}{{ player.city && player.state ? ', ' : '' }}{{ player.state }}</span>
+            }
           </div>
+          @if (player.distance_miles != null) {
+          <div class="player-distance-badge">
+            <span class="rating-label">MILES</span>
+            <span class="rating-value">{{ player.distance_miles | number:'1.0-1' }}</span>
+          </div>
+          }
           <div class="player-rating-badge">
             <span class="rating-label">DUPR</span>
-            <span class="rating-value">{{ player.dupr_rating | number:'1.1-2' }}</span>
+            <span class="rating-value">
+              {{ player.dupr_rating != null ? (player.dupr_rating | number:'1.1-2') : '—' }}
+            </span>
           </div>
         </li>
         }

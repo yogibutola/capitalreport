@@ -22,6 +22,11 @@ export class SignupComponent {
   email = '';
   password = '';
   dupr_rating: number | null = null;
+  // Optional - it only powers the "players near me" search, and nothing here
+  // blocks account creation.
+  city = '';
+  state = '';
+  zip_code = '';
   isSubmitting = signal(false);
   submitAttempted = signal(false);
   formError = signal<string | null>(null);
@@ -51,7 +56,16 @@ export class SignupComponent {
 
     this.isSubmitting.set(true);
     this.authService
-      .signupObservable(this.firstName, this.lastName, this.email, this.password, this.dupr_rating!)
+      .signupObservable({
+        firstName: this.firstName,
+        lastName: this.lastName,
+        email: this.email,
+        password: this.password,
+        duprRating: this.dupr_rating!,
+        city: this.city,
+        state: this.state,
+        zip_code: this.zip_code,
+      })
       .subscribe({
         next: (success) => {
           this.isSubmitting.set(false);

@@ -15,6 +15,7 @@ export interface User {
   age?: number | null;
   state?: string | null;
   city?: string | null;
+  zip_code?: string | null;
   clubName?: string | null;
   address?: string | null;
   phone?: string | null;
@@ -33,6 +34,7 @@ export interface Profile {
   dupr_rating: number | null;
   state: string | null;
   city: string | null;
+  zip_code: string | null;
   clubName: string | null;
   address: string | null;
   phone: string | null;
@@ -49,6 +51,19 @@ export interface PlayerProfileUpdate {
   dupr_rating: number | null;
   state: string | null;
   city: string | null;
+  zip_code: string | null;
+}
+
+/** What a new player account is created from. Location is optional. */
+export interface PlayerSignupInput {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  duprRating: number;
+  state?: string | null;
+  city?: string | null;
+  zip_code?: string | null;
 }
 
 /** Fields a club (admin) may edit. */
@@ -192,8 +207,14 @@ export class AuthService {
   }
 
   // Observable-based signup that returns result for proper async handling
-  signupObservable(firstName: string, lastName: string, email: string, password: string, duprRating: number): Observable<boolean> {
+  signupObservable(input: PlayerSignupInput): Observable<boolean> {
+    const { firstName, lastName, email, password, duprRating } = input;
     const username = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`;
+
+    // Location is optional; send null rather than '' so the backend stores "not set".
+    const state = input.state?.trim() || null;
+    const city = input.city?.trim() || null;
+    const zip_code = input.zip_code?.trim() || null;
 
     const signupPayload = {
       firstName: firstName,
@@ -201,7 +222,10 @@ export class AuthService {
       userName: username,
       email: email,
       password: password,
-      dupr_rating: duprRating
+      dupr_rating: duprRating,
+      state,
+      city,
+      zip_code
     };
 
     return this.http.post<any>('api/v1/signup', signupPayload).pipe(
@@ -213,6 +237,11 @@ export class AuthService {
           userName: username,
           email,
           dupr_rating: duprRating,
+          state,
+          city,
+          // Cached so the "players near me" search can prefill this ZIP right away,
+          // with no profile round-trip.
+          zip_code,
           role: response.role || 'player',
           token: response.token
         };
@@ -322,6 +351,7 @@ export class AuthService {
       age: profile.age ?? null,
       state: profile.state ?? null,
       city: profile.city ?? null,
+      zip_code: profile.zip_code ?? null,
       clubName: profile.clubName ?? null,
       address: profile.address ?? null,
       phone: profile.phone ?? null,

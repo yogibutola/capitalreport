@@ -149,7 +149,7 @@
             <td>{{ p.firstName }} {{ p.lastName }}</td>
             <td>{{ p.email }}</td>
             <td class="num">{{ p.dupr_rating ?? '—' }}</td>
-            <td>{{ (p.city || p.state) ? ((p.city || '') + ' ' + (p.state || '')) : '—' }}</td>
+            <td>{{ (p.city || p.state) ? ((p.city || '') + ' ' + (p.state || '')) : '—' }}{{ p.zip_code ? ' ' + p.zip_code : '' }}</td>
             <td class="num">{{ p.league_count }}</td>
             <td class="row-actions">
               <button class="link-btn" (click)="viewActivityFor(p.email)">Activity</button>

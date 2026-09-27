@@ -74,6 +74,9 @@ class PBPlatformService:
             "dupr_rating": p.get("dupr_rating"),
             "state": p.get("state"),
             "city": p.get("city"),
+            # Shown in the console because "why isn't X in distance search?"
+            # is almost always a missing ZIP.
+            "zip_code": p.get("zip_code"),
             "league_count": len(p.get("leagues", []) or []),
         } for p in players]
         out.sort(key=lambda p: ((p["firstName"] or "").lower(), (p["lastName"] or "").lower()))

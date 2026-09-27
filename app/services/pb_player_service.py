@@ -19,6 +19,15 @@ from app.vo.pb.player import (
     ResetPasswordRequest,
     ProfileResponse,
     ProfileUpdateRequest,
+    PlayerSearchResult,
+    PlayerSearchResponse,
+)
+from app.utils.geo import (
+    InvalidZipError,
+    coordinates_for_zip,
+    distance_miles,
+    normalize_zip,
+    zip_is_known,
 )
 from app.utils.security import create_access_token, is_superadmin_email
 
@@ -249,6 +258,30 @@ class PBPlayerService:
         self.pb_player_store.reset_password(player['email'], self.hash_password(req.new_password))
 
     @staticmethod
+    def _clean_optional(value: str | None) -> str | None:
+        """Trim an optional free-text field, collapsing blank input to None."""
+        if value is None:
+            return None
+        return str(value).strip() or None
+
+    @staticmethod
+    def _reject_unknown_zip(zip_code: str | None) -> None:
+        """422 when a ZIP is well-formed but isn't a real US ZIP.
+
+        Raised as a Pydantic-shaped ``detail`` list so the frontend pins the
+        message to the ZIP field rather than showing it as a form-level error.
+        Blank input is fine — location is optional everywhere.
+        """
+        if zip_code and not zip_is_known(zip_code):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=[{
+                    "loc": ["body", "zip_code"],
+                    "msg": "We don't recognise that ZIP code.",
+                }],
+            )
+
+    @staticmethod
     def _to_profile_response(player: dict, token: str | None = None) -> ProfileResponse:
         return ProfileResponse(
             id=str(player.get('_id')),
@@ -259,6 +292,7 @@ class PBPlayerService:
             dupr_rating=player.get('dupr_rating'),
             state=player.get('state'),
             city=player.get('city'),
+            zip_code=player.get('zip_code'),
             clubName=player.get('clubName'),
             address=player.get('address'),
             phone=player.get('phone'),
@@ -290,7 +324,7 @@ class PBPlayerService:
         updates = req.model_dump(exclude_unset=True)
 
         # Keep only the fields that make sense for this account type.
-        player_only = {"firstName", "lastName", "age", "dupr_rating", "state", "city"}
+        player_only = {"firstName", "lastName", "age", "dupr_rating", "state", "city", "zip_code"}
         club_only = {"clubName", "address", "phone"}
         for key in (club_only if not is_club else player_only):
             updates.pop(key, None)
@@ -321,6 +355,11 @@ class PBPlayerService:
             for key in ("state", "city"):
                 if key in updates and updates[key] is not None:
                     updates[key] = str(updates[key]).strip() or None
+
+            # The VO already normalized this to 5 digits or None; all that's left is
+            # to check it's a ZIP that actually exists, so distance search can place
+            # this player instead of silently skipping them.
+            self._reject_unknown_zip(updates.get("zip_code"))
 
             # dupr_rating is not clearable from the profile form; drop an explicit null.
             if "dupr_rating" in updates and updates["dupr_rating"] is None:
@@ -383,6 +422,13 @@ class PBPlayerService:
         player_data = player.model_dump(exclude={'id'})
         created_player = self.pb_player_store.create_player(player_data)
 
+        # Same as register_player: the client navigates straight to /admin, which is
+        # auth-guarded, so a missing token logs the brand-new club straight back out.
+        role = created_player.get('role', 'admin')
+        access_token = create_access_token(
+            data={"sub": created_player['email'], "role": role}
+        )
+
         # Return response
         return PlayerResponse(
             id=created_player.get('_id'),
@@ -390,7 +436,8 @@ class PBPlayerService:
             lastName=created_player['lastName'],
             email=created_player['email'],
             dupr_rating=created_player['dupr_rating'],
-            role=created_player.get('role', 'admin'),
+            role=role,
+            token=access_token,
             clubName=created_player.get('clubName'),
             leagues=created_player.get('leagues', [])
         )
@@ -416,9 +463,14 @@ class PBPlayerService:
                 detail=f"Player with email {player_signup.email} already exists"
             )
         
+        # Location is optional at signup, but if a ZIP was given it has to be a
+        # real one - otherwise the account is invisible to distance search with
+        # no feedback to the player.
+        self._reject_unknown_zip(player_signup.zip_code)
+
         # Hash the password
         hashed_password = self.hash_password(player_signup.password)
-        
+
         # Create player model
         player = Player(
             firstName=player_signup.firstName,
@@ -427,6 +479,9 @@ class PBPlayerService:
             password=hashed_password,
             dupr_rating=player_signup.dupr_rating,
             role="player",  # Default role
+            state=self._clean_optional(player_signup.state),
+            city=self._clean_optional(player_signup.city),
+            zip_code=player_signup.zip_code,  # Already normalized to 5 digits by the VO
             leagues=[]
         )
         
@@ -434,6 +489,14 @@ class PBPlayerService:
         player_data = player.model_dump(exclude={'id'})  # Exclude None id
         created_player = self.pb_player_store.create_player(player_data)
         
+        # Signing up signs you in: the client navigates straight to the dashboard,
+        # so without a token here the first authenticated request 401s and the
+        # interceptor bounces the brand-new account back to the login screen.
+        role = created_player.get('role', 'player')
+        access_token = create_access_token(
+            data={"sub": created_player['email'], "role": role}
+        )
+
         # Return response without password
         return PlayerResponse(
             id=created_player.get('_id'),
@@ -441,7 +504,8 @@ class PBPlayerService:
             lastName=created_player['lastName'],
             email=created_player['email'],
             dupr_rating=created_player['dupr_rating'],
-            role=created_player.get('role', 'player'),
+            role=role,
+            token=access_token,
             leagues=created_player.get('leagues', [])
         )
 
@@ -454,11 +518,120 @@ class PBPlayerService:
                 firstName=player['firstName'],
                 lastName=player['lastName'],
                 email=player['email'],
-                dupr_rating=player['dupr_rating'],
+                # .get, not [] - a seeded or legacy doc without a rating used to
+                # 500 this whole listing.
+                dupr_rating=player.get('dupr_rating'),
                 role=player.get('role', 'player'),
                 leagues=player.get('leagues', [])
             ) for player in players_data
         ]
+
+    def search_players(self, searcher_email: str, first_name: str = None, last_name: str = None,
+                       dupr_min: float = None, dupr_max: float = None,
+                       radius_miles: float = None, origin_zip: str = None,
+                       limit: int = 200) -> PlayerSearchResponse:
+        """Find other players by name, DUPR band and/or distance.
+
+        Name and rating filters run in Mongo; distance runs here, because the
+        player documents hold a ZIP rather than coordinates. A player whose ZIP
+        can't be placed is dropped when a radius is in play — the same rule that
+        drops an unrated player when a DUPR band is set.
+
+        ``origin_zip`` lets the searcher measure from somewhere other than home
+        (a club across town, a trip). It falls back to their profile ZIP.
+
+        Raises:
+            HTTPException 400: inverted DUPR range, or a radius with no usable origin
+            HTTPException 404: the searcher's own account no longer exists
+        """
+        if dupr_min is not None and dupr_max is not None and dupr_max < dupr_min:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "code": "dupr_range_inverted",
+                    "message": "Max rating must be at least the min rating.",
+                },
+            )
+
+        # Resolve the origin once, before the scan.
+        origin = None
+        resolved_zip = None
+        if radius_miles is not None:
+            if origin_zip:
+                try:
+                    resolved_zip = normalize_zip(origin_zip)
+                except InvalidZipError:
+                    resolved_zip = None
+                origin = coordinates_for_zip(resolved_zip)
+                if origin is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail={
+                            "code": "origin_zip_unknown",
+                            "message": "We don't recognise that ZIP code.",
+                        },
+                    )
+            else:
+                searcher = self.pb_player_store.find_player_by_email(searcher_email)
+                if not searcher:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+                resolved_zip = searcher.get('zip_code')
+                origin = coordinates_for_zip(resolved_zip)
+                if origin is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail={
+                            "code": "origin_zip_missing",
+                            "message": "Enter a ZIP code, or add one to your profile, "
+                                       "to search by distance.",
+                        },
+                    )
+
+        docs = self.pb_player_store.find_players(
+            first_name=first_name,
+            last_name=last_name,
+            dupr_min=dupr_min,
+            dupr_max=dupr_max,
+            exclude_email=searcher_email,
+        )
+
+        results: list[PlayerSearchResult] = []
+        for doc in docs:
+            miles = None
+            if origin is not None:
+                coords = coordinates_for_zip(doc.get('zip_code'))
+                if coords is None:
+                    continue  # Can't place them, so we can't honour the radius.
+                miles = distance_miles(origin, coords)
+                if miles > radius_miles:
+                    continue
+                miles = round(miles, 1)
+
+            results.append(PlayerSearchResult(
+                id=str(doc.get('_id')),
+                firstName=doc.get('firstName', ''),
+                lastName=doc.get('lastName', ''),
+                email=doc['email'],
+                dupr_rating=doc.get('dupr_rating'),
+                role=doc.get('role', 'player'),
+                city=doc.get('city'),
+                state=doc.get('state'),
+                distance_miles=miles,
+            ))
+
+        if origin is not None:
+            results.sort(key=lambda r: r.distance_miles)
+        else:
+            results.sort(key=lambda r: (r.lastName.lower(), r.firstName.lower()))
+
+        results = results[:limit]
+        return PlayerSearchResponse(
+            results=results,
+            count=len(results),  # Rows returned, not a total - the limit applies first.
+            origin_zip=resolved_zip,
+            radius_miles=radius_miles,
+        )
 
     def get_player_details(self):
         return "Player details"

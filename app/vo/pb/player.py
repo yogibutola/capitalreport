@@ -2,6 +2,21 @@ import re
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
+from app.utils.geo import InvalidZipError, normalize_zip
+
+
+def _validate_zip_code(v: Optional[str]) -> Optional[str]:
+    """Shared ``zip_code`` validator for signup and profile updates.
+
+    Stores the bare 5 digits, and treats blank input as "not set" — the profile
+    form sends ``''`` rather than ``null`` when a field is cleared, so a
+    ``pattern=`` constraint would reject every "remove my ZIP".
+    """
+    try:
+        return normalize_zip(v)
+    except InvalidZipError as exc:
+        raise ValueError(str(exc)) from exc
+
 
 class PlayerLeague(BaseModel):
     """Model for league details associated with a player"""
@@ -23,6 +38,13 @@ class PlayerSignup(BaseModel):
     email: EmailStr = Field(..., description="Player's email address")
     password: str = Field(..., min_length=6, description="Player's password (min 6 characters)")
     dupr_rating: float = Field(..., ge=0.0, le=8.0, description="DUPR rating between 0.0 and 8.0")
+    # Location is optional at signup - it only powers the "players near me"
+    # search, and requiring it would put a wall in front of account creation.
+    state: Optional[str] = Field(default=None, max_length=100, description="Player's state / province")
+    city: Optional[str] = Field(default=None, max_length=100, description="Player's city")
+    zip_code: Optional[str] = Field(default=None, max_length=10, description="Player's US ZIP code")
+
+    _normalize_zip = field_validator('zip_code')(_validate_zip_code)
 
     @field_validator('password')
     @classmethod
@@ -52,6 +74,7 @@ class Player(BaseModel):
     age: Optional[int] = Field(default=None, ge=13, le=120, description="Player's age")
     state: Optional[str] = Field(default=None, description="Player's state / province")
     city: Optional[str] = Field(default=None, description="Player's city")
+    zip_code: Optional[str] = Field(default=None, description="Player's US ZIP code (5 digits); the anchor for distance search")
     leagues: List[PlayerLeague] = Field(default_factory=list)
     clubName: Optional[str] = Field(None, description="Name of the club (for admins)")
     address: Optional[str] = Field(None, description="Club address")
@@ -88,12 +111,41 @@ class PlayerResponse(BaseModel):
     firstName: str
     lastName: str
     email: EmailStr
-    dupr_rating: float
+    # Optional because a player document can predate the field or be seeded
+    # without one; a non-Optional float here used to 500 the whole listing.
+    dupr_rating: Optional[float] = None
     role: str = Field(default="player")
     token: Optional[str] = None
     clubName: Optional[str] = None
     leagues: List[PlayerLeague] = Field(default_factory=list)
     is_demo: bool = Field(default=False, description="True when this is a read-only demo session")
+
+
+class PlayerSearchResult(BaseModel):
+    """One row of the "Find a Player" search.
+
+    Deliberately carries ``city``/``state`` and a rounded ``distance_miles``
+    rather than the player's raw ZIP — same usefulness to the searcher, far less
+    exposure of someone else's location.
+    """
+    id: str
+    firstName: str
+    lastName: str
+    email: EmailStr
+    dupr_rating: Optional[float] = None
+    role: str = Field(default="player")
+    city: Optional[str] = None
+    state: Optional[str] = None
+    distance_miles: Optional[float] = Field(
+        default=None, description="Miles from the search origin; None unless a radius was applied")
+
+
+class PlayerSearchResponse(BaseModel):
+    """Result of a player search, echoing back the origin that was used."""
+    results: List[PlayerSearchResult] = Field(default_factory=list)
+    count: int = Field(default=0, description="Number of rows returned (post-limit), not a total")
+    origin_zip: Optional[str] = Field(default=None, description="ZIP the distances were measured from")
+    radius_miles: Optional[float] = None
 
 
 class PlayerLogin(BaseModel):
@@ -129,6 +181,7 @@ class ProfileResponse(BaseModel):
     dupr_rating: Optional[float] = None
     state: Optional[str] = None
     city: Optional[str] = None
+    zip_code: Optional[str] = None
     clubName: Optional[str] = None
     address: Optional[str] = None
     phone: Optional[str] = None
@@ -151,9 +204,12 @@ class ProfileUpdateRequest(BaseModel):
     dupr_rating: Optional[float] = Field(default=None, ge=0.0, le=8.0, description="DUPR rating 0.0-8.0")
     state: Optional[str] = Field(default=None, max_length=100, description="Player's state / province")
     city: Optional[str] = Field(default=None, max_length=100, description="Player's city")
+    zip_code: Optional[str] = Field(default=None, max_length=10, description="Player's US ZIP code")
     clubName: Optional[str] = Field(default=None, max_length=120, description="Club name (admin accounts)")
     address: Optional[str] = Field(default=None, max_length=200, description="Club address (admin accounts)")
     phone: Optional[str] = Field(default=None, max_length=40, description="Club phone number (admin accounts)")
+
+    _normalize_zip = field_validator('zip_code')(_validate_zip_code)
 
 
 class ChangePasswordRequest(BaseModel):
