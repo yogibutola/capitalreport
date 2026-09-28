@@ -214,5 +214,24 @@ class TestLimit(PlayerSearchTestCase):
         self.assertEqual([r.email for r in resp.results], ["sterling@x.com"])
 
 
+class TestPaddles(PlayerSearchTestCase):
+    """Paddles ride along on a result row so the card can show them."""
+
+    def test_paddles_are_included_in_a_result_row(self):
+        self.mock_store.find_players.return_value = [
+            player("bea@x.com", paddles=[{"brand": "CRBN", "model": "1X"}])]
+        resp = self.search(first_name="bea")
+        self.assertEqual(resp.results[0].paddles[0].brand, "CRBN")
+        self.assertEqual(resp.results[0].paddles[0].model, "1X")
+
+    def test_a_player_without_paddles_gets_an_empty_list(self):
+        self.mock_store.find_players.return_value = [player("bea@x.com")]
+        self.assertEqual(self.search(first_name="bea").results[0].paddles, [])
+
+    def test_a_stored_null_becomes_an_empty_list(self):
+        self.mock_store.find_players.return_value = [player("bea@x.com", paddles=None)]
+        self.assertEqual(self.search(first_name="bea").results[0].paddles, [])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -17,7 +17,8 @@ class PlayerSearchRouteTestCase(unittest.TestCase):
         self.service.search_players.return_value = PlayerSearchResponse(
             results=[PlayerSearchResult(
                 id="1", firstName="Bea", lastName="Baker", email="bea@example.com",
-                dupr_rating=4.0, distance_miles=4.2)],
+                dupr_rating=4.0, distance_miles=4.2,
+                paddles=[{"brand": "CRBN", "model": "1X"}])],
             count=1, origin_zip="20147", radius_miles=25,
         )
         # The sibling /players/{league_id} handler shares this mock and has its own
@@ -72,6 +73,9 @@ class TestQueryContract(PlayerSearchRouteTestCase):
         self.assertEqual(body["count"], 1)
         self.assertEqual(body["origin_zip"], "20147")
         self.assertEqual(body["results"][0]["distance_miles"], 4.2)
+        # A field missing from the response_model would be silently stripped here.
+        self.assertEqual(body["results"][0]["paddles"],
+                         [{"brand": "CRBN", "model": "1X"}])
 
     def test_out_of_range_values_are_422_not_silently_clamped(self):
         for query in ("dupr_min=9", "dupr_max=-1", "radius_miles=0",

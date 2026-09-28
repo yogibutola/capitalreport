@@ -35,6 +35,11 @@
         <div><dt>State</dt><dd>{{ state || '—' }}</dd></div>
         <div><dt>City</dt><dd>{{ city || '—' }}</dd></div>
         <div><dt>ZIP Code</dt><dd>{{ zip_code || '—' }}</dd></div>
+        <div><dt>Paddles</dt><dd>
+          @if (viewPaddles().length) {
+            <app-paddle-chips [paddles]="viewPaddles()" />
+          } @else { — }
+        </dd></div>
       </dl>
       }
     }
@@ -56,6 +61,12 @@
               state: 'State',
               city: 'City',
               zip_code: 'ZIP code',
+              paddleBrand1: 'Paddle 1 brand',
+              paddleBrandOther1: 'Paddle 1 brand name',
+              paddleBrand2: 'Paddle 2 brand',
+              paddleBrandOther2: 'Paddle 2 brand name',
+              paddleBrand3: 'Paddle 3 brand',
+              paddleBrandOther3: 'Paddle 3 brand name',
               clubName: 'Club name',
               address: 'Address',
               phone: 'Phone'
@@ -193,6 +204,53 @@
           <app-field-error id="err-zip_code" label="ZIP code" [control]="zipCtrl"
             [serverError]="profileFieldErrors()['zip_code']" [forceShow]="profileAttempted()" />
         </div>
+      </div>
+
+      <!-- ===== Paddle bag ===== -->
+      <div class="form-group">
+        <label style="display:block; margin-bottom: var(--space-xs);">My Paddles</label>
+        <small class="input-hint">What you're playing with these days — up to {{ maxPaddles }}.</small>
+        <app-field-error id="err-paddles" label="Paddles"
+          [serverError]="profileFieldErrors()['paddles']" [forceShow]="profileAttempted()" />
+
+        @for (p of paddles; track p.uid; let i = $index) {
+        <div class="paddle-row">
+          <select [id]="'field-paddleBrand' + (i + 1)" [name]="'paddleBrand' + (i + 1)"
+            [(ngModel)]="p.brand" #brandCtrl="ngModel" class="input-field" required
+            [attr.aria-label]="'Paddle ' + (i + 1) + ' brand'"
+            [appInvalid]="brandCtrl" [appInvalidForce]="profileAttempted()">
+            <option value="" disabled>Select a brand…</option>
+            @for (b of brands; track b) {
+            <option [value]="b">{{ b }}</option>
+            }
+            <option [value]="otherBrand">{{ otherBrand }}</option>
+          </select>
+
+          @if (p.brand === otherBrand) {
+          <input [id]="'field-paddleBrandOther' + (i + 1)" [name]="'paddleBrandOther' + (i + 1)"
+            [(ngModel)]="p.brandOther" #otherCtrl="ngModel" type="text" class="input-field" required
+            maxlength="40" placeholder="Brand name"
+            [attr.aria-label]="'Paddle ' + (i + 1) + ' brand name'"
+            [appInvalid]="otherCtrl" [appInvalidForce]="profileAttempted()">
+          }
+
+          <input [id]="'field-paddleModel' + (i + 1)" [name]="'paddleModel' + (i + 1)"
+            [(ngModel)]="p.model" type="text" class="input-field" maxlength="60"
+            placeholder="Model (optional)" [attr.aria-label]="'Paddle ' + (i + 1) + ' model'">
+
+          <button type="button" class="btn btn-secondary paddle-row__remove"
+            (click)="removePaddle(p.uid)" [attr.aria-label]="'Remove paddle ' + (i + 1)">
+            Remove
+          </button>
+        </div>
+        }
+
+        @if (paddles.length < maxPaddles) {
+        <button type="button" class="btn btn-secondary" (click)="addPaddle()"
+          style="margin-top: var(--space-xs);">
+          + Add a paddle
+        </button>
+        }
       </div>
       }
 
@@ -345,6 +403,38 @@
 
   .collapsible-toggle .chevron.open {
     transform: rotate(180deg);
+  }
+
+  /* One paddle: brand select, optional free-text brand, model, remove.
+     Wraps to stacked inputs on a phone rather than squeezing four controls. */
+  .paddle-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    align-items: center;
+    margin-top: var(--space-xs);
+  }
+
+  .paddle-row .input-field {
+    flex: 1 1 140px;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .paddle-row__remove {
+    flex: 0 0 auto;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 520px) {
+    .paddle-row .input-field {
+      flex-basis: 100%;
+    }
+
+    .paddle-row__remove {
+      width: 100%;
+    }
   }
 
   .validation-checklist {

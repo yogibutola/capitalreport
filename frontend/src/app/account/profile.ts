@@ -4,6 +4,20 @@ import { RouterLink } from '@angular/router';
 import { AuthService, Profile } from '../auth/auth';
 import { ToastService } from '../shared/toast.service';
 import { FORM_ERROR_UI, ParsedHttpError } from '../shared/form-error-ui';
+import { PaddleChipsComponent } from '../shared/paddle-chips';
+import { MAX_PADDLES, OTHER_BRAND, PADDLE_BRANDS, Paddle } from '../shared/paddle';
+
+/**
+ * One editable paddle row. Richer than the wire shape: `uid` keeps `@for` track
+ * stable across removals, and `brandOther` holds the free text when the player
+ * picks "Other" so switching back and forth doesn't lose what they typed.
+ */
+interface PaddleRow {
+  uid: number;
+  brand: string;
+  brandOther: string;
+  model: string;
+}
 
 interface ProfileFields {
   firstName: string;
@@ -14,6 +28,7 @@ interface ProfileFields {
   state: string;
   city: string;
   zip_code: string;
+  paddles: PaddleRow[];
   clubName: string;
   address: string;
   phone: string;
@@ -22,7 +37,7 @@ interface ProfileFields {
 @Component({
   selector: 'app-account-profile',
   standalone: true,
-  imports: [FormsModule, RouterLink, ...FORM_ERROR_UI],
+  imports: [FormsModule, RouterLink, PaddleChipsComponent, ...FORM_ERROR_UI],
   templateUrl: './profile.html',
   styleUrl: './profile.css',
 })
@@ -39,10 +54,16 @@ export class AccountProfileComponent implements OnInit {
   state = '';
   city = '';
   zip_code = '';
+  paddles: PaddleRow[] = [];
   // Club (admin) accounts
   clubName = '';
   address = '';
   phone = '';
+
+  private paddleUid = 0;
+  readonly maxPaddles = MAX_PADDLES;
+  readonly brands = PADDLE_BRANDS;
+  readonly otherBrand = OTHER_BRAND;
 
   role = signal<'player' | 'admin' | 'superadmin'>(this.auth.currentUser()?.role ?? 'player');
   isClub = computed(() => this.role() === 'admin');
@@ -96,10 +117,33 @@ export class AccountProfileComponent implements OnInit {
     this.state = p.state ?? this.state;
     this.city = p.city ?? this.city;
     this.zip_code = p.zip_code ?? this.zip_code;
+    // `??`, not `||`: a cleared bag is [], which must not read as "absent".
+    this.paddles = (p.paddles ?? []).map((paddle) => this.toRow(paddle));
     this.clubName = p.clubName ?? this.clubName;
     this.address = p.address ?? this.address;
     this.phone = p.phone ?? this.phone;
     this.saved = this.snapshot();
+  }
+
+  /** A stored brand we don't offer in the dropdown comes back as "Other". */
+  private toRow(paddle: Paddle): PaddleRow {
+    const known = (PADDLE_BRANDS as readonly string[]).includes(paddle.brand);
+    return {
+      uid: ++this.paddleUid,
+      brand: known ? paddle.brand : OTHER_BRAND,
+      brandOther: known ? '' : paddle.brand,
+      model: paddle.model ?? '',
+    };
+  }
+
+  /** Editor rows collapsed back to the wire shape, for the read-only chips. */
+  viewPaddles(): Paddle[] {
+    return this.paddles
+      .map((r) => ({
+        brand: (r.brand === OTHER_BRAND ? r.brandOther : r.brand).trim(),
+        model: r.model.trim() || null,
+      }))
+      .filter((p) => p.brand.length > 0);
   }
 
   private snapshot(): ProfileFields {
@@ -112,6 +156,7 @@ export class AccountProfileComponent implements OnInit {
       state: this.state,
       city: this.city,
       zip_code: this.zip_code,
+      paddles: this.paddles.map((p) => ({ ...p })),
       clubName: this.clubName,
       address: this.address,
       phone: this.phone,
@@ -120,6 +165,19 @@ export class AccountProfileComponent implements OnInit {
 
   private restore(): void {
     Object.assign(this, this.saved);
+    // Object.assign copies the array *reference*, so without this the form and
+    // the snapshot would share rows: the next edit would mutate `saved` in place
+    // and a second Cancel would silently do nothing.
+    this.paddles = this.saved.paddles.map((p) => ({ ...p }));
+  }
+
+  addPaddle(): void {
+    if (this.paddles.length >= this.maxPaddles) return;
+    this.paddles.push({ uid: ++this.paddleUid, brand: '', brandOther: '', model: '' });
+  }
+
+  removePaddle(uid: number): void {
+    this.paddles = this.paddles.filter((p) => p.uid !== uid);
   }
 
   // ---- Edit mode ----
@@ -198,6 +256,9 @@ export class AccountProfileComponent implements OnInit {
           state: this.state.trim(),
           city: this.city.trim(),
           zip_code: this.zip_code.trim(),
+          // Always present, so an emptied bag reaches the backend as a clear
+          // rather than being skipped by exclude_unset.
+          paddles: this.viewPaddles(),
         };
 
     this.savingProfile.set(true);

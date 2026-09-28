@@ -266,6 +266,9 @@
             @if (player.city || player.state) {
             <span class="player-location">📍 {{ player.city }}{{ player.city && player.state ? ', ' : '' }}{{ player.state }}</span>
             }
+            @if (player.paddles?.length) {
+            <app-paddle-chips [paddles]="player.paddles!" [max]="2" />
+            }
           </div>
           @if (player.distance_miles != null) {
           <div class="player-distance-badge">

@@ -2,6 +2,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, map } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { Paddle } from '../shared/paddle';
 
 export interface Player {
   id: string;
@@ -86,6 +87,12 @@ export interface LeagueDetailsPayload {
   players: Player[];
   rounds?: RoundItem[];
   withdrawals?: { email: string; play_day: number; reason: string }[];
+  /**
+   * Joined in at read time, keyed by lowercased email. Kept beside `players`
+   * rather than merged into it: that array is echoed back on the slotting write,
+   * so anything folded into it would be persisted onto the roster.
+   */
+  paddles_by_email?: Record<string, Paddle[]>;
 }
 
 @Injectable({

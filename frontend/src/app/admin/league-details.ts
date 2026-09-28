@@ -3,6 +3,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { LeagueDetailsPayload, LeagueRoundPayload, LeagueService, Player, RoundItem } from '../league/league';
+import { PaddleChipsComponent } from '../shared/paddle-chips';
+import { Paddle } from '../shared/paddle';
 
 interface LeagueDetails {
     league_id: string;
@@ -15,12 +17,13 @@ interface LeagueDetails {
     league_duration: string;
     players: Player[];
     rounds?: RoundItem[];
+    paddles_by_email?: Record<string, Paddle[]>;
 }
 
 @Component({
     selector: 'app-league-details',
     standalone: true,
-    imports: [CommonModule, RouterLink],
+    imports: [CommonModule, RouterLink, PaddleChipsComponent],
     templateUrl: './league-details.html',
     styleUrl: './league-details.css'
 })
@@ -40,6 +43,13 @@ export class LeagueDetailsComponent {
     sortDirection = signal<'asc' | 'desc'>('asc');
 
     // Computed sorted players list
+    /** Paddles for a roster row, looked up fresh rather than read off the
+     *  embedded player copy, which was frozen at registration time. */
+    paddlesFor(email: string | null | undefined): Paddle[] {
+        if (!email) return [];
+        return this.leagueDetails()?.paddles_by_email?.[email.toLowerCase()] ?? [];
+    }
+
     sortedPlayers = computed(() => {
         const details = this.leagueDetails();
         if (!details || !details.players) return [];
@@ -113,7 +123,8 @@ export class LeagueDetailsComponent {
                     league_end_date: data.league_end_date,
                     league_duration: data.league_duration,
                     players: data.players,
-                    rounds: data.rounds
+                    rounds: data.rounds,
+                    paddles_by_email: data.paddles_by_email
                 };
 
                 // Populate LeagueService with players for slotting

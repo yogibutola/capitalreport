@@ -4,6 +4,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Observable, throwError } from 'rxjs';
 import { tap, catchError, map } from 'rxjs/operators';
 import { parseHttpError } from '../shared/http-error';
+import { Paddle } from '../shared/paddle';
 
 export interface User {
   id: string;
@@ -16,6 +17,7 @@ export interface User {
   state?: string | null;
   city?: string | null;
   zip_code?: string | null;
+  paddles?: Paddle[];
   clubName?: string | null;
   address?: string | null;
   phone?: string | null;
@@ -35,6 +37,7 @@ export interface Profile {
   state: string | null;
   city: string | null;
   zip_code: string | null;
+  paddles: Paddle[];
   clubName: string | null;
   address: string | null;
   phone: string | null;
@@ -52,6 +55,8 @@ export interface PlayerProfileUpdate {
   state: string | null;
   city: string | null;
   zip_code: string | null;
+  /** Always sent, so an emptied bag ([]) reaches the backend as a clear. */
+  paddles: Paddle[];
 }
 
 /** What a new player account is created from. Location is optional. */
@@ -352,6 +357,7 @@ export class AuthService {
       state: profile.state ?? null,
       city: profile.city ?? null,
       zip_code: profile.zip_code ?? null,
+      paddles: profile.paddles ?? [],
       clubName: profile.clubName ?? null,
       address: profile.address ?? null,
       phone: profile.phone ?? null,

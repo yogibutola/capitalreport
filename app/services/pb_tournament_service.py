@@ -66,7 +66,22 @@ class PBTournamentService:
         return self.pb_tournament_store.get_tournaments_by_player_email(email)
 
     def get_tournament_by_id(self, tournament_id: str):
-        return self.pb_tournament_store.get_tournament_details(tournament_id)
+        doc = self.pb_tournament_store.get_tournament_details(tournament_id)
+        if doc:
+            # Registrations embed a copy of the player taken at sign-up time, so
+            # paddles are joined in fresh as a side map. Partners and both halves
+            # of a team count: a doubles roster renders all of them.
+            emails: set[str] = set()
+            for reg in doc.get("registrations") or []:
+                emails.add(reg.get("email"))
+                emails.add(reg.get("partner_email"))
+            for team in doc.get("teams") or []:
+                emails.add(team.get("player_one_email"))
+                emails.add(team.get("player_two_email"))
+            doc["paddles_by_email"] = PBPlayerStore().get_paddles_by_emails(
+                [e for e in emails if e]
+            )
+        return doc
 
     def get_matches_by_player_email(self, email: str) -> list[dict]:
         """Flatten pool + knockout matches from every tournament the player is

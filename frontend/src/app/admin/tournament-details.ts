@@ -10,6 +10,8 @@ import {
 } from './tournament';
 import { AuthService } from '../auth/auth';
 import { ConfirmService } from '../shared/confirm.service';
+import { PaddleChipsComponent } from '../shared/paddle-chips';
+import { Paddle } from '../shared/paddle';
 import { ToastService } from '../shared/toast.service';
 import { parseHttpError } from '../shared/http-error';
 
@@ -28,7 +30,9 @@ interface TournamentTeam {
   team_id: string;
   team_name: string;
   player_one_name: string;
+  player_one_email?: string | null;
   player_two_name?: string | null;
+  player_two_email?: string | null;
   dupr_rating?: number;
   formed_by?: string;
 }
@@ -84,6 +88,7 @@ interface RosterPlayer {
   dupr: number | null;
   email?: string | null;
   note?: string;
+  paddles?: Paddle[];
 }
 
 interface RosterEntry {
@@ -112,12 +117,15 @@ interface TournamentDetail {
   teams: TournamentTeam[];
   pools: Pool[];
   knockout: KnockoutRound[];
+  /** Joined in at read time, keyed by lowercased email: registrations embed a
+   *  copy of the player taken at sign-up, so paddles can't come from there. */
+  paddles_by_email?: Record<string, Paddle[]>;
 }
 
 @Component({
   selector: 'app-tournament-details',
   standalone: true,
-  imports: [RouterLink, NgTemplateOutlet],
+  imports: [RouterLink, NgTemplateOutlet, PaddleChipsComponent],
   templateUrl: './tournament-details.html',
 })
 export class TournamentDetailsComponent {
@@ -195,6 +203,13 @@ export class TournamentDetailsComponent {
     (this.tournament()?.registrations ?? []).filter((r) => r.partner_email)
   );
 
+  /** Paddles for a roster row, looked up fresh rather than read off the
+   *  embedded registration copy, which was frozen at sign-up time. */
+  private paddlesFor(email: string | null | undefined): Paddle[] {
+    if (!email) return [];
+    return this.tournament()?.paddles_by_email?.[email.toLowerCase()] ?? [];
+  }
+
   /** Doubles roster: seeded teams once the draw is done, otherwise the
    *  teams-in-formation derived from each registration's partner choice. */
   doublesEntries = computed<RosterEntry[]>(() => {
@@ -208,15 +223,35 @@ export class TournamentDetailsComponent {
         dupr: tm.dupr_rating ?? null,
         badge: tm.formed_by === 'auto' ? 'auto-paired' : '',
         players: [
-          { name: tm.player_one_name, dupr: null },
-          ...(tm.player_two_name ? [{ name: tm.player_two_name, dupr: null }] : []),
+          // The emails were previously dropped here; the paddle lookup needs them.
+          {
+            name: tm.player_one_name,
+            dupr: null,
+            email: tm.player_one_email,
+            paddles: this.paddlesFor(tm.player_one_email),
+          },
+          ...(tm.player_two_name
+            ? [
+                {
+                  name: tm.player_two_name,
+                  dupr: null,
+                  email: tm.player_two_email,
+                  paddles: this.paddlesFor(tm.player_two_email),
+                },
+              ]
+            : []),
         ],
       }));
     }
 
     return (t.registrations ?? []).map((r, i) => {
       const players: RosterPlayer[] = [
-        { name: `${r.firstName} ${r.lastName}`.trim(), dupr: r.dupr_rating ?? null, email: r.email },
+        {
+          name: `${r.firstName} ${r.lastName}`.trim(),
+          dupr: r.dupr_rating ?? null,
+          email: r.email,
+          paddles: this.paddlesFor(r.email),
+        },
       ];
       let badge: string;
       if (r.partner_email) {
@@ -224,6 +259,7 @@ export class TournamentDetailsComponent {
           name: r.partner_name || r.partner_email,
           dupr: r.partner_dupr ?? null,
           email: r.partner_email,
+          paddles: this.paddlesFor(r.partner_email),
           note: r.partner_registered ? undefined : 'invited — not registered yet',
         });
         badge = r.partner_registered ? '' : 'partner invited';
@@ -248,6 +284,7 @@ export class TournamentDetailsComponent {
       name: `${r.firstName} ${r.lastName}`.trim(),
       dupr: r.dupr_rating ?? null,
       email: r.email,
+      paddles: this.paddlesFor(r.email),
     }));
   });
   soloNames = computed(() =>

@@ -200,5 +200,125 @@ class TestProfileZipCode(unittest.TestCase):
         self.assertNotIn("zip_code", self.updates())
 
 
+class TestProfilePaddles(unittest.TestCase):
+    """The paddle bag is free-text brand + optional model, tidied on the way in."""
+
+    def setUp(self):
+        self.mock_store = MagicMock()
+        self.service = PBPlayerService(self.mock_store)
+        self.player = {
+            "_id": "abc123", "firstName": "Ada", "lastName": "Lovelace",
+            "email": "ada@example.com", "dupr_rating": 3.5, "role": "player",
+            "paddles": [{"brand": "Joola", "model": "Perseus"}],
+        }
+        self.mock_store.find_player_by_email.return_value = self.player
+        self.mock_store.update_player_profile.side_effect = lambda email, updates: {
+            **self.player, **updates,
+        }
+
+    def update(self, req):
+        return self.service.update_profile("ada@example.com", req)
+
+    def updates(self):
+        return self.mock_store.update_player_profile.call_args[0][1]
+
+    # ---- reads ----
+
+    def test_paddles_are_returned_on_the_profile(self):
+        paddles = self.service.get_profile("ada@example.com").paddles
+        self.assertEqual(len(paddles), 1)
+        self.assertEqual(paddles[0].brand, "Joola")
+        self.assertEqual(paddles[0].model, "Perseus")
+
+    def test_a_legacy_player_without_the_field_gets_an_empty_list(self):
+        del self.player["paddles"]
+        self.assertEqual(self.service.get_profile("ada@example.com").paddles, [])
+
+    def test_a_stored_null_becomes_an_empty_list(self):
+        self.player["paddles"] = None
+        self.assertEqual(self.service.get_profile("ada@example.com").paddles, [])
+
+    # ---- normalization ----
+
+    def test_brand_and_model_are_trimmed(self):
+        self.update(ProfileUpdateRequest(paddles=[{"brand": "  CRBN  ", "model": "  1X  "}]))
+        self.assertEqual(self.updates()["paddles"], [{"brand": "CRBN", "model": "1X"}])
+
+    def test_a_blank_model_becomes_none(self):
+        self.update(ProfileUpdateRequest(paddles=[{"brand": "CRBN", "model": "   "}]))
+        self.assertEqual(self.updates()["paddles"], [{"brand": "CRBN", "model": None}])
+
+    def test_an_entry_with_a_blank_brand_is_dropped(self):
+        """A model on its own can't be rendered as a chip."""
+        self.update(ProfileUpdateRequest(paddles=[
+            {"brand": "   ", "model": "Perseus"},
+            {"brand": "Selkirk", "model": None},
+        ]))
+        self.assertEqual(self.updates()["paddles"], [{"brand": "Selkirk", "model": None}])
+
+    def test_duplicate_paddles_are_collapsed_case_insensitively(self):
+        self.update(ProfileUpdateRequest(paddles=[
+            {"brand": "Joola", "model": "Perseus"},
+            {"brand": "joola", "model": "perseus"},
+        ]))
+        # First spelling wins.
+        self.assertEqual(self.updates()["paddles"], [{"brand": "Joola", "model": "Perseus"}])
+
+    def test_the_same_brand_with_different_models_is_not_a_duplicate(self):
+        self.update(ProfileUpdateRequest(paddles=[
+            {"brand": "Joola", "model": "Perseus"},
+            {"brand": "Joola", "model": "Hyperion"},
+        ]))
+        self.assertEqual(len(self.updates()["paddles"]), 2)
+
+    def test_order_is_preserved(self):
+        self.update(ProfileUpdateRequest(paddles=[
+            {"brand": "Selkirk"}, {"brand": "CRBN"}, {"brand": "Engage"},
+        ]))
+        self.assertEqual([p["brand"] for p in self.updates()["paddles"]],
+                         ["Selkirk", "CRBN", "Engage"])
+
+    def test_paddles_are_stored_as_plain_dicts(self):
+        """$set has to write BSON, not Pydantic objects."""
+        self.update(ProfileUpdateRequest(paddles=[{"brand": "CRBN"}]))
+        self.assertIsInstance(self.updates()["paddles"][0], dict)
+
+    # ---- the clear-all contract ----
+
+    def test_an_empty_list_clears_the_paddles(self):
+        self.update(ProfileUpdateRequest(paddles=[]))
+        self.assertEqual(self.updates()["paddles"], [])
+
+    def test_null_is_treated_as_clear_not_as_omit(self):
+        self.update(ProfileUpdateRequest(paddles=None))
+        self.assertEqual(self.updates()["paddles"], [])
+
+    def test_an_update_that_omits_paddles_leaves_them_alone(self):
+        self.update(ProfileUpdateRequest(city="Ashburn"))
+        self.assertNotIn("paddles", self.updates())
+
+    # ---- model constraints ----
+
+    def test_more_than_three_paddles_is_rejected_by_the_model(self):
+        with self.assertRaises(pydantic.ValidationError) as ctx:
+            ProfileUpdateRequest(paddles=[{"brand": b} for b in "abcd"])
+        self.assertEqual(ctx.exception.errors()[0]["loc"], ("paddles",))
+
+    def test_an_over_long_brand_is_rejected_by_the_model(self):
+        with self.assertRaises(pydantic.ValidationError):
+            ProfileUpdateRequest(paddles=[{"brand": "x" * 41}])
+
+    def test_an_over_long_model_is_rejected_by_the_model(self):
+        with self.assertRaises(pydantic.ValidationError):
+            ProfileUpdateRequest(paddles=[{"brand": "CRBN", "model": "x" * 61}])
+
+    # ---- account type ----
+
+    def test_a_club_account_cannot_set_paddles(self):
+        self.player["role"] = "admin"
+        self.update(ProfileUpdateRequest(paddles=[{"brand": "Joola"}], clubName="Ada's Club"))
+        self.assertNotIn("paddles", self.updates())
+
+
 if __name__ == "__main__":
     unittest.main()

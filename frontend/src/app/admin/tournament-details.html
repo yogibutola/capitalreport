@@ -51,7 +51,9 @@
                     <span class="roster-player">
                         {{ p.name }}@if (p.dupr != null) { <span class="roster-dupr">({{ p.dupr.toFixed(2)
                         }})</span> }@if (isAdminView && p.email) { <span class="roster-email">{{ p.email }}</span> }@if
-                        (p.note) { <span class="roster-note">{{ p.note }}</span> }
+                        (p.note) { <span class="roster-note">{{ p.note }}</span> }@if (p.paddles?.length) {
+                        <app-paddle-chips [paddles]="p.paddles!" [max]="1" />
+                        }
                     </span>
                     }
                 </div>
@@ -69,6 +71,7 @@
                 <span class="roster-entry-name">{{ p.name }}</span>
                 @if (p.dupr != null) { <span class="roster-dupr">({{ p.dupr.toFixed(2) }})</span> }
                 @if (isAdminView && p.email) { <span class="roster-email">{{ p.email }}</span> }
+                @if (p.paddles?.length) { <app-paddle-chips [paddles]="p.paddles!" [max]="2" /> }
             </li>
             }
         </ul>

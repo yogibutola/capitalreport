@@ -5,6 +5,9 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from app.utils.geo import InvalidZipError, normalize_zip
 
 
+MAX_PADDLES = 3
+
+
 def _validate_zip_code(v: Optional[str]) -> Optional[str]:
     """Shared ``zip_code`` validator for signup and profile updates.
 
@@ -16,6 +19,28 @@ def _validate_zip_code(v: Optional[str]) -> Optional[str]:
         return normalize_zip(v)
     except InvalidZipError as exc:
         raise ValueError(str(exc)) from exc
+
+
+def _coerce_paddles(v):
+    """Shared ``paddles`` coercion: a missing or null list reads as empty.
+
+    Player documents predate this field, and ``Player`` is parsed straight from
+    raw Mongo docs wherever it is embedded (leagues, pools, groups, teams), so a
+    stored ``null`` would otherwise blow up the whole parse.
+    """
+    return [] if v is None else v
+
+
+class Paddle(BaseModel):
+    """One paddle in a player's bag.
+
+    ``brand`` is a free string rather than an enum: paddle brands churn, and a
+    ``Literal`` would reject a value we ourselves stored the day the list is
+    pruned. Nothing branches on the brand, so length is the only real constraint
+    — the frontend offers a suggestion list purely as an input affordance.
+    """
+    brand: str = Field(..., min_length=1, max_length=40, description="Paddle manufacturer")
+    model: Optional[str] = Field(default=None, max_length=60, description="Paddle model, if the player names one")
 
 
 class PlayerLeague(BaseModel):
@@ -76,9 +101,13 @@ class Player(BaseModel):
     city: Optional[str] = Field(default=None, description="Player's city")
     zip_code: Optional[str] = Field(default=None, description="Player's US ZIP code (5 digits); the anchor for distance search")
     leagues: List[PlayerLeague] = Field(default_factory=list)
+    paddles: List[Paddle] = Field(default_factory=list, max_length=MAX_PADDLES,
+                                  description="The paddles the player is using these days")
     clubName: Optional[str] = Field(None, description="Name of the club (for admins)")
     address: Optional[str] = Field(None, description="Club address")
     phone: Optional[str] = Field(None, description="Club phone number")
+
+    _default_paddles = field_validator('paddles', mode='before')(_coerce_paddles)
 
 
 class ClubSignup(BaseModel):
@@ -136,8 +165,11 @@ class PlayerSearchResult(BaseModel):
     role: str = Field(default="player")
     city: Optional[str] = None
     state: Optional[str] = None
+    paddles: List[Paddle] = Field(default_factory=list, max_length=MAX_PADDLES)
     distance_miles: Optional[float] = Field(
         default=None, description="Miles from the search origin; None unless a radius was applied")
+
+    _default_paddles = field_validator('paddles', mode='before')(_coerce_paddles)
 
 
 class PlayerSearchResponse(BaseModel):
@@ -182,12 +214,15 @@ class ProfileResponse(BaseModel):
     state: Optional[str] = None
     city: Optional[str] = None
     zip_code: Optional[str] = None
+    paddles: List[Paddle] = Field(default_factory=list, max_length=MAX_PADDLES)
     clubName: Optional[str] = None
     address: Optional[str] = None
     phone: Optional[str] = None
     role: str = Field(default="player")
     # Only populated when the email changed and the old token is now stale.
     token: Optional[str] = None
+
+    _default_paddles = field_validator('paddles', mode='before')(_coerce_paddles)
 
 
 class ProfileUpdateRequest(BaseModel):
@@ -205,6 +240,10 @@ class ProfileUpdateRequest(BaseModel):
     state: Optional[str] = Field(default=None, max_length=100, description="Player's state / province")
     city: Optional[str] = Field(default=None, max_length=100, description="Player's city")
     zip_code: Optional[str] = Field(default=None, max_length=10, description="Player's US ZIP code")
+    # Optional (not defaulted to []) so "omitted" stays distinguishable from
+    # "cleared" under exclude_unset; the service coerces an explicit null to [].
+    paddles: Optional[List[Paddle]] = Field(default=None, max_length=MAX_PADDLES,
+                                            description=f"Up to {MAX_PADDLES} paddles; [] clears them")
     clubName: Optional[str] = Field(default=None, max_length=120, description="Club name (admin accounts)")
     address: Optional[str] = Field(default=None, max_length=200, description="Club address (admin accounts)")
     phone: Optional[str] = Field(default=None, max_length=40, description="Club phone number (admin accounts)")

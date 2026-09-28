@@ -18,6 +18,7 @@ class PBLeagueService:
     def __init__(self, pb_league_store: PBLeagueStore):
         self.pb_league_store = pb_league_store
         self.pb_match_store = PBMatchStore()
+        self.pb_player_store = PBPlayerStore()
         self.pb_tournament_service = PBTournamentService(PBTournamentStore())
 
     def get_league_details(self):
@@ -94,6 +95,13 @@ class PBLeagueService:
             league_details["league_id"] = str(league_details["_id"])
             del league_details["_id"]
             league_details["matches"] = matches
+
+            # The roster embeds a copy of each player taken at registration time,
+            # so paddles are joined in as a side map rather than merged into
+            # players[] — that array flows back into the slotting write path, and
+            # anything we fold into it would be persisted as part of the roster.
+            emails = [p.get("email") for p in league_details.get("players") or []]
+            league_details["paddles_by_email"] = self.pb_player_store.get_paddles_by_emails(emails)
         return league_details
 
     def get_matches_by_player_email(self, email: str):

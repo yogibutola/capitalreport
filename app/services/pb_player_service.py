@@ -21,6 +21,7 @@ from app.vo.pb.player import (
     ProfileUpdateRequest,
     PlayerSearchResult,
     PlayerSearchResponse,
+    MAX_PADDLES,
 )
 from app.utils.geo import (
     InvalidZipError,
@@ -265,6 +266,42 @@ class PBPlayerService:
         return str(value).strip() or None
 
     @staticmethod
+    def _normalize_paddles(raw: list | None) -> list[dict]:
+        """Tidy a submitted paddle bag into what we're willing to store.
+
+        Trims both halves, drops entries with no brand (a model on its own can't
+        be rendered as a chip), collapses case-insensitive duplicates keeping the
+        first spelling the player used, and caps the count. Returns plain dicts so
+        ``$set`` writes clean BSON rather than Pydantic objects.
+        """
+        if not raw:
+            return []
+
+        cleaned: list[dict] = []
+        seen: set[tuple[str, str]] = set()
+        for entry in raw:
+            # Entries arrive as Paddle models from the VO, but tolerate dicts so
+            # the method is usable from tests and any future caller.
+            if isinstance(entry, dict):
+                brand, model = entry.get("brand"), entry.get("model")
+            else:
+                brand, model = entry.brand, entry.model
+
+            brand = str(brand).strip() if brand is not None else ""
+            if not brand:
+                continue
+            model = str(model).strip() or None if model is not None else None
+
+            key = (brand.casefold(), (model or "").casefold())
+            if key in seen:
+                continue
+            seen.add(key)
+            cleaned.append({"brand": brand, "model": model})
+
+        # The VO's max_length already 422s an oversized list; this is belt and braces.
+        return cleaned[:MAX_PADDLES]
+
+    @staticmethod
     def _reject_unknown_zip(zip_code: str | None) -> None:
         """422 when a ZIP is well-formed but isn't a real US ZIP.
 
@@ -293,6 +330,8 @@ class PBPlayerService:
             state=player.get('state'),
             city=player.get('city'),
             zip_code=player.get('zip_code'),
+            # `or []` rather than a .get default: it also covers a stored null.
+            paddles=player.get('paddles') or [],
             clubName=player.get('clubName'),
             address=player.get('address'),
             phone=player.get('phone'),
@@ -324,7 +363,8 @@ class PBPlayerService:
         updates = req.model_dump(exclude_unset=True)
 
         # Keep only the fields that make sense for this account type.
-        player_only = {"firstName", "lastName", "age", "dupr_rating", "state", "city", "zip_code"}
+        player_only = {"firstName", "lastName", "age", "dupr_rating", "state", "city", "zip_code",
+                       "paddles"}
         club_only = {"clubName", "address", "phone"}
         for key in (club_only if not is_club else player_only):
             updates.pop(key, None)
@@ -355,6 +395,12 @@ class PBPlayerService:
             for key in ("state", "city"):
                 if key in updates and updates[key] is not None:
                     updates[key] = str(updates[key]).strip() or None
+
+            # Presence-tested, not truthiness-tested: an empty list is how the
+            # profile form says "I've emptied my paddle bag", and it has to reach
+            # the $set. Omitting the key entirely is what leaves paddles alone.
+            if "paddles" in updates:
+                updates["paddles"] = self._normalize_paddles(updates["paddles"])
 
             # The VO already normalized this to 5 digits or None; all that's left is
             # to check it's a ZIP that actually exists, so distance search can place
@@ -617,6 +663,7 @@ class PBPlayerService:
                 role=doc.get('role', 'player'),
                 city=doc.get('city'),
                 state=doc.get('state'),
+                paddles=doc.get('paddles') or [],
                 distance_miles=miles,
             ))
 

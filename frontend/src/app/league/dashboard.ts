@@ -7,6 +7,8 @@ import { PlayerService } from '../player/player';
 import { FormsModule } from '@angular/forms';
 import { GroupsService, GroupEvent } from '../groups/groups.service';
 import { MatchService } from '../matches/match';
+import { PaddleChipsComponent } from '../shared/paddle-chips';
+import { Paddle } from '../shared/paddle';
 
 interface UpcomingGroupEvent {
     groupId: string;
@@ -23,6 +25,7 @@ interface PlayerResult {
     role: string;
     city?: string | null;
     state?: string | null;
+    paddles?: Paddle[];
     /** Miles from the search origin; null unless a radius was applied. */
     distance_miles?: number | null;
 }
@@ -37,7 +40,7 @@ interface PlayerSearchResponse {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, CommonModule, FormsModule],
+  imports: [RouterLink, CommonModule, FormsModule, PaddleChipsComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })

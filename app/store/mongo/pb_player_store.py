@@ -101,7 +101,7 @@ class PBPlayerStore:
         # Explicit projection so the password hash never leaves Mongo.
         projection = {
             "firstName": 1, "lastName": 1, "email": 1, "dupr_rating": 1,
-            "role": 1, "city": 1, "state": 1, "zip_code": 1,
+            "role": 1, "city": 1, "state": 1, "zip_code": 1, "paddles": 1,
         }
 
         collection = self.get_players_collection()
@@ -109,6 +109,26 @@ class PBPlayerStore:
         for player in players:
             player["_id"] = str(player["_id"])
         return players
+
+    def get_paddles_by_emails(self, emails: list[str]) -> dict[str, list[dict]]:
+        """Map lowercased email -> paddles, for views holding stale player copies.
+
+        League and tournament rosters embed a frozen copy of each player taken at
+        registration time, so paddles have to be joined in at read time or they'd
+        show whatever the player owned the day they signed up. One query for the
+        whole roster; players with no paddles are omitted to keep the map small.
+        """
+        wanted = [e.lower() for e in emails if e]
+        if not wanted:
+            return {}
+
+        collection = self.get_players_collection()
+        docs = collection.find({"email": {"$in": wanted}}, {"email": 1, "paddles": 1})
+        return {
+            doc["email"].lower(): doc["paddles"]
+            for doc in docs
+            if doc.get("email") and doc.get("paddles")
+        }
 
     def get_clubs(self) -> list[dict]:
         """Fetch all club (admin) accounts. Mirror of ``get_all_players`` for the

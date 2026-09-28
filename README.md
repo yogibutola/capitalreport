@@ -1,7 +1,7 @@
 # capitalreport
 
 ## TODOs:
-### Ability to select and reserve paddles for Traials
+### Ability to select and reserve paddles for Traials at specific clubs.
 
 ### Mention your paddle that you are using for playing a specific match.
 
