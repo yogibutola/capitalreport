@@ -53,6 +53,9 @@ export interface PlatformMetrics {
 }
 
 export interface NewClub {
+  /** The organiser who will run the club - a normal account that owns it. */
+  firstName: string;
+  lastName: string;
   clubName: string;
   email: string;
   password: string;
@@ -131,6 +134,8 @@ export class PlatformService {
       tap(() => {
         this.toast.success(`Club "${club.clubName}" created.`);
         this.fetchClubs();
+        // Creating a club also creates its organiser's account.
+        this.fetchPlayers();
         this.fetchMetrics();
       }),
       catchError((err) => throwError(() => parseHttpError(err))),
@@ -152,7 +157,7 @@ export class PlatformService {
     const confirmed = await this.confirm.ask({
       title: `Remove ${club.clubName || club.email}?`,
       message:
-        'The club account is deleted. Its existing leagues and tournaments are left in place but will no longer have an owner. This cannot be undone.',
+        'The club is deleted; its organiser keeps their player account. Its existing leagues and tournaments are left in place but will no longer have an owner. This cannot be undone.',
       confirmLabel: 'Remove Club',
       cancelLabel: 'Keep Club',
       tone: 'danger',
@@ -160,8 +165,8 @@ export class PlatformService {
     if (!confirmed) return;
 
     const snapshot = this.clubs();
-    this.clubs.update((c) => c.filter((x) => x.email !== club.email));
-    this.http.delete(`${BASE}/clubs/${encodeURIComponent(club.email)}`).subscribe({
+    this.clubs.update((c) => c.filter((x) => x.id !== club.id));
+    this.http.delete(`${BASE}/clubs/${encodeURIComponent(club.id)}`).subscribe({
       next: () => {
         this.toast.success('Club removed.');
         this.fetchMetrics();

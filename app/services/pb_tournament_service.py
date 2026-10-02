@@ -12,6 +12,7 @@ from app.services.tournament_bracket import (
     knockout_is_complete,
     resolve_pool_qualifiers,
 )
+from app.store.mongo.pb_club_store import PBClubStore
 from app.store.mongo.pb_player_store import PBPlayerStore
 from app.store.mongo.pb_tournament_store import PBTournamentStore
 from app.vo.pb.player import Player, PlayerSignup
@@ -40,11 +41,9 @@ class PBTournamentService:
         # Stamp the owning club's name and location onto the tournament so
         # listings can show who runs it and where, without a second lookup.
         if tournament.club_id and not (tournament.club_name and tournament.location):
-            club = PBPlayerStore().find_player_by_email(tournament.club_id)
+            club = PBClubStore().get_club(tournament.club_id)
             if club:
-                tournament.club_name = (
-                    tournament.club_name or club.get("clubName") or club.get("firstName")
-                )
+                tournament.club_name = tournament.club_name or club.get("name")
                 tournament.location = tournament.location or club.get("address")
 
         tournament.tournament_status = tournament.tournament_status or "pending"

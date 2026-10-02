@@ -46,8 +46,7 @@ def get_all_leagues(pb_league_service: PBLeagueService = Depends(get_pb_league_s
 def get_my_leagues(pb_league_service: PBLeagueService = Depends(get_pb_league_service),
                    payload: dict = Depends(get_current_admin)):
     """ Get the leagues created by the authenticated admin's club. (Admin only)"""
-    club_id = payload.get("sub")
-    return pb_league_service.get_leagues_by_club(club_id)
+    return pb_league_service.get_leagues_by_club(payload["club_id"])
 
 
 # The league read endpoints below return rosters (emails + DUPR), so they need a
@@ -91,7 +90,7 @@ def create_league(league: League,
                   pb_league_service: PBLeagueService = Depends(get_pb_league_service),
                   payload: dict = Depends(get_current_admin)):
     """Create a new league. (Admin only)"""
-    league.club_id = payload.get("sub")
+    league.club_id = payload["club_id"]
     pb_league_service.save_league_details(league)
     league_response = LeagueResponse(league_id=league.league_id, league_name=league.league_name)
     return league_response

@@ -24,6 +24,9 @@ test.describe('Platform console', () => {
         // ── Add a club ─────────────────────────────────────────────────────
         const newClubEmail = `pc.new.${Date.now()}@test.com`;
         await page.click('button:has-text("+ Add club")');
+        // A club is run by a person: the form creates the organiser's account too.
+        await page.fill('input[name="firstName"]', 'Nova');
+        await page.fill('input[name="lastName"]', 'Organiser');
         await page.fill('input[name="clubName"]', 'Brand New Club');
         await page.fill('input[name="email"]', newClubEmail);
         await page.fill('input[name="password"]', 'Password@123');
@@ -35,6 +38,11 @@ test.describe('Platform console', () => {
         await clubRow.locator('button:has-text("Remove")').click();
         await page.locator('app-confirm-host button:has-text("Remove Club")').click();
         await expect(page.locator('.pc-table', { hasText: newClubEmail })).toHaveCount(0, { timeout: 10_000 });
+
+        // The organiser keeps their account: removing a club isn't removing a person.
+        await page.click('.pc-tabs button:has-text("Players")');
+        await expect(page.locator('.pc-table', { hasText: newClubEmail })).toBeVisible({ timeout: 10_000 });
+        await page.click('.pc-tabs button:has-text("Clubs")');
 
         // ── Players tab ───────────────────────────────────────────────────
         await page.click('.pc-tabs button:has-text("Players")');

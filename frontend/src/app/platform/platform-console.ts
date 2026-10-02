@@ -25,7 +25,7 @@ export class PlatformConsoleComponent implements OnInit {
 
     // add-club form
     showClubForm = signal(false);
-    club = { clubName: '', email: '', password: '', address: '', phone: '' };
+    club = { firstName: '', lastName: '', clubName: '', email: '', password: '', address: '', phone: '' };
     clubBusy = signal(false);
     clubAttempted = signal(false);
     clubFormError = signal<string | null>(null);
@@ -66,6 +66,8 @@ export class PlatformConsoleComponent implements OnInit {
         this.clubBusy.set(true);
         this.svc
             .addClub({
+                firstName: this.club.firstName.trim(),
+                lastName: this.club.lastName.trim(),
                 clubName: this.club.clubName.trim(),
                 email: this.club.email.trim(),
                 password: this.club.password,
@@ -77,7 +79,7 @@ export class PlatformConsoleComponent implements OnInit {
                     this.clubBusy.set(false);
                     this.showClubForm.set(false);
                     this.clubAttempted.set(false);
-                    this.club = { clubName: '', email: '', password: '', address: '', phone: '' };
+                    this.club = { firstName: '', lastName: '', clubName: '', email: '', password: '', address: '', phone: '' };
                 },
                 error: (err: ParsedHttpError) => {
                     this.clubBusy.set(false);

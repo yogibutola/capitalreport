@@ -5,6 +5,8 @@ from fastapi import HTTPException
 
 from app.store.mongo.pb_league_store import PBLeagueStore
 from app.services.pb_league_service import PBLeagueService
+from app.services.pb_club_service import PBClubService
+from app.store.mongo.pb_club_store import PBClubStore
 from app.store.mongo.pb_player_store import PBPlayerStore
 from app.services.pb_player_service import PBPlayerService
 from app.vo.pb.league import League
@@ -34,7 +36,7 @@ def main():
     parser.add_argument(
         "--club",
         default="test_pro@gmail.com",
-        help="Email of the club (admin account) that owns the league; /api/v1/my_leagues filters by this. "
+        help="Email of the organiser whose club owns the league; /api/v1/my_leagues lists that club's leagues. "
              "Defaults to the account the Playwright e2e specs sign in with.",
     )
     args = parser.parse_args()
@@ -106,10 +108,15 @@ def main():
 
         registered_emails.append(email)
 
+    club = PBClubService(PBClubStore(), PBPlayerStore()).club_for_owner_email(args.club)
+    if not club:
+        print(f"No club is run by '{args.club}'. Sign up a club with that email first, or pass --club.")
+        sys.exit(1)
+
     print("\n--- Creating League ---")
     today = datetime.now().strftime("%m-%d-%Y")
     league = League(
-        club_id=args.club,
+        club_id=str(club["_id"]),
         league_name=f"Pro_{timestamp}",
         league_description="League created by seed script for testing.",
         league_start_date=today,

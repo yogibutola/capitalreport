@@ -49,7 +49,7 @@ def get_my_tournaments(
     payload: dict = Depends(get_current_admin),
 ):
     """Get the tournaments created by the authenticated admin's club. (Admin only)"""
-    return pb_tournament_service.get_tournaments_by_club(payload.get("sub"))
+    return pb_tournament_service.get_tournaments_by_club(payload["club_id"])
 
 
 @router.get("/player/tournaments/{email_id}", status_code=status.HTTP_200_OK)
@@ -93,7 +93,7 @@ def create_tournament(
 ):
     """Create a new tournament. Seeds players into round-robin pools and builds
     the knockout bracket. (Admin only)"""
-    tournament.club_id = payload.get("sub")
+    tournament.club_id = payload["club_id"]
     pb_tournament_service.create_tournament(tournament)
     return TournamentResponse(
         tournament_id=tournament.tournament_id, tournament_name=tournament.tournament_name

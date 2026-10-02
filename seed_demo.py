@@ -32,6 +32,8 @@ from faker import Faker
 from app.services.pb_league_service import PBLeagueService
 from app.services.pb_player_service import PBPlayerService, DEMO_ACCOUNTS
 from app.services.pb_tournament_service import PBTournamentService
+from app.services.pb_club_service import PBClubService
+from app.store.mongo.pb_club_store import PBClubStore
 from app.store.mongo.pb_league_store import PBLeagueStore
 from app.store.mongo.pb_match_store import PBMatchStore
 from app.store.mongo.pb_player_store import PBPlayerStore
@@ -106,7 +108,8 @@ def _ensure_accounts() -> list[str]:
     # Demo club (admin)
     try:
         _player_service().register_club(
-            ClubSignup(clubName=DEMO_CLUB_NAME, email=DEMO_ADMIN_EMAIL,
+            ClubSignup(firstName="Demo", lastName="Organiser",
+                       clubName=DEMO_CLUB_NAME, email=DEMO_ADMIN_EMAIL,
                        password=PASSWORD, address="123 Baseline Ct, Portland OR",
                        phone="555-0100")
         )
@@ -135,18 +138,26 @@ def _ensure_accounts() -> list[str]:
     return fillers
 
 
+def _demo_club_id() -> str:
+    """The demo club's id. Leagues/tournaments belong to the club, not the account."""
+    club = PBClubService(PBClubStore(), PBPlayerStore()).club_for_owner_email(DEMO_ADMIN_EMAIL)
+    if not club:
+        sys.exit(f"{DEMO_ADMIN_EMAIL} runs no club - account seeding must have failed")
+    return str(club["_id"])
+
+
 def _wipe_previous() -> None:
     """Delete any league/tournament the demo club owns, so a re-run is clean."""
     print("--- Clearing previous demo league/tournament ---")
     league_store = PBLeagueStore()
     league_service = PBLeagueService(league_store)
-    for lg in league_service.get_leagues_by_club(DEMO_ADMIN_EMAIL):
+    for lg in league_service.get_leagues_by_club(_demo_club_id()):
         lid = lg.get("league_id") or str(lg.get("_id"))
         league_service.delete_league(lid)
         print(f"  deleted league {lid}")
 
     tournament_service = PBTournamentService(PBTournamentStore())
-    for t in tournament_service.get_tournaments_by_club(DEMO_ADMIN_EMAIL):
+    for t in tournament_service.get_tournaments_by_club(_demo_club_id()):
         tid = t.get("tournament_id")
         tournament_service.delete_tournament(tid)
         print(f"  deleted tournament {tid}")
@@ -170,7 +181,7 @@ def _seed_league(participant_emails: list[str]) -> str:
         group_size=4,
         match_format="Doubles",
         league_status="Active",
-        club_id=DEMO_ADMIN_EMAIL,
+        club_id=_demo_club_id(),
     )
     service.save_league_details(league)
     league_id = str(league.league_id)
@@ -214,7 +225,7 @@ def _seed_tournament(pairs: list[tuple[str, str]]) -> str:
         pool_size=4,
         advancers_per_pool=2,
         tournament_status="pending",
-        club_id=DEMO_ADMIN_EMAIL,
+        club_id=_demo_club_id(),
         players=[],
     )
     service.create_tournament(tournament)

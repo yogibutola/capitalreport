@@ -1,6 +1,7 @@
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
+from bson import ObjectId
 from pymongo import ReturnDocument
 from pymongo.synchronous.collection import Collection
 
@@ -32,15 +33,35 @@ class PBPlayerStore:
         collection = self.get_players_collection()
         return collection.find_one({"email": email.lower()})
 
+    def find_player_by_id(self, player_id) -> dict | None:
+        """A player by ``_id`` (ObjectId or its string form); None for a bad id."""
+        try:
+            oid = player_id if isinstance(player_id, ObjectId) else ObjectId(player_id)
+        except Exception:
+            return None
+        return self.get_players_collection().find_one({"_id": oid})
+
     def create_player(self, player_data: dict) -> dict:
-        """Create a new player in the database"""
+        """Create a new player in the database; returns the doc with its ObjectId ``_id``.
+
+        Raises ``DuplicateKeyError`` when the email is taken (unique index, players v2).
+        """
         collection = self.get_players_collection()
         # Ensure email is stored in lowercase for consistency
         player_data["email"] = player_data["email"].lower()
         result = collection.insert_one(player_data)
-        player_data["_id"] = str(result.inserted_id)
+        player_data["_id"] = result.inserted_id
         self.logger.info(f"Successfully created player with email: {player_data['email']}")
         return player_data
+
+    def record_rating(self, player_id, rating: float, source: str) -> None:
+        """Append to ``rating_history`` - DUPR is self-reported, so keep what was claimed when."""
+        self.db["rating_history"].insert_one({
+            "player_id": ObjectId(player_id) if not isinstance(player_id, ObjectId) else player_id,
+            "rating": rating,
+            "source": source,
+            "recorded_at": datetime.now(timezone.utc),
+        })
 
     def get_all_players(self) -> list[dict]:
         """Fetch all non-admin players from the database.
@@ -193,7 +214,10 @@ class PBPlayerStore:
         collection = self.get_players_collection()
         collection.update_one(
             {"email": email.lower()},
-            {"$set": {"password": hashed_password}}
+            # Unsetting the pre-v2 ``password`` field means a changed password
+            # leaves only one hash behind, whichever shape the doc started in.
+            {"$set": {"password_hash": hashed_password, "updated_at": datetime.now(timezone.utc)},
+             "$unset": {"password": ""}}
         )
         self.logger.info(f"Password updated for player {email.lower()}")
 
@@ -217,8 +241,8 @@ class PBPlayerStore:
         collection.update_one(
             {"email": email.lower()},
             {
-                "$set": {"password": hashed_password},
-                "$unset": {"reset_token_hash": "", "reset_token_expires": ""}
+                "$set": {"password_hash": hashed_password, "updated_at": datetime.now(timezone.utc)},
+                "$unset": {"password": "", "reset_token_hash": "", "reset_token_expires": ""}
             }
         )
         self.logger.info(f"Password reset for player {email.lower()}")
@@ -237,7 +261,7 @@ class PBPlayerStore:
 
         updated = collection.find_one_and_update(
             {"email": email.lower()},
-            {"$set": updates},
+            {"$set": {**updates, "updated_at": datetime.now(timezone.utc)}},
             return_document=ReturnDocument.AFTER,
         )
         if updated:

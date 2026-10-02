@@ -25,15 +25,15 @@ class TestDemoReadOnlyDeps(unittest.TestCase):
 
     def test_demo_token_blocks_writes_for_admin_dep(self):
         with self.assertRaises(HTTPException) as ctx:
-            get_current_admin(_request("POST"), {"sub": "demo.club@x", "role": "admin", "demo": True})
+            get_current_admin(_request("POST"), {"sub": "demo.club@x", "role": "admin", "club_id": "c1", "demo": True})
         self.assertEqual(ctx.exception.status_code, 403)
 
     def test_demo_token_allows_reads_for_admin_dep(self):
-        payload = {"sub": "demo.club@x", "role": "admin", "demo": True}
+        payload = {"sub": "demo.club@x", "role": "admin", "club_id": "c1", "demo": True}
         self.assertIs(get_current_admin(_request("GET"), payload), payload)
 
     def test_non_demo_token_can_still_write(self):
-        payload = {"sub": "real@x", "role": "admin"}
+        payload = {"sub": "real@x", "role": "admin", "club_id": "c1"}
         self.assertIs(get_current_admin(_request("POST"), payload), payload)
         player = {"sub": "real@x"}
         self.assertIs(get_current_player(_request("POST"), player), player)

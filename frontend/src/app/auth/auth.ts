@@ -71,6 +71,24 @@ export interface PlayerSignupInput {
   zip_code?: string | null;
 }
 
+/** Sign up an organiser and the club they run, in one step. */
+export interface ClubSignupInput {
+  firstName: string;
+  lastName: string;
+  clubName: string;
+  email: string;
+  password: string;
+  address?: string | null;
+  phone?: string | null;
+}
+
+/** Create a club for the account that is already signed in. */
+export interface ClubCreateInput {
+  name: string;
+  address?: string | null;
+  phone?: string | null;
+}
+
 /** Fields a club (admin) may edit. */
 export interface ClubProfileUpdate {
   clubName: string;
@@ -126,6 +144,8 @@ export class AuthService {
           userName: response.userName || '',
           email: response.email || email,
           dupr_rating: response.dupr_rating || 0,
+          // Set when the account runs a club (role "admin").
+          clubName: response.clubName ?? null,
           role: response.role || 'player',
           token: response.token
         };
@@ -262,26 +282,22 @@ export class AuthService {
     );
   }
 
-  // Club Signup
-  signupClubObservable(clubName: string, email: string, password: string, address: string, phone: string): Observable<boolean> {
-    const payload = {
-      clubName,
-      email,
-      password,
-      address,
-      phone
-    };
-
-    return this.http.post<any>('api/v1/signup/club', payload).pipe(
+  /**
+   * Sign up a club organiser: a normal account for the person plus the club they
+   * run. The response token already carries the admin role for that club.
+   */
+  signupClubObservable(input: ClubSignupInput): Observable<boolean> {
+    return this.http.post<any>('api/v1/signup/club', input).pipe(
       tap((response) => {
         const user: User = {
           id: response.id || crypto.randomUUID(),
-          firstName: clubName, // Map clubName to firstName as per requirement
-          lastName: '',
-          userName: `admin.${clubName.toLowerCase().replace(/\s+/g, '')}`,
-          email,
-          dupr_rating: 0,
-          role: 'admin', // Club signup always results in admin role
+          firstName: response.firstName ?? input.firstName,
+          lastName: response.lastName ?? input.lastName,
+          userName: '',
+          email: response.email ?? input.email,
+          dupr_rating: response.dupr_rating ?? 0,
+          clubName: response.clubName ?? input.clubName,
+          role: response.role || 'admin',
           token: response.token
         };
 
@@ -292,6 +308,34 @@ export class AuthService {
         }
       }),
       map(() => true),
+      catchError((err) => throwError(() => parseHttpError(err)))
+    );
+  }
+
+  /**
+   * Create a club run by the signed-in player. The current token predates the
+   * club and still says "player", so the fresh admin token in the response
+   * replaces it.
+   */
+  createClub(input: ClubCreateInput): Observable<void> {
+    return this.http.post<{ club: { id: string; name: string }; token: string; role: 'admin' }>(
+      'api/v1/clubs', input
+    ).pipe(
+      tap((response) => {
+        const current = this.currentUser();
+        if (!current) return;
+        const updated: User = {
+          ...current,
+          role: response.role,
+          clubName: response.club.name,
+          token: response.token,
+        };
+        this.currentUser.set(updated);
+        if (isPlatformBrowser(this.platformId)) {
+          localStorage.setItem('pickleball_user', JSON.stringify(updated));
+        }
+      }),
+      map(() => undefined),
       catchError((err) => throwError(() => parseHttpError(err)))
     );
   }

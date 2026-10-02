@@ -15,6 +15,7 @@ from app.api.v1.routers.pickleball import pb_quote
 from app.api.v1.routers.pickleball import pb_group
 from app.api.v1.routers.pickleball import pb_admin
 from app.api.v1.routers.pickleball import pb_demo_request
+from app.api.v1.routers.pickleball import pb_club
 from app.utils.audit_middleware import AuditLogMiddleware
 
 app = FastAPI(title="Query Param Example")
@@ -45,4 +46,5 @@ app.include_router(pb_quote.router, prefix="/api/v1")
 app.include_router(pb_group.router, prefix="/api/v1")
 app.include_router(pb_admin.router, prefix="/api/v1")
 app.include_router(pb_demo_request.router, prefix="/api/v1")
+app.include_router(pb_club.router, prefix="/api/v1")
 app.include_router(generate_report.router, prefix="/api/v1")

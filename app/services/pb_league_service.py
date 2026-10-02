@@ -1,6 +1,7 @@
 from bson import ObjectId
 from bson.errors import InvalidId
 from app.store.mongo.pb_league_store import PBLeagueStore
+from app.store.mongo.pb_club_store import PBClubStore
 from app.store.mongo.pb_player_store import PBPlayerStore
 from app.store.mongo.pb_tournament_store import PBTournamentStore
 from app.vo.pb.league import League
@@ -47,9 +48,9 @@ class PBLeagueService:
         # Stamp the owning club's name and location onto the league so league
         # listings can show who runs it and where, without a second lookup.
         if league_details.club_id and not (league_details.club_name and league_details.location):
-            club = PBPlayerStore().find_player_by_email(league_details.club_id)
+            club = PBClubStore().get_club(league_details.club_id)
             if club:
-                league_details.club_name = league_details.club_name or club.get("clubName") or club.get("firstName")
+                league_details.club_name = league_details.club_name or club.get("name")
                 league_details.location = league_details.location or club.get("address")
         self.pb_league_store.store_new_league_details(league_details)
 

@@ -49,13 +49,24 @@ def get_current_admin(
     payload: dict = Depends(get_current_user_payload),
 ) -> dict:
     """
-    Dependency to ensure the user is an admin.
+    Dependency to ensure the user runs a club ("admin").
+
+    The role is granted at token issue to accounts that own a club, together
+    with the club's id in ``club_id``. A token from before clubs were their own
+    records has the role but no ``club_id``; it gets a 401 so the client signs
+    in again and receives a current one.
     """
     role = payload.get("role")
     if role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin privileges required"
+        )
+    if not payload.get("club_id"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Your session is out of date. Please sign in again.",
+            headers={"WWW-Authenticate": "Bearer"},
         )
     _reject_demo_writes(payload, request)
     return payload
@@ -114,14 +125,14 @@ def require_self(email: str | None, payload: dict) -> None:
 
 def is_club_owner(club_id: str | None, payload: dict) -> bool:
     """
-    True when the caller is the club that owns a league/tournament.
+    True when the caller runs the club that owns a league/tournament.
 
-    Leagues and tournaments store their owning club's email as ``club_id``
-    (taken from the creating admin's token), so ownership is that email matching
-    the caller's ``sub``. A resource with no ``club_id`` belongs to nobody.
+    Leagues and tournaments store their club's id as ``club_id`` (taken from the
+    creating owner's token), so ownership is that id matching the caller's
+    ``club_id`` claim. A resource with no ``club_id`` belongs to nobody.
     """
-    caller = (payload.get("sub") or "").lower()
-    return payload.get("role") == "admin" and bool(club_id) and club_id.lower() == caller
+    caller_club = payload.get("club_id")
+    return payload.get("role") == "admin" and bool(club_id) and bool(caller_club) and str(club_id) == caller_club
 
 
 def require_club_owner(club_id: str | None, payload: dict) -> None:

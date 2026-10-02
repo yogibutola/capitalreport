@@ -1,3 +1,11 @@
 /* Layout and form styling come from the global utility classes and the shared
    form-error toolkit; component-specific tweaks (password checklist) live inline
    in the template. */
+
+.create-club-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}

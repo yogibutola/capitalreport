@@ -2,16 +2,24 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 import pydantic
+from bson import ObjectId
 from fastapi import HTTPException
 
 from app.services.pb_player_service import PBPlayerService
 from app.vo.pb.player import ProfileUpdateRequest
 
 
+def _no_club():
+    """A club store in which the account runs no club."""
+    clubs = MagicMock()
+    clubs.get_club_by_owner.return_value = None
+    return clubs
+
+
 class TestProfile(unittest.TestCase):
     def setUp(self):
         self.mock_store = MagicMock()
-        self.service = PBPlayerService(self.mock_store)
+        self.service = PBPlayerService(self.mock_store, _no_club())
         self.player = {
             "_id": "abc123",
             "firstName": "Ada",
@@ -83,58 +91,64 @@ class TestProfile(unittest.TestCase):
             ProfileUpdateRequest(dupr_rating=12.0)
 
 
-class TestClubProfile(unittest.TestCase):
+class TestClubOwnerProfile(unittest.TestCase):
+    """A club owner is a person with a player profile who also runs a club record.
+    The profile page edits both: player fields go to the account, club fields to the club."""
+
     def setUp(self):
         self.mock_store = MagicMock()
-        self.service = PBPlayerService(self.mock_store)
-        self.club = {
-            "_id": "club1",
-            "firstName": "Downtown Dinkers",
-            "lastName": "Admin",
-            "email": "club@example.com",
-            "dupr_rating": 0.0,
-            "role": "admin",
-            "clubName": "Downtown Dinkers",
-            "address": "1 Court St",
-            "phone": "555-0100",
+        self.clubs = MagicMock()
+        self.service = PBPlayerService(self.mock_store, self.clubs)
+        self.owner = {
+            "_id": ObjectId(), "firstName": "Dana", "lastName": "Dink",
+            "email": "dana@example.com", "dupr_rating": 4.0,
         }
-        self.mock_store.find_player_by_email.return_value = self.club
-        self.mock_store.update_player_profile.side_effect = lambda email, updates: {
-            **self.club,
-            **updates,
-        }
+        self.club = {"_id": ObjectId(), "name": "Downtown Dinkers", "address": "1 Court St", "phone": "555-0100"}
+        self.mock_store.find_player_by_email.return_value = self.owner
+        self.mock_store.update_player_profile.side_effect = lambda email, updates: {**self.owner, **updates}
+        self.clubs.get_club_by_owner.return_value = self.club
+        self.clubs.update_club.side_effect = lambda club_id, fields: {**self.club, **fields}
 
-    def test_get_profile_returns_club_fields(self):
-        resp = self.service.get_profile("club@example.com")
+    def test_get_profile_returns_the_owners_club(self):
+        resp = self.service.get_profile("dana@example.com")
         self.assertEqual(resp.role, "admin")
+        self.assertEqual(resp.firstName, "Dana")
         self.assertEqual(resp.clubName, "Downtown Dinkers")
         self.assertEqual(resp.address, "1 Court St")
         self.assertEqual(resp.phone, "555-0100")
 
-    def test_update_club_fields_and_sync_first_name(self):
+    def test_club_fields_update_the_club_record_not_the_account(self):
         req = ProfileUpdateRequest(clubName="Uptown Dinkers", address="2 Net Ave", phone="555-0200")
-        self.service.update_profile("club@example.com", req)
-        _, updates = self.mock_store.update_player_profile.call_args[0]
-        self.assertEqual(updates["clubName"], "Uptown Dinkers")
-        self.assertEqual(updates["firstName"], "Uptown Dinkers")  # header stays in sync
-        self.assertEqual(updates["address"], "2 Net Ave")
+        resp = self.service.update_profile("dana@example.com", req)
+        club_id, fields = self.clubs.update_club.call_args[0]
+        self.assertEqual(club_id, self.club["_id"])
+        self.assertEqual(fields, {"name": "Uptown Dinkers", "address": "2 Net Ave", "phone": "555-0200"})
+        _, account_updates = self.mock_store.update_player_profile.call_args[0]
+        for key in ("clubName", "name", "address", "phone"):
+            self.assertNotIn(key, account_updates)
+        self.assertEqual(resp.clubName, "Uptown Dinkers")
 
-    def test_club_player_fields_are_ignored(self):
-        req = ProfileUpdateRequest(clubName="Downtown Dinkers", age=40, dupr_rating=5.0,
-                                   state="CA", zip_code="20147")
-        self.service.update_profile("club@example.com", req)
+    def test_an_owner_can_still_edit_their_player_profile(self):
+        req = ProfileUpdateRequest(firstName="Danielle", dupr_rating=4.25, paddles=[{"brand": "Joola"}])
+        self.service.update_profile("dana@example.com", req)
         _, updates = self.mock_store.update_player_profile.call_args[0]
-        self.assertNotIn("age", updates)
-        self.assertNotIn("dupr_rating", updates)
-        self.assertNotIn("state", updates)
-        # A club's location is its street address, not a player ZIP.
-        self.assertNotIn("zip_code", updates)
+        self.assertEqual(updates["firstName"], "Danielle")
+        self.assertEqual(updates["dupr_rating"], 4.25)
+        self.assertEqual(updates["paddles"], [{"brand": "Joola", "model": None}])
 
     def test_blank_club_name_rejected(self):
         req = ProfileUpdateRequest(clubName="   ")
         with self.assertRaises(HTTPException) as ctx:
-            self.service.update_profile("club@example.com", req)
+            self.service.update_profile("dana@example.com", req)
         self.assertEqual(ctx.exception.status_code, 400)
+        self.clubs.update_club.assert_not_called()
+
+    def test_club_fields_are_ignored_for_someone_without_a_club(self):
+        self.clubs.get_club_by_owner.return_value = None
+        resp = self.service.update_profile("dana@example.com", ProfileUpdateRequest(clubName="Mine Now"))
+        self.clubs.update_club.assert_not_called()
+        self.assertIsNone(resp.clubName)
+        self.assertEqual(resp.role, "player")
 
 
 class TestProfileZipCode(unittest.TestCase):
@@ -143,7 +157,7 @@ class TestProfileZipCode(unittest.TestCase):
 
     def setUp(self):
         self.mock_store = MagicMock()
-        self.service = PBPlayerService(self.mock_store)
+        self.service = PBPlayerService(self.mock_store, _no_club())
         self.player = {
             "_id": "abc123", "firstName": "Ada", "lastName": "Lovelace",
             "email": "ada@example.com", "dupr_rating": 3.5, "role": "player",
@@ -205,7 +219,7 @@ class TestProfilePaddles(unittest.TestCase):
 
     def setUp(self):
         self.mock_store = MagicMock()
-        self.service = PBPlayerService(self.mock_store)
+        self.service = PBPlayerService(self.mock_store, _no_club())
         self.player = {
             "_id": "abc123", "firstName": "Ada", "lastName": "Lovelace",
             "email": "ada@example.com", "dupr_rating": 3.5, "role": "player",
@@ -312,12 +326,6 @@ class TestProfilePaddles(unittest.TestCase):
         with self.assertRaises(pydantic.ValidationError):
             ProfileUpdateRequest(paddles=[{"brand": "CRBN", "model": "x" * 61}])
 
-    # ---- account type ----
-
-    def test_a_club_account_cannot_set_paddles(self):
-        self.player["role"] = "admin"
-        self.update(ProfileUpdateRequest(paddles=[{"brand": "Joola"}], clubName="Ada's Club"))
-        self.assertNotIn("paddles", self.updates())
 
 
 if __name__ == "__main__":

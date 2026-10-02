@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 import pydantic
+from bson import ObjectId
 from fastapi import HTTPException
 
 from app.services.pb_player_service import PBPlayerService
@@ -22,8 +23,11 @@ class PlayerSignupLocationTestCase(unittest.TestCase):
     def setUp(self):
         self.mock_store = MagicMock()
         self.mock_store.find_player_by_email.return_value = None  # email is free
-        self.mock_store.create_player.side_effect = lambda data: {**data, "_id": "new-id"}
-        self.service = PBPlayerService(self.mock_store)
+        self.mock_store.create_player.side_effect = lambda data: {**data, "_id": ObjectId()}
+        self.clubs = MagicMock()
+        self.clubs.slug_exists.return_value = False
+        self.clubs.insert_club.side_effect = lambda doc: {**doc, "_id": ObjectId()}
+        self.service = PBPlayerService(self.mock_store, self.clubs)
 
     def register(self, req, known_zip=True):
         with patch('app.services.pb_player_service.zip_is_known', return_value=known_zip):
@@ -106,9 +110,12 @@ class TestClubSignupIsUnaffected(PlayerSignupLocationTestCase):
 
     def test_registering_a_club_stores_no_zip(self):
         self.service.register_club(ClubSignup(
-            clubName="Metro Paddle", email="club@example.com",
+            firstName="Mo", lastName="Reyes", clubName="Metro Paddle", email="club@example.com",
             password=PASSWORD, address="1 Main St", phone="555-0100"))
         self.assertIsNone(self.stored().get("zip_code"))
+        # The address belongs to the club record, not the organiser's account.
+        self.assertNotIn("address", self.stored())
+        self.assertEqual(self.clubs.insert_club.call_args[0][0]["address"], "1 Main St")
 
 
 if __name__ == "__main__":

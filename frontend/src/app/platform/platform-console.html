@@ -50,7 +50,15 @@
           <input class="input-field" name="clubName" [(ngModel)]="club.clubName" required>
           <app-field-error label="Club name" [serverError]="clubFieldErrors()['clubName']" />
         </label>
-        <label>Email
+        <label>Organiser first name
+          <input class="input-field" name="firstName" [(ngModel)]="club.firstName" required>
+          <app-field-error label="First name" [serverError]="clubFieldErrors()['firstName']" />
+        </label>
+        <label>Organiser last name
+          <input class="input-field" name="lastName" [(ngModel)]="club.lastName" required>
+          <app-field-error label="Last name" [serverError]="clubFieldErrors()['lastName']" />
+        </label>
+        <label>Organiser email
           <input class="input-field" type="email" name="email" [(ngModel)]="club.email" required email>
           <app-field-error label="Email" [serverError]="clubFieldErrors()['email']" />
         </label>

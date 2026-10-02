@@ -3,14 +3,16 @@ import hashlib
 import logging
 import os
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, status
+from pymongo.errors import DuplicateKeyError
 
+from app.services.pb_session import issue_session, session_claims
 from app.store.mongo.pb_player_store import PBPlayerStore
+from app.store.mongo.schema.players import SCHEMA_VERSION
 from app.vo.pb.player import (
     PlayerSignup,
-    Player,
     PlayerResponse,
     PlayerLogin,
     ClubSignup,
@@ -30,7 +32,6 @@ from app.utils.geo import (
     normalize_zip,
     zip_is_known,
 )
-from app.utils.security import create_access_token, is_superadmin_email
 
 logger = logging.getLogger(__name__)
 
@@ -48,8 +49,68 @@ DEMO_ACCOUNTS = {
 class PBPlayerService:
     """Service for managing player operations"""
     
-    def __init__(self, pb_player_store: PBPlayerStore):
+    def __init__(self, pb_player_store: PBPlayerStore, club_store=None):
         self.pb_player_store = pb_player_store
+        self._club_store = club_store
+
+    @property
+    def club_store(self):
+        """Clubs live in their own collection; created on first use so callers that
+        only need player data don't have to supply one."""
+        if self._club_store is None:
+            from app.store.mongo.pb_club_store import PBClubStore
+            self._club_store = PBClubStore()
+        return self._club_store
+
+    def _club_of(self, player: dict) -> dict | None:
+        """The club this account runs, if any."""
+        return self.club_store.get_club_by_owner(player["_id"]) if player.get("_id") else None
+
+    @staticmethod
+    def _password_hash(player: dict) -> str:
+        # Migrated documents store ``password_hash``; documents written before the
+        # v2 migration still have ``password``. Read both until the migration runs.
+        return player.get("password_hash") or player.get("password") or ""
+
+    @staticmethod
+    def _new_player_doc(*, first_name: str, last_name: str, email: str, password_hash: str,
+                        dupr_rating: float | None, state: str | None = None, city: str | None = None,
+                        zip_code: str | None = None) -> dict:
+        """A ``players`` document in the v2 shape (app/store/mongo/schema/players.py)."""
+        now = datetime.now(timezone.utc)
+        return {
+            "email": email.strip().lower(),
+            "password_hash": password_hash,
+            "firstName": first_name.strip(),
+            "lastName": last_name.strip(),
+            "dupr_rating": dupr_rating,
+            "age": None,
+            "state": state,
+            "city": city,
+            "zip_code": zip_code,
+            "paddles": [],
+            "is_demo": False,
+            "created_at": now,
+            "updated_at": now,
+            "deleted_at": None,
+            "schema_version": SCHEMA_VERSION,
+        }
+
+    def _session_response(self, player: dict, club: dict | None, demo: bool = False) -> PlayerResponse:
+        """The signed-in response for ``player``: profile basics plus a fresh token."""
+        token, claims = issue_session(player, club, demo=demo)
+        return PlayerResponse(
+            id=str(player.get('_id')),
+            firstName=player['firstName'],
+            lastName=player['lastName'],
+            email=player['email'],
+            dupr_rating=player.get('dupr_rating'),
+            role=claims["role"],
+            token=token,
+            clubName=club["name"] if club else None,
+            leagues=player.get('leagues', []),
+            is_demo=demo,
+        )
 
     def hash_password(self, password: str) -> str:
         """Hash a password using bcrypt (truncates to 72 bytes due to bcrypt limitation)"""
@@ -82,37 +143,18 @@ class PBPlayerService:
         player_data = self.pb_player_store.find_player_by_email(login_data.email)
         
         # Verify player exists and password matches
-        if not player_data or not self.verify_password(login_data.password, player_data['password']):
+        if not player_data or not self.verify_password(login_data.password, self._password_hash(player_data)):
             self._audit_signin(login_data.email, None, 401, "Failed sign-in")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password"
             )
 
-        # Emails in the SUPERADMIN_EMAILS allowlist are elevated to the platform
-        # ("superadmin") role for this session; the stored doc keeps its own role.
-        role = player_data.get('role', 'player')
-        if is_superadmin_email(player_data['email']):
-            role = 'superadmin'
-
-        self._audit_signin(player_data['email'], role, 200, "Signed in")
-
-        # Generate access token
-        access_token = create_access_token(
-            data={"sub": player_data['email'], "role": role}
-        )
-
-        # Return player profile with token
-        return PlayerResponse(
-            id=str(player_data.get('_id')),
-            firstName=player_data['firstName'],
-            lastName=player_data['lastName'],
-            email=player_data['email'],
-            dupr_rating=player_data['dupr_rating'],
-            role=role,
-            token=access_token,
-            leagues=player_data.get('leagues', [])
-        )
+        # The role is derived, never stored: superadmin from SUPERADMIN_EMAILS,
+        # admin when the account runs a club, otherwise player (pb_session.py).
+        response = self._session_response(player_data, self._club_of(player_data))
+        self._audit_signin(player_data['email'], response.role, 200, "Signed in")
+        return response
 
     @staticmethod
     def _audit_signin(email: str, role: str | None, status_code: int, action: str) -> None:
@@ -170,23 +212,7 @@ class PBPlayerService:
                 detail="The demo is not available right now. Please try again later.",
             )
 
-        role = player_data.get('role', 'player')
-        access_token = create_access_token(
-            data={"sub": player_data['email'], "role": role, "demo": True}
-        )
-
-        return PlayerResponse(
-            id=str(player_data.get('_id')),
-            firstName=player_data['firstName'],
-            lastName=player_data['lastName'],
-            email=player_data['email'],
-            dupr_rating=player_data.get('dupr_rating') or 0.0,
-            role=role,
-            token=access_token,
-            clubName=player_data.get('clubName'),
-            leagues=player_data.get('leagues', []),
-            is_demo=True,
-        )
+        return self._session_response(player_data, self._club_of(player_data), demo=True)
 
     def change_password(self, email: str, req: ChangePasswordRequest) -> None:
         """
@@ -203,7 +229,7 @@ class PBPlayerService:
                 detail="User not found"
             )
 
-        if not self.verify_password(req.current_password, player.get('password', '')):
+        if not self.verify_password(req.current_password, self._password_hash(player)):
             # 400 (not 401) on purpose - a 401 makes the frontend auth interceptor
             # force a logout mid-form. 400 maps to parseHttpError kind 'validation'.
             raise HTTPException(
@@ -324,8 +350,7 @@ class PBPlayerService:
                 }],
             )
 
-    @staticmethod
-    def _to_profile_response(player: dict, token: str | None = None) -> ProfileResponse:
+    def _to_profile_response(self, player: dict, club: dict | None, token: str | None = None) -> ProfileResponse:
         return ProfileResponse(
             id=str(player.get('_id')),
             firstName=player.get('firstName', ''),
@@ -338,10 +363,11 @@ class PBPlayerService:
             zip_code=player.get('zip_code'),
             # `or []` rather than a .get default: it also covers a stored null.
             paddles=player.get('paddles') or [],
-            clubName=player.get('clubName'),
-            address=player.get('address'),
-            phone=player.get('phone'),
-            role=player.get('role', 'player'),
+            # A club owner's profile page edits their club too (clubs collection).
+            clubName=club["name"] if club else None,
+            address=club.get("address") if club else None,
+            phone=club.get("phone") if club else None,
+            role=session_claims(player, club)["role"],
             token=token,
         )
 
@@ -350,11 +376,14 @@ class PBPlayerService:
         player = self.pb_player_store.find_player_by_email(email)
         if not player:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-        return self._to_profile_response(player)
+        return self._to_profile_response(player, self._club_of(player))
 
     def update_profile(self, email: str, req: ProfileUpdateRequest) -> ProfileResponse:
         """
         Apply a partial update to the authenticated user's profile.
+
+        Player fields update the account. ``clubName``/``address``/``phone`` update
+        the club the account runs, and are ignored for accounts without one.
 
         Raises:
             HTTPException 404: If the user no longer exists
@@ -365,201 +394,162 @@ class PBPlayerService:
         if not player:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-        is_club = player.get("role") == "admin"
+        club = self._club_of(player)
         updates = req.model_dump(exclude_unset=True)
+        club_updates = {key: updates.pop(key) for key in ("clubName", "address", "phone") if key in updates}
 
-        # Keep only the fields that make sense for this account type.
-        player_only = {"firstName", "lastName", "age", "dupr_rating", "state", "city", "zip_code",
-                       "paddles"}
-        club_only = {"clubName", "address", "phone"}
-        for key in (club_only if not is_club else player_only):
-            updates.pop(key, None)
-
-        if is_club:
-            if "clubName" in updates:
-                if updates["clubName"] is None or not str(updates["clubName"]).strip():
+        if club and club_updates:
+            if "clubName" in club_updates:
+                if club_updates["clubName"] is None or not str(club_updates["clubName"]).strip():
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="Club name cannot be empty",
                     )
-                updates["clubName"] = str(updates["clubName"]).strip()
-                # The header greets the club by firstName; keep it in sync.
-                updates["firstName"] = updates["clubName"]
+                club_updates["name"] = str(club_updates.pop("clubName")).strip()
             for key in ("address", "phone"):
-                if key in updates and updates[key] is not None:
-                    updates[key] = str(updates[key]).strip() or None
-        else:
-            for key in ("firstName", "lastName"):
-                if key in updates:
-                    if updates[key] is None or not str(updates[key]).strip():
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="First and last name cannot be empty",
-                        )
-                    updates[key] = str(updates[key]).strip()
+                if key in club_updates and club_updates[key] is not None:
+                    club_updates[key] = str(club_updates[key]).strip() or None
 
-            for key in ("state", "city"):
-                if key in updates and updates[key] is not None:
-                    updates[key] = str(updates[key]).strip() or None
+        for key in ("firstName", "lastName"):
+            if key in updates:
+                if updates[key] is None or not str(updates[key]).strip():
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="First and last name cannot be empty",
+                    )
+                updates[key] = str(updates[key]).strip()
 
-            # Presence-tested, not truthiness-tested: an empty list is how the
-            # profile form says "I've emptied my paddle bag", and it has to reach
-            # the $set. Omitting the key entirely is what leaves paddles alone.
-            if "paddles" in updates:
-                updates["paddles"] = self._normalize_paddles(updates["paddles"])
+        for key in ("state", "city"):
+            if key in updates and updates[key] is not None:
+                updates[key] = str(updates[key]).strip() or None
 
-            # The VO already normalized this to 5 digits or None; all that's left is
-            # to check it's a ZIP that actually exists, so distance search can place
-            # this player instead of silently skipping them.
-            self._reject_unknown_zip(updates.get("zip_code"))
+        # Presence-tested, not truthiness-tested: an empty list is how the
+        # profile form says "I've emptied my paddle bag", and it has to reach
+        # the $set. Omitting the key entirely is what leaves paddles alone.
+        if "paddles" in updates:
+            updates["paddles"] = self._normalize_paddles(updates["paddles"])
 
-            # dupr_rating is not clearable from the profile form; drop an explicit null.
-            if "dupr_rating" in updates and updates["dupr_rating"] is None:
-                updates.pop("dupr_rating")
+        # The VO already normalized this to 5 digits or None; all that's left is
+        # to check it's a ZIP that actually exists, so distance search can place
+        # this player instead of silently skipping them.
+        self._reject_unknown_zip(updates.get("zip_code"))
 
-        new_token = None
+        # dupr_rating is not clearable from the profile form; drop an explicit null.
+        if "dupr_rating" in updates and updates["dupr_rating"] is None:
+            updates.pop("dupr_rating")
+
         new_email = updates.get("email")
-        if new_email and new_email.lower() != email.lower():
+        email_changed = bool(new_email) and new_email.lower() != email.lower()
+        if email_changed:
             if self.pb_player_store.find_player_by_email(new_email):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail=f"Email {new_email} is already in use",
                 )
             updates["email"] = new_email.lower()
-            # The JWT 'sub' is the email, so a change invalidates the current token.
-            token_role = player.get("role", "player")
-            if is_superadmin_email(new_email):
-                token_role = "superadmin"
-            new_token = create_access_token(
-                data={"sub": new_email.lower(), "role": token_role}
-            )
         else:
             updates.pop("email", None)
 
-        updated = self.pb_player_store.update_player_profile(email, updates)
+        try:
+            updated = self.pb_player_store.update_player_profile(email, updates)
+        except DuplicateKeyError:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Email {new_email} is already in use",
+            )
         if not updated:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-        return self._to_profile_response(updated, token=new_token)
+
+        if "dupr_rating" in updates and updates["dupr_rating"] != player.get("dupr_rating"):
+            self.pb_player_store.record_rating(player["_id"], updates["dupr_rating"], "self")
+        if club and club_updates:
+            club = self.club_store.update_club(club["_id"], club_updates) or club
+
+        # The JWT 'sub' is the email, so a change invalidates the current token.
+        new_token = issue_session(updated, club)[0] if email_changed else None
+        return self._to_profile_response(updated, club, token=new_token)
 
     def register_club(self, club_signup: "ClubSignup") -> PlayerResponse:
         """
-        Register a new club (admin)
+        Sign up a club organiser: a normal account for the person, plus the club
+        they run (a separate ``clubs`` record they own).
+
+        Raises:
+            HTTPException 409: If the email already has an account - an existing
+            player creates a club from their account instead (POST /clubs).
         """
-        # Check if email already exists
-        existing_player = self.pb_player_store.find_player_by_email(club_signup.email)
-        if existing_player:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"User with email {club_signup.email} already exists"
-            )
+        from app.services.pb_club_service import PBClubService
+        from app.vo.pb.club import ClubCreate
 
-        # Hash the password
-        hashed_password = self.hash_password(club_signup.password)
-
-        # Create player model with admin role
-        player = Player(
-            firstName=club_signup.clubName,  # Store club name as first name for now
-            lastName="Admin",
-            email=club_signup.email.lower(),
-            password=hashed_password,
-            dupr_rating=0.0, # Not relevant for club admin
-            role="admin",
-            clubName=club_signup.clubName,
-            address=club_signup.address,
-            phone=club_signup.phone,
-            leagues=[]
+        owner = self._create_account(
+            first_name=club_signup.firstName, last_name=club_signup.lastName,
+            email=club_signup.email, password=club_signup.password, dupr_rating=None,
         )
-
-        # Store in database
-        player_data = player.model_dump(exclude={'id'})
-        created_player = self.pb_player_store.create_player(player_data)
-
-        # Same as register_player: the client navigates straight to /admin, which is
-        # auth-guarded, so a missing token logs the brand-new club straight back out.
-        role = created_player.get('role', 'admin')
-        access_token = create_access_token(
-            data={"sub": created_player['email'], "role": role}
+        club = PBClubService(self.club_store, self.pb_player_store).create_club_with_owner(
+            owner, ClubCreate(name=club_signup.clubName, address=club_signup.address, phone=club_signup.phone),
         )
-
-        # Return response
-        return PlayerResponse(
-            id=created_player.get('_id'),
-            firstName=created_player['firstName'],
-            lastName=created_player['lastName'],
-            email=created_player['email'],
-            dupr_rating=created_player['dupr_rating'],
-            role=role,
-            token=access_token,
-            clubName=created_player.get('clubName'),
-            leagues=created_player.get('leagues', [])
-        )
+        # The client navigates straight to /admin, which is auth-guarded, so the
+        # response has to carry a token with the admin role.
+        return self._session_response(owner, club)
 
     def register_player(self, player_signup: PlayerSignup) -> PlayerResponse:
         """
         Register a new player
-        
+
         Args:
             player_signup: PlayerSignup model with registration data
-            
+
         Returns:
             PlayerResponse model without password
-            
+
         Raises:
             HTTPException: If email already exists (409 Conflict)
         """
-        # Check if email already exists
-        existing_player = self.pb_player_store.find_player_by_email(player_signup.email)
-        if existing_player:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"Player with email {player_signup.email} already exists"
-            )
-        
         # Location is optional at signup, but if a ZIP was given it has to be a
         # real one - otherwise the account is invisible to distance search with
         # no feedback to the player.
         self._reject_unknown_zip(player_signup.zip_code)
 
-        # Hash the password
-        hashed_password = self.hash_password(player_signup.password)
-
-        # Create player model
-        player = Player(
-            firstName=player_signup.firstName,
-            lastName=player_signup.lastName,
-            email=player_signup.email.lower(),  # Store in lowercase
-            password=hashed_password,
+        created_player = self._create_account(
+            first_name=player_signup.firstName, last_name=player_signup.lastName,
+            email=player_signup.email, password=player_signup.password,
             dupr_rating=player_signup.dupr_rating,
-            role="player",  # Default role
             state=self._clean_optional(player_signup.state),
             city=self._clean_optional(player_signup.city),
             zip_code=player_signup.zip_code,  # Already normalized to 5 digits by the VO
-            leagues=[]
         )
-        
-        # Store in database
-        player_data = player.model_dump(exclude={'id'})  # Exclude None id
-        created_player = self.pb_player_store.create_player(player_data)
-        
+
         # Signing up signs you in: the client navigates straight to the dashboard,
         # so without a token here the first authenticated request 401s and the
         # interceptor bounces the brand-new account back to the login screen.
-        role = created_player.get('role', 'player')
-        access_token = create_access_token(
-            data={"sub": created_player['email'], "role": role}
-        )
+        return self._session_response(created_player, None)
 
-        # Return response without password
-        return PlayerResponse(
-            id=created_player.get('_id'),
-            firstName=created_player['firstName'],
-            lastName=created_player['lastName'],
-            email=created_player['email'],
-            dupr_rating=created_player['dupr_rating'],
-            role=role,
-            token=access_token,
-            leagues=created_player.get('leagues', [])
+    def _create_account(self, *, first_name: str, last_name: str, email: str, password: str,
+                        dupr_rating: float | None, state: str | None = None, city: str | None = None,
+                        zip_code: str | None = None) -> dict:
+        """Insert a new account (v2 shape) and seed its rating history. 409 if the email is taken."""
+        if self.pb_player_store.find_player_by_email(email):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"An account with email {email} already exists"
+            )
+        doc = self._new_player_doc(
+            first_name=first_name, last_name=last_name, email=email,
+            password_hash=self.hash_password(password), dupr_rating=dupr_rating,
+            state=state, city=city, zip_code=zip_code,
         )
+        try:
+            created = self.pb_player_store.create_player(doc)
+        except DuplicateKeyError:
+            # Two signups with the same email raced past the check above; the
+            # unique email index (players v2) let only one through.
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"An account with email {email} already exists"
+            )
+        if dupr_rating is not None:
+            self.pb_player_store.record_rating(created["_id"], dupr_rating, "self")
+        return created
 
     def get_all_players(self) -> list[PlayerResponse]:
         """Get all players from the database"""

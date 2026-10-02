@@ -24,8 +24,10 @@ from datetime import datetime
 from fastapi import HTTPException
 from faker import Faker
 
+from app.services.pb_club_service import PBClubService
 from app.services.pb_player_service import PBPlayerService
 from app.services.pb_tournament_service import PBTournamentService
+from app.store.mongo.pb_club_store import PBClubStore
 from app.store.mongo.pb_player_store import PBPlayerStore
 from app.store.mongo.pb_tournament_store import PBTournamentStore
 from app.vo.pb.player import PlayerSignup
@@ -60,12 +62,13 @@ def main():
     pb_player_service = PBPlayerService(pb_player_store)
     pb_tournament_service = PBTournamentService(PBTournamentStore())
 
-    club = pb_player_store.find_player_by_email(args.club)
-    if not club or club.get("role") != "admin":
-        print(f"Club/admin account '{args.club}' not found (or not an admin). "
-              f"Create it first (club signup) or pass --club with an existing admin email.")
+    club = PBClubService(PBClubStore(), pb_player_store).club_for_owner_email(args.club)
+    if not club:
+        print(f"No club is run by '{args.club}'. "
+              f"Create it first (club signup) or pass --club with an organiser's email.")
         sys.exit(1)
-    print(f"Owning club: {args.club} ({club.get('clubName') or club.get('firstName')})")
+    club_id = str(club["_id"])
+    print(f"Owning club: {club['name']} (run by {args.club})")
 
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
@@ -111,7 +114,7 @@ def main():
         pool_size=args.pool_size,
         advancers_per_pool=args.advancers,
         tournament_status="pending",
-        club_id=args.club,
+        club_id=club_id,
         # club_name / location are left blank on purpose: create_tournament fills
         # them from the owning club's record.
         players=[],

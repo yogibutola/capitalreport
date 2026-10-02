@@ -12,7 +12,7 @@ class Withdrawal(BaseModel):
 
 class   League(BaseModel):
     league_id: Optional[str] = None
-    club_id: Optional[str] = Field(None, description="Email of the admin/club that owns this league")
+    club_id: Optional[str] = Field(None, description="Id of the club that runs this league (set from the token)")
     club_name: Optional[str] = Field(None, description="Display name of the club that runs this league")
     location: Optional[str] = Field(None, description="Where the league is played (venue / club address)")
 

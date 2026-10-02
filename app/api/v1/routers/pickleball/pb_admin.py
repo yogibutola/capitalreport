@@ -51,14 +51,15 @@ def create_club(
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to create club: {e}")
 
 
-@router.delete("/clubs/{email}")
+@router.delete("/clubs/{club_id}")
 def delete_club(
-    email: str,
+    club_id: str,
     _: dict = Depends(get_current_superadmin),
     svc: PBPlatformService = Depends(get_platform_service),
 ):
-    svc.delete_club(email)
-    return {"message": "Club removed", "email": email.lower()}
+    """Remove a club. Its owner keeps their player account."""
+    svc.delete_club(club_id)
+    return {"message": "Club removed", "id": club_id}
 
 
 @router.get("/players")

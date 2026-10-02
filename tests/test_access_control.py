@@ -13,7 +13,7 @@ from bson import ObjectId
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
-from app.api.v1.deps import is_club_owner, require_club_owner, require_self
+from app.api.v1.deps import get_current_admin, is_club_owner, require_club_owner, require_self
 from app.api.v1.routers.pickleball import pb_group, pb_league, pb_player, pb_tournament
 from app.services.pb_league_service import PBLeagueService
 from app.services.pb_player_service import PBPlayerService
@@ -25,12 +25,33 @@ PLAYER = "pat@example.com"
 OTHER = "olive@example.com"
 CLUB = "club@example.com"
 OTHER_CLUB = "rival@example.com"
+CLUB_ID = str(ObjectId())
+OTHER_CLUB_ID = str(ObjectId())
 LEAGUE_ID = str(ObjectId())
 TOURNAMENT_ID = str(ObjectId())
 
 
-def _auth(email: str, role: str = "player") -> dict:
-    return {"Authorization": f"Bearer {create_access_token({'sub': email, 'role': role})}"}
+def _auth(email: str, role: str = "player", club_id: str | None = None) -> dict:
+    claims = {"sub": email, "role": role}
+    if club_id:
+        claims["club_id"] = club_id
+    return {"Authorization": f"Bearer {create_access_token(claims)}"}
+
+
+def _club(email: str = None) -> dict:
+    """Headers for the club that owns LEAGUE_ID / TOURNAMENT_ID."""
+    return _auth(email or CLUB, "admin", CLUB_ID)
+
+
+def _rival() -> dict:
+    """Headers for a different club."""
+    return _auth(OTHER_CLUB, "admin", OTHER_CLUB_ID)
+
+
+def _request(method: str):
+    req = MagicMock()
+    req.method = method
+    return req
 
 
 def _app(router, dep, service) -> TestClient:
@@ -52,32 +73,42 @@ class TestDepsHelpers(unittest.TestCase):
     def test_require_self_lets_the_platform_admin_read_anyone(self):
         require_self(OTHER, {"sub": "ops@example.com", "role": "superadmin"})
 
-    def test_club_owner_needs_admin_role_and_matching_email(self):
-        self.assertTrue(is_club_owner("Club@Example.com", {"sub": CLUB, "role": "admin"}))
-        self.assertFalse(is_club_owner(CLUB, {"sub": OTHER_CLUB, "role": "admin"}))
-        # A player whose email happens to equal the club_id is still not the club.
-        self.assertFalse(is_club_owner(CLUB, {"sub": CLUB, "role": "player"}))
+    def test_club_owner_needs_admin_role_and_matching_club_id(self):
+        self.assertTrue(is_club_owner(CLUB_ID, {"sub": CLUB, "role": "admin", "club_id": CLUB_ID}))
+        self.assertFalse(is_club_owner(CLUB_ID, {"sub": OTHER_CLUB, "role": "admin", "club_id": OTHER_CLUB_ID}))
+        # A token claiming the club without the admin role is still not the club.
+        self.assertFalse(is_club_owner(CLUB_ID, {"sub": CLUB, "role": "player", "club_id": CLUB_ID}))
+
+    def test_ownership_is_by_club_id_not_email(self):
+        # Before clubs were records, club_id held the club's email. That no longer matches.
+        self.assertFalse(is_club_owner(CLUB, {"sub": CLUB, "role": "admin", "club_id": CLUB_ID}))
 
     def test_resource_without_an_owner_belongs_to_nobody(self):
-        self.assertFalse(is_club_owner(None, {"sub": CLUB, "role": "admin"}))
+        self.assertFalse(is_club_owner(None, {"sub": CLUB, "role": "admin", "club_id": CLUB_ID}))
         with self.assertRaises(HTTPException) as ctx:
-            require_club_owner(None, {"sub": CLUB, "role": "admin"})
+            require_club_owner(None, {"sub": CLUB, "role": "admin", "club_id": CLUB_ID})
         self.assertEqual(ctx.exception.status_code, 403)
+
+    def test_admin_token_without_a_club_id_must_sign_in_again(self):
+        # Tokens issued before clubs were records carry the role but no club_id.
+        with self.assertRaises(HTTPException) as ctx:
+            get_current_admin(_request("GET"), {"sub": CLUB, "role": "admin"})
+        self.assertEqual(ctx.exception.status_code, 401)
 
 
 class LeagueRouteTestCase(unittest.TestCase):
     def setUp(self):
         self.service = MagicMock()
-        self.service.get_league_owner.return_value = {"club_id": CLUB}
+        self.service.get_league_owner.return_value = {"club_id": CLUB_ID}
         self.service.get_match_participant_emails.return_value = {PLAYER, "b@x.com", "c@x.com", "d@x.com"}
         self.service.delete_league.return_value = True
         self.service.get_league_details_by_league_name.return_value = {"league_name": "Tue"}
         self.service.get_matches_by_player_email.return_value = []
         self.client = _app(pb_league.router, pb_league.get_pb_league_service, self.service)
 
-    def _score(self, email, role="player", match_league=LEAGUE_ID):
-        return self.client.post("/api/v1/league/match/score", headers=_auth(email, role), json={
-            "league_id": match_league, "match_id": "m1",
+    def _score(self, headers):
+        return self.client.post("/api/v1/league/match/score", headers=headers, json={
+            "league_id": LEAGUE_ID, "match_id": "m1",
             "score_team_1": 11, "score_team_2": 7, "match_status": "completed"})
 
 
@@ -114,46 +145,46 @@ class TestLeagueRegistration(LeagueRouteTestCase):
 
 class TestLeagueScoring(LeagueRouteTestCase):
     def test_a_participant_can_score(self):
-        self.assertEqual(self._score(PLAYER).status_code, 200)
+        self.assertEqual(self._score(_auth(PLAYER)).status_code, 200)
         self.service.save_match_score.assert_called_once()
 
     def test_the_owning_club_can_score(self):
-        self.assertEqual(self._score(CLUB, role="admin").status_code, 200)
+        self.assertEqual(self._score(_club()).status_code, 200)
 
     def test_a_bystander_cannot_score(self):
-        self.assertEqual(self._score(OTHER).status_code, 403)
+        self.assertEqual(self._score(_auth(OTHER)).status_code, 403)
         self.service.save_match_score.assert_not_called()
 
     def test_another_club_cannot_score(self):
-        self.assertEqual(self._score(OTHER_CLUB, role="admin").status_code, 403)
+        self.assertEqual(self._score(_rival()).status_code, 403)
         self.service.save_match_score.assert_not_called()
 
     def test_unknown_match_is_404(self):
         self.service.get_match_participant_emails.return_value = None
-        self.assertEqual(self._score(PLAYER).status_code, 404)
+        self.assertEqual(self._score(_auth(PLAYER)).status_code, 404)
 
 
 class TestLeagueOwnership(LeagueRouteTestCase):
     def test_only_the_owning_club_can_delete(self):
-        resp = self.client.delete(f"/api/v1/league/{LEAGUE_ID}", headers=_auth(OTHER_CLUB, "admin"))
+        resp = self.client.delete(f"/api/v1/league/{LEAGUE_ID}", headers=_rival())
         self.assertEqual(resp.status_code, 403)
         self.service.delete_league.assert_not_called()
 
-        resp = self.client.delete(f"/api/v1/league/{LEAGUE_ID}", headers=_auth(CLUB, "admin"))
+        resp = self.client.delete(f"/api/v1/league/{LEAGUE_ID}", headers=_club())
         self.assertEqual(resp.status_code, 200, resp.text)
         self.service.delete_league.assert_called_once_with(LEAGUE_ID)
 
     def test_unknown_league_is_404_not_500(self):
         self.service.get_league_owner.return_value = None
-        resp = self.client.delete(f"/api/v1/league/{LEAGUE_ID}", headers=_auth(CLUB, "admin"))
+        resp = self.client.delete(f"/api/v1/league/{LEAGUE_ID}", headers=_club())
         self.assertEqual(resp.status_code, 404)
 
     def test_only_the_owning_club_can_slot_a_play_day(self):
-        resp = self.client.post(f"/api/v1/league/{LEAGUE_ID}/day/1/slot", headers=_auth(OTHER_CLUB, "admin"))
+        resp = self.client.post(f"/api/v1/league/{LEAGUE_ID}/day/1/slot", headers=_rival())
         self.assertEqual(resp.status_code, 403)
         self.service.slot_first_round_of_day.assert_not_called()
 
-        resp = self.client.post(f"/api/v1/league/{LEAGUE_ID}/day/1/slot", headers=_auth(CLUB, "admin"))
+        resp = self.client.post(f"/api/v1/league/{LEAGUE_ID}/day/1/slot", headers=_club())
         self.assertEqual(resp.status_code, 200, resp.text)
 
     def _round_payload(self, match_league_id):
@@ -166,17 +197,17 @@ class TestLeagueOwnership(LeagueRouteTestCase):
                 "rounds": [{"round_id": 1, "group": [{"group_id": 1, "group_name": "Group 1", "match": [match]}]}]}
 
     def test_only_the_owning_club_can_post_rounds(self):
-        resp = self.client.post("/api/v1/league/round", headers=_auth(OTHER_CLUB, "admin"),
+        resp = self.client.post("/api/v1/league/round", headers=_rival(),
                                 json=self._round_payload(LEAGUE_ID))
         self.assertEqual(resp.status_code, 403)
         self.service.update_league_with_round_details.assert_not_called()
 
-        resp = self.client.post("/api/v1/league/round", headers=_auth(CLUB, "admin"),
+        resp = self.client.post("/api/v1/league/round", headers=_club(),
                                 json=self._round_payload(LEAGUE_ID))
         self.assertEqual(resp.status_code, 200, resp.text)
 
     def test_rounds_cannot_carry_matches_for_another_league(self):
-        resp = self.client.post("/api/v1/league/round", headers=_auth(CLUB, "admin"),
+        resp = self.client.post("/api/v1/league/round", headers=_club(),
                                 json=self._round_payload(str(ObjectId())))
         self.assertEqual(resp.status_code, 400)
         self.service.update_league_with_round_details.assert_not_called()
@@ -207,7 +238,7 @@ class TestPlayerRoutes(unittest.TestCase):
 class TestTournamentRoutes(unittest.TestCase):
     def setUp(self):
         self.service = MagicMock()
-        self.service.get_tournament_owner.return_value = {"club_id": CLUB}
+        self.service.get_tournament_owner.return_value = {"club_id": CLUB_ID}
         self.service.get_public_tournament.return_value = {"tournament_id": TOURNAMENT_ID, "tournament_name": "Fall Open"}
         self.service.get_tournament_by_id.return_value = {
             "tournament_id": TOURNAMENT_ID, "tournament_name": "Fall Open", "players": [{"email": OTHER}]}
@@ -261,11 +292,11 @@ class TestTournamentRoutes(unittest.TestCase):
         for method, path, body, service_call in calls:
             with self.subTest(path=path, method=method):
                 kwargs = {"json": body} if body else {}
-                resp = getattr(self.client, method)(path, headers=_auth(OTHER_CLUB, "admin"), **kwargs)
+                resp = getattr(self.client, method)(path, headers=_rival(), **kwargs)
                 self.assertEqual(resp.status_code, 403, resp.text)
                 service_call.assert_not_called()
 
-                resp = getattr(self.client, method)(path, headers=_auth(CLUB, "admin"), **kwargs)
+                resp = getattr(self.client, method)(path, headers=_club(), **kwargs)
                 self.assertEqual(resp.status_code, 200, resp.text)
                 service_call.assert_called_once()
 
@@ -342,8 +373,8 @@ class TestOwnershipLookups(unittest.TestCase):
 
     def test_league_owner_is_its_club_id(self):
         store = MagicMock()
-        store.get_league_details.return_value = {"club_id": CLUB, "players": [{"email": OTHER}]}
-        self.assertEqual(self._league_service(store).get_league_owner(LEAGUE_ID), {"club_id": CLUB})
+        store.get_league_details.return_value = {"club_id": CLUB_ID, "players": [{"email": OTHER}]}
+        self.assertEqual(self._league_service(store).get_league_owner(LEAGUE_ID), {"club_id": CLUB_ID})
 
     def test_participants_are_the_four_players_not_the_sitter(self):
         match_store = MagicMock()
@@ -359,7 +390,7 @@ class TestOwnershipLookups(unittest.TestCase):
     def test_public_tournament_view_has_no_roster(self):
         store = MagicMock()
         store.get_tournament_details.return_value = {
-            "tournament_id": TOURNAMENT_ID, "tournament_name": "Fall Open", "club_id": CLUB,
+            "tournament_id": TOURNAMENT_ID, "tournament_name": "Fall Open", "club_id": CLUB_ID,
             "players": [{"email": OTHER}], "registrations": [{"email": OTHER}],
             "teams": [{"player_one_email": OTHER}], "pools": [], "knockout": []}
         public = PBTournamentService(store).get_public_tournament(TOURNAMENT_ID)

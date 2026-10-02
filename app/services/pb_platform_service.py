@@ -9,6 +9,7 @@ import logging
 from fastapi import HTTPException, status
 
 from app.store.mongo.pb_audit_store import PBAuditStore
+from app.store.mongo.pb_club_store import PBClubStore
 from app.store.mongo.pb_league_store import PBLeagueStore
 from app.store.mongo.pb_player_store import PBPlayerStore
 from app.store.mongo.pb_tournament_store import PBTournamentStore
@@ -25,28 +26,31 @@ class PBPlatformService:
         league_store: PBLeagueStore,
         tournament_store: PBTournamentStore,
         audit_store: PBAuditStore,
+        club_store: PBClubStore | None = None,
     ):
         self.player_store = player_store
         self.league_store = league_store
         self.tournament_store = tournament_store
         self.audit_store = audit_store
-        self.player_service = PBPlayerService(player_store)
+        self.club_store = club_store or PBClubStore()
+        self.player_service = PBPlayerService(player_store, self.club_store)
 
     # ---- clubs -----------------------------------------------------------------
 
     def list_clubs(self) -> list[dict]:
-        clubs = self.player_store.get_clubs()
         out = []
-        for club in clubs:
-            email = club.get("email", "")
+        for club in self.club_store.list_clubs():
+            club_id = str(club["_id"])
+            owner = self.player_store.find_player_by_id(club.get("owner_player_id")) or {}
             out.append({
-                "id": str(club.get("_id")),
-                "email": email,
-                "clubName": club.get("clubName") or club.get("firstName"),
+                "id": club_id,
+                # The owner's sign-in email - who to contact about the club.
+                "email": owner.get("email") or club.get("contact_email") or "",
+                "clubName": club.get("name"),
                 "address": club.get("address"),
                 "phone": club.get("phone"),
-                "league_count": len(self.league_store.get_leagues_by_club(email)),
-                "tournament_count": len(self.tournament_store.get_tournaments_by_club(email)),
+                "league_count": len(self.league_store.get_leagues_by_club(club_id)),
+                "tournament_count": len(self.tournament_store.get_tournaments_by_club(club_id)),
             })
         out.sort(key=lambda c: (c["clubName"] or "").lower())
         return out
@@ -55,12 +59,11 @@ class PBPlatformService:
         created = self.player_service.register_club(payload)
         return created.model_dump()
 
-    def delete_club(self, email: str) -> None:
-        club = self.player_store.find_player_by_email(email)
-        if not club or club.get("role") != "admin":
+    def delete_club(self, club_id: str) -> None:
+        """Remove the club (and its venues). The owner keeps their player account;
+        by decision, the club's leagues/tournaments are orphaned, not cascaded."""
+        if not self.club_store.delete_club(club_id):
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Club not found")
-        # By decision, the club's leagues/tournaments are orphaned, not cascaded.
-        self.player_store.delete_player_by_email(email)
 
     # ---- players -------------------------------------------------------------
 
@@ -90,6 +93,13 @@ class PBPlatformService:
         player = self.player_store.find_player_by_email(email)
         if not player or player.get("role") == "admin":
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Player not found")
+        club = self.club_store.get_club_by_owner(player["_id"])
+        if club:
+            # Deleting the owner would leave a club nobody can sign in to run.
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                detail=f"{email} runs {club.get('name')}; remove the club first",
+            )
         self.player_store.delete_player_by_email(email)
         leagues_touched = self.league_store.purge_player(email)
         tournaments_touched = self.tournament_store.purge_player(email)
@@ -107,7 +117,7 @@ class PBPlatformService:
     def metrics(self) -> dict:
         role_counts = self.player_store.count_by_role()
         base = {
-            "total_clubs": role_counts.get("admin", 0),
+            "total_clubs": self.club_store.count_clubs(),
             "total_players": role_counts.get("player", 0),
             "total_leagues": len(self.league_store.get_all_leagues()),
             "total_tournaments": len(self.tournament_store.get_all_tournaments()),

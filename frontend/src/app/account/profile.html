@@ -267,6 +267,14 @@
     }
   </div>
 
+  @if (role() === 'player') {
+  <!-- Clubs are run from a normal account: any player can start one. -->
+  <div class="card create-club-card" style="margin-bottom: var(--space-lg);">
+    <span>Run leagues or tournaments for a club?</span>
+    <a routerLink="/admin/signup" class="btn btn-secondary" data-testid="create-club-link">Create a club</a>
+  </div>
+  }
+
   <!-- ============ Change password (collapsible) ============ -->
   <div class="card">
     <button type="button" class="collapsible-toggle" (click)="togglePassword()"

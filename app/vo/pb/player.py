@@ -111,9 +111,15 @@ class Player(BaseModel):
 
 
 class ClubSignup(BaseModel):
-    """Model for club/admin signup requests"""
-    clubName: str = Field(..., min_length=1, description="Name of the club")
-    email: EmailStr = Field(..., description="Club email address")
+    """Sign up a club organiser: their own account plus the club they run.
+
+    The person and the club are separate records: ``firstName``/``lastName`` are
+    the organiser's, and the club gets its own ``clubs`` document they own.
+    """
+    firstName: str = Field(..., min_length=1, max_length=100, description="Organiser's first name")
+    lastName: str = Field(..., min_length=1, max_length=100, description="Organiser's last name")
+    clubName: str = Field(..., min_length=2, max_length=120, description="Name of the club")
+    email: EmailStr = Field(..., description="Organiser's sign-in email")
     password: str = Field(..., min_length=6, description="Password (min 6 characters)")
     address: Optional[str] = Field(None, description="Club address")
     phone: Optional[str] = Field(None, description="Club phone number")

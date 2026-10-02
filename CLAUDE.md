@@ -78,7 +78,7 @@ Everything is wired manually in [app/main.py](app/main.py) and in each router's 
 
 Pickleball stores get their `MongoClient` from `get_client()` in [app/store/mongo/client.py](app/store/mongo/client.py) (one shared, thread-safe client per URI) — don't construct `MongoClient` in a store.
 
-**Schema redesign in progress** — see [docs/schema/proposed-schema.md](docs/schema/proposed-schema.md). The `players` v2 validator/indexes live in [app/store/mongo/schema/players.py](app/store/mongo/schema/players.py), and [scripts/migrate_players_v2.py](scripts/migrate_players_v2.py) migrates profiles (`python -m scripts.migrate_players_v2` is a read-only dry run; `--apply --i-have-a-dump` writes). **Don't `--apply` until the code that reads v2 ships** (`password_hash`, no `role`, `clubs` collection) — current code can't sign anyone in against migrated docs.
+**Schema redesign in progress** — see [docs/schema/proposed-schema.md](docs/schema/proposed-schema.md). The `players` v2 validator/indexes live in [app/store/mongo/schema/players.py](app/store/mongo/schema/players.py), and [scripts/migrate_players_v2.py](scripts/migrate_players_v2.py) migrates profiles (`python -m scripts.migrate_players_v2` is a read-only dry run; `--apply --i-have-a-dump` writes). The code reads both shapes (`password_hash` or legacy `password`), so deploy first, then `--apply` in the same window as the league/tournament reset: the migration deletes the old club-as-player accounts, and their organisers re-create clubs (signup or **Create a club** on the profile page).
 
 MongoDB uses **two databases on one server**: `document_embeddings` (RAG, [app/store/mongo_db_store.py](app/store/mongo_db_store.py)) and `pickleball` (leagues, [app/store/mongo/pb_mongo_db_store.py](app/store/mongo/pb_mongo_db_store.py)). Both read `MONGO_URI` from the environment.
 
@@ -102,11 +102,13 @@ Core rules in [app/services/pb_league_service.py](app/services/pb_league_service
 
 Auth ([app/utils/security.py](app/utils/security.py), [app/api/v1/deps.py](app/api/v1/deps.py)): JWT via `OAuth2PasswordBearer(tokenUrl="/api/v1/signin")`. `SECRET_KEY` is currently hardcoded — do not rely on it being secure; move it to env before any real deployment.
 
-Three roles, all carried in the JWT `role` claim: `player`, `admin` (**= a club**, not an operator), and `superadmin` (the application/platform admin). `deps.py` has one dependency per tier: `get_current_player`, `get_current_admin`, `get_current_superadmin`.
+Three roles, all carried in the JWT `role` claim: `player`, `admin` (**runs a club**, not an operator), and `superadmin` (the application/platform admin). `deps.py` has one dependency per tier: `get_current_player`, `get_current_admin`, `get_current_superadmin`.
+
+**Roles are derived, never stored** — [app/services/pb_session.py](app/services/pb_session.py) mints every token: `superadmin` if the email is in `SUPERADMIN_EMAILS`, else `admin` + a `club_id` claim if the account owns a club, else `player`. Clubs are their own `clubs` records ([pb_club_store.py](app/store/mongo/pb_club_store.py), one per owner, unique `owner_player_id`) with `venues`/courts; an organiser is a normal player account. Club API: `POST /clubs` (a signed-in player creates one, gets a fresh admin token), `/clubs/me`, `/clubs/me/venues`. `POST /signup/club` creates the organiser's account (needs `firstName`/`lastName`) and their club. An admin token without `club_id` (pre-clubs) gets a 401 so the client re-signs in.
 
 Access rules on top of the role (helpers in `deps.py`; tests in [tests/test_access_control.py](tests/test_access_control.py)):
 - **Identity comes from the token, never the body.** Registration, group creator/voter/author all use `payload["sub"]`; body email fields are accepted but ignored.
-- **Club ownership** (`require_club_owner`): a league/tournament's `club_id` is its club's email, and every admin mutation on one (round, slot, delete, draw, score, reopen) checks it against the caller. `get_current_admin` alone is not enough.
+- **Club ownership** (`require_club_owner`): a league/tournament's `club_id` is its club's id (from the creator's `club_id` claim), and every admin mutation on one (round, slot, delete, draw, score, reopen) checks it against the caller's `club_id`. `get_current_admin` alone is not enough.
 - **Self-only** (`require_self`): endpoints keyed by an email in the path (`/player/{email}/matches`, `/player/league/{email}`, `/player/tournaments/{email}`, `/groups/player/{email}`) return only the caller's own data (superadmin excepted).
 - League match scores: the match's four players or the owning club. Groups: signed-in members only.
 - `GET /tournament/id/{id}` serves anonymous visitors (the flyer share link) via `get_optional_user_payload`, returning event details only — no roster.
@@ -116,7 +118,7 @@ Access rules on top of the role (helpers in `deps.py`; tests in [tests/test_acce
 
 `superadmin` is granted **at sign-in** to any account whose email is in the `SUPERADMIN_EMAILS` env var (comma-separated; [app/utils/security.py](app/utils/security.py) `is_superadmin_email`) — the stored `players` doc keeps its own role. Sign up a normal account, add its email to `SUPERADMIN_EMAILS`, restart the backend.
 
-- Backend: [app/api/v1/routers/pickleball/pb_admin.py](app/api/v1/routers/pickleball/pb_admin.py) → [app/services/pb_platform_service.py](app/services/pb_platform_service.py). Mounted at `/api/v1/platform-console/...` with `include_in_schema=False` (absent from OpenAPI). Lists / creates / deletes clubs and players across the whole system; deleting a club **orphans** its leagues/tournaments, deleting a player purges them from every league/tournament roster (`purge_player` on the league/tournament stores).
+- Backend: [app/api/v1/routers/pickleball/pb_admin.py](app/api/v1/routers/pickleball/pb_admin.py) → [app/services/pb_platform_service.py](app/services/pb_platform_service.py). Mounted at `/api/v1/platform-console/...` with `include_in_schema=False` (absent from OpenAPI). Lists / creates / deletes clubs and players across the whole system; deleting a club removes the club record (its organiser keeps their account) and **orphans** its leagues/tournaments; deleting a player purges them from every league/tournament roster (`purge_player` on the league/tournament stores), and is refused (409) while they still run a club.
 - Frontend: route `/x9k2-console` (+ `/x9k2-console/login`), guarded by `superAdminGuard` ([frontend/src/app/auth/super-admin.guard.ts](frontend/src/app/auth/super-admin.guard.ts)). **Intentionally not linked from any nav** and the path is unadvertised. Components in [frontend/src/app/platform/](frontend/src/app/platform/).
 
 ### Activity log (observability)

@@ -57,6 +57,7 @@ def main():
 
     try:
         svc.register_club(ClubSignup(
+            firstName="Console", lastName="Organiser",
             clubName="Platform Console Test Club", email=CLUB_EMAIL, password=PASSWORD,
             address="1 Test Way", phone="555-0100",
         ))

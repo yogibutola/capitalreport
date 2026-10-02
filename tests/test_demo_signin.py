@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import MagicMock
 
 import jwt
+from bson import ObjectId
 from fastapi import HTTPException
 
 from app.services.pb_player_service import PBPlayerService, DEMO_ACCOUNTS
@@ -11,17 +12,21 @@ from app.utils.security import ALGORITHM, SECRET_KEY
 class TestDemoSignin(unittest.TestCase):
     def setUp(self):
         self.mock_store = MagicMock()
-        self.service = PBPlayerService(self.mock_store)
+        self.clubs = MagicMock()
+        self.clubs.get_club_by_owner.return_value = None
+        self.service = PBPlayerService(self.mock_store, self.clubs)
 
     def _decode(self, token: str) -> dict:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
     def test_admin_persona_returns_demo_admin_session(self):
+        owner_id, club_id = ObjectId(), ObjectId()
+        # The demo organiser is a normal account; "admin" comes from owning the demo club.
         self.mock_store.find_player_by_email.return_value = {
-            "_id": "1", "firstName": "StackedPaddle Demo Club", "lastName": "Admin",
-            "email": DEMO_ACCOUNTS["admin"], "role": "admin", "dupr_rating": 0.0,
-            "clubName": "StackedPaddle Demo Club",
+            "_id": owner_id, "firstName": "Demo", "lastName": "Organiser",
+            "email": DEMO_ACCOUNTS["admin"], "dupr_rating": None,
         }
+        self.clubs.get_club_by_owner.return_value = {"_id": club_id, "name": "StackedPaddle Demo Club"}
 
         resp = self.service.demo_signin("admin")
 
@@ -31,19 +36,24 @@ class TestDemoSignin(unittest.TestCase):
         payload = self._decode(resp.token)
         self.assertTrue(payload["demo"])
         self.assertEqual(payload["role"], "admin")
+        self.assertEqual(payload["club_id"], str(club_id))
         self.assertEqual(payload["sub"], DEMO_ACCOUNTS["admin"])
+        self.assertEqual(resp.clubName, "StackedPaddle Demo Club")
+        self.clubs.get_club_by_owner.assert_called_once_with(owner_id)
 
     def test_player_persona_returns_demo_player_session(self):
         self.mock_store.find_player_by_email.return_value = {
-            "_id": "2", "firstName": "Demo", "lastName": "Player",
-            "email": DEMO_ACCOUNTS["player"], "role": "player", "dupr_rating": 3.5,
+            "_id": ObjectId(), "firstName": "Demo", "lastName": "Player",
+            "email": DEMO_ACCOUNTS["player"], "dupr_rating": 3.5,
         }
 
         resp = self.service.demo_signin("player")
 
         self.assertTrue(resp.is_demo)
         self.assertEqual(resp.role, "player")
-        self.assertTrue(self._decode(resp.token)["demo"])
+        payload = self._decode(resp.token)
+        self.assertTrue(payload["demo"])
+        self.assertNotIn("club_id", payload)
 
     def test_unknown_persona_is_rejected(self):
         with self.assertRaises(HTTPException) as ctx:
