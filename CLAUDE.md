@@ -100,6 +100,14 @@ Auth ([app/utils/security.py](app/utils/security.py), [app/api/v1/deps.py](app/a
 
 Three roles, all carried in the JWT `role` claim: `player`, `admin` (**= a club**, not an operator), and `superadmin` (the application/platform admin). `deps.py` has one dependency per tier: `get_current_player`, `get_current_admin`, `get_current_superadmin`.
 
+Access rules on top of the role (helpers in `deps.py`; tests in [tests/test_access_control.py](tests/test_access_control.py)):
+- **Identity comes from the token, never the body.** Registration, group creator/voter/author all use `payload["sub"]`; body email fields are accepted but ignored.
+- **Club ownership** (`require_club_owner`): a league/tournament's `club_id` is its club's email, and every admin mutation on one (round, slot, delete, draw, score, reopen) checks it against the caller. `get_current_admin` alone is not enough.
+- **Self-only** (`require_self`): endpoints keyed by an email in the path (`/player/{email}/matches`, `/player/league/{email}`, `/player/tournaments/{email}`, `/groups/player/{email}`) return only the caller's own data (superadmin excepted).
+- League match scores: the match's four players or the owning club. Groups: signed-in members only.
+- `GET /tournament/id/{id}` serves anonymous visitors (the flyer share link) via `get_optional_user_payload`, returning event details only — no roster.
+- Password-reset links are only logged when `LOG_PASSWORD_RESET_LINKS=true` (set in `run_debug.sh`; never in deployed envs).
+
 ### Platform admin console (hidden)
 
 `superadmin` is granted **at sign-in** to any account whose email is in the `SUPERADMIN_EMAILS` env var (comma-separated; [app/utils/security.py](app/utils/security.py) `is_superadmin_email`) — the stored `players` doc keeps its own role. Sign up a normal account, add its email to `SUPERADMIN_EMAILS`, restart the backend.

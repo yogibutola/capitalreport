@@ -8,7 +8,9 @@ class GroupCreate(BaseModel):
     """Payload to create a new group."""
     name: str = Field(..., min_length=1, description="Group name")
     description: Optional[str] = Field(None, description="Optional description")
-    creator_email: str = Field(..., description="Email of the player creating the group")
+    # Ignored: the creator is the token's subject. Optional so clients that still
+    # send it don't get a 422.
+    creator_email: Optional[str] = Field(None, description="Ignored; the authenticated player creates the group")
 
 
 class GroupMemberAdd(BaseModel):
@@ -27,7 +29,7 @@ class GroupEventCreate(BaseModel):
 
 class EventVoteCreate(BaseModel):
     """Payload to cast (or change) a player's vote on an event."""
-    voter_email: str = Field(..., description="Email of the voting player")
+    voter_email: Optional[str] = Field(None, description="Ignored; the authenticated player votes")
     voter_name: str = Field(..., description="Display name of the voting player")
     vote: VoteOption = Field(..., description="One of: In, In but late, In but leave early, May be, Out")
 
@@ -42,7 +44,7 @@ class EventVoteResponse(BaseModel):
 
 class GroupMessage(BaseModel):
     """A discussion message at the group or event level."""
-    author_email: str = Field(..., description="Email of the message author")
+    author_email: Optional[str] = Field(None, description="Ignored; the authenticated player is the author")
     author_name: str = Field(..., description="Display name of the author")
     content: str = Field(..., min_length=1, description="Message content")
 

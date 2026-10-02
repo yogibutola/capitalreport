@@ -1,6 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.v1.deps import get_current_admin, get_current_player
+from app.api.v1.deps import (
+    get_current_admin,
+    get_current_player,
+    get_optional_user_payload,
+    require_club_owner,
+    require_self,
+)
 from app.services.pb_tournament_service import AccountExistsError, PBTournamentService
 from app.store.mongo.pb_tournament_store import PBTournamentStore
 from app.vo.pb.response_model.tournament_response import TournamentResponse
@@ -17,6 +23,16 @@ router = APIRouter(tags=["Tournament"])
 def get_pb_tournament_service() -> PBTournamentService:
     """Dependency injector for PBTournamentService."""
     return PBTournamentService(PBTournamentStore())
+
+
+def _require_tournament_owner(
+    pb_tournament_service: PBTournamentService, tournament_id: str, payload: dict
+) -> None:
+    """404 for an unknown tournament, 403 unless the caller's club runs it."""
+    owner = pb_tournament_service.get_tournament_owner(tournament_id)
+    if not owner:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tournament not found")
+    require_club_owner(owner.get("club_id"), payload)
 
 
 @router.get("/all_tournaments", status_code=status.HTTP_200_OK)
@@ -40,8 +56,10 @@ def get_my_tournaments(
 def get_player_tournaments(
     email_id: str,
     pb_tournament_service: PBTournamentService = Depends(get_pb_tournament_service),
+    payload: dict = Depends(get_current_player),
 ):
-    """Get the tournaments a player is registered for."""
+    """Get the tournaments a player is registered for. (Own tournaments only)"""
+    require_self(email_id, payload)
     return pb_tournament_service.get_tournaments_by_player_email(email_id)
 
 
@@ -49,8 +67,18 @@ def get_player_tournaments(
 def get_tournament_by_id(
     tournament_id: str,
     pb_tournament_service: PBTournamentService = Depends(get_pb_tournament_service),
+    payload: dict | None = Depends(get_optional_user_payload),
 ):
-    """Get a tournament (pools + knockout bracket) by id."""
+    """Get a tournament (pools + knockout bracket) by id.
+
+    Signed-in callers get the full tournament. Anonymous visitors - the public
+    share link on a flyer - get the event details only, with no roster, teams
+    or bracket, since those carry other players' emails."""
+    if payload is None:
+        public = pb_tournament_service.get_public_tournament(tournament_id)
+        if not public:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tournament not found")
+        return public
     tournament = pb_tournament_service.get_tournament_by_id(tournament_id)
     if not tournament:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tournament not found")
@@ -81,8 +109,14 @@ def register_player_to_tournament(
     """Register the authenticated player for a tournament.
 
     For doubles the payload also carries the partner choice (named partner,
-    email invite, or looking-for-a-partner)."""
-    email = payload.get("sub") or registration.email
+    email invite, or looking-for-a-partner). The player is always the token's
+    subject; any ``email`` in the body is ignored."""
+    email = payload.get("sub")
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not extract email from token",
+        )
     try:
         pb_tournament_service.register(registration.tournament_id, registration, email)
         return {"message": "Player registered successfully"}
@@ -122,6 +156,7 @@ def generate_tournament_draw(
     """Close registration and generate the pools + knockout bracket. (Admin only)
 
     Doubles registrations without a partner are auto-paired by DUPR rating."""
+    _require_tournament_owner(pb_tournament_service, tournament_id, payload)
     try:
         return pb_tournament_service.generate_draw(tournament_id)
     except ValueError as e:
@@ -135,11 +170,12 @@ def record_tournament_match_score(
     tournament_id: str,
     payload: TournamentMatchScorePayload,
     pb_tournament_service: PBTournamentService = Depends(get_pb_tournament_service),
-    _: dict = Depends(get_current_admin),
+    admin: dict = Depends(get_current_admin),
 ):
     """Record a pool or knockout match result. Resolves pool qualifiers into the
     bracket and advances knockout winners (and byes). Returns the updated
-    tournament. (Admin only)"""
+    tournament. (Admin only - the club that runs it)"""
+    _require_tournament_owner(pb_tournament_service, tournament_id, admin)
     try:
         return pb_tournament_service.record_match_score(tournament_id, payload)
     except ValueError as e:
@@ -154,7 +190,8 @@ def reopen_tournament_registration(
     pb_tournament_service: PBTournamentService = Depends(get_pb_tournament_service),
     payload: dict = Depends(get_current_admin),
 ):
-    """Undo the draw and re-open registration. (Admin only)"""
+    """Undo the draw and re-open registration. (Admin only - the club that runs it)"""
+    _require_tournament_owner(pb_tournament_service, tournament_id, payload)
     try:
         pb_tournament_service.reopen_registration(tournament_id)
         return {"message": "Registration reopened"}
@@ -192,7 +229,8 @@ def delete_tournament(
     pb_tournament_service: PBTournamentService = Depends(get_pb_tournament_service),
     payload: dict = Depends(get_current_admin),
 ):
-    """Delete a tournament. (Admin only)"""
+    """Delete a tournament. (Admin only - the club that runs it)"""
+    _require_tournament_owner(pb_tournament_service, tournament_id, payload)
     try:
         success = pb_tournament_service.delete_tournament(tournament_id)
         if not success:

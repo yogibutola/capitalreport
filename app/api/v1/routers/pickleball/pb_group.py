@@ -3,6 +3,7 @@ from typing import List
 
 from fastapi import status, APIRouter, Depends, HTTPException
 
+from app.api.v1.deps import get_current_player, require_self
 from app.store.mongo.pb_group_store import PBGroupStore
 from app.vo.pb.group_ext import (
     GroupCreate,
@@ -21,6 +22,25 @@ router = APIRouter(tags=["Groups"])
 
 def get_group_store() -> PBGroupStore:
     return PBGroupStore()
+
+
+def _caller_email(payload: dict) -> str:
+    """The signed-in player's email. Every group write is attributed to it, never
+    to an email in the request body."""
+    email = (payload.get("sub") or "").lower()
+    if not email:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not extract email from token")
+    return email
+
+
+def _require_member(store: PBGroupStore, group_id: str, payload: dict) -> dict:
+    """The group document, after checking the caller belongs to it (404 / 403)."""
+    doc = store.get_group_by_id(group_id)
+    if not doc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+    if _caller_email(payload) not in {m.lower() for m in doc.get("members", [])}:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this group")
+    return doc
 
 
 def _doc_to_response(doc: dict) -> GroupResponse:
@@ -75,13 +95,15 @@ def _doc_to_response(doc: dict) -> GroupResponse:
 def create_group(
     payload: GroupCreate,
     store: PBGroupStore = Depends(get_group_store),
+    user: dict = Depends(get_current_player),
 ):
-    """Create a new player group."""
+    """Create a new player group, owned by the signed-in player."""
+    creator_email = _caller_email(user)
     try:
         doc = store.create_group(
             name=payload.name,
             description=payload.description,
-            creator_email=payload.creator_email,
+            creator_email=creator_email,
         )
         return _doc_to_response(doc)
     except Exception as e:
@@ -92,8 +114,10 @@ def create_group(
 def get_groups_for_player(
     email: str,
     store: PBGroupStore = Depends(get_group_store),
+    user: dict = Depends(get_current_player),
 ):
-    """Get all groups a player belongs to."""
+    """Get all groups a player belongs to. (Own groups only)"""
+    require_self(email, user)
     try:
         docs = store.get_groups_for_player(email)
         return [_doc_to_response(d) for d in docs]
@@ -105,12 +129,10 @@ def get_groups_for_player(
 def get_group(
     group_id: str,
     store: PBGroupStore = Depends(get_group_store),
+    user: dict = Depends(get_current_player),
 ):
-    """Get full group details (events + messages)."""
-    doc = store.get_group_by_id(group_id)
-    if not doc:
-        raise HTTPException(status_code=404, detail="Group not found")
-    return _doc_to_response(doc)
+    """Get full group details (events + messages). (Members only)"""
+    return _doc_to_response(_require_member(store, group_id, user))
 
 
 # ─────────────────────────────────────────────────────────────
@@ -122,8 +144,10 @@ def add_member(
     group_id: str,
     payload: GroupMemberAdd,
     store: PBGroupStore = Depends(get_group_store),
+    user: dict = Depends(get_current_player),
 ):
-    """Add a player to a group."""
+    """Add a player to a group. (Members only)"""
+    _require_member(store, group_id, user)
     found = store.add_member(group_id, payload.email)
     if not found:
         raise HTTPException(status_code=404, detail="Group not found")
@@ -139,8 +163,10 @@ def add_event(
     group_id: str,
     payload: GroupEventCreate,
     store: PBGroupStore = Depends(get_group_store),
+    user: dict = Depends(get_current_player),
 ):
-    """Add an event to a group. Date/title default to today when omitted."""
+    """Add an event to a group. Date/title default to today when omitted. (Members only)"""
+    _require_member(store, group_id, user)
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     date_str = payload.date or today
     title = payload.title or f"Group Session — {datetime.now(timezone.utc).strftime('%b %d, %Y')}"
@@ -174,12 +200,14 @@ def vote_on_event(
     event_id: str,
     payload: EventVoteCreate,
     store: PBGroupStore = Depends(get_group_store),
+    user: dict = Depends(get_current_player),
 ):
-    """Cast or change a player's attendance vote on an event."""
+    """Cast or change the signed-in player's attendance vote on an event. (Members only)"""
+    _require_member(store, group_id, user)
     vote = store.set_event_vote(
         group_id=group_id,
         event_id=event_id,
-        voter_email=payload.voter_email,
+        voter_email=_caller_email(user),
         voter_name=payload.voter_name,
         vote=payload.vote,
     )
@@ -197,11 +225,13 @@ def post_group_message(
     group_id: str,
     payload: GroupMessage,
     store: PBGroupStore = Depends(get_group_store),
+    user: dict = Depends(get_current_player),
 ):
-    """Post a message to the group-level discussion."""
+    """Post a message to the group-level discussion. (Members only)"""
+    _require_member(store, group_id, user)
     msg = store.add_group_message(
         group_id=group_id,
-        author_email=payload.author_email,
+        author_email=_caller_email(user),
         author_name=payload.author_name,
         content=payload.content,
     )
@@ -216,12 +246,14 @@ def post_event_message(
     event_id: str,
     payload: GroupMessage,
     store: PBGroupStore = Depends(get_group_store),
+    user: dict = Depends(get_current_player),
 ):
-    """Post a message to a specific event's discussion thread."""
+    """Post a message to a specific event's discussion thread. (Members only)"""
+    _require_member(store, group_id, user)
     msg = store.add_event_message(
         group_id=group_id,
         event_id=event_id,
-        author_email=payload.author_email,
+        author_email=_caller_email(user),
         author_name=payload.author_name,
         content=payload.content,
     )

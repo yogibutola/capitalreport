@@ -238,9 +238,15 @@ class PBPlayerService:
         expires_at = datetime.utcnow() + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)
         self.pb_player_store.set_reset_token(player['email'], self._hash_token(token), expires_at)
 
-        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:4200')
-        reset_link = f"{frontend_url}/reset-password?token={token}"
-        logger.info(f"[STUB EMAIL] Password reset link for {player['email']}: {reset_link}")
+        # No email is sent yet. The link is a bearer credential for the account, so
+        # it is only logged when a developer opts in locally - never in deployed
+        # logs, where anyone with log access could use it.
+        if os.getenv('LOG_PASSWORD_RESET_LINKS', '').lower() == 'true':
+            frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:4200')
+            reset_link = f"{frontend_url}/reset-password?token={token}"
+            logger.info(f"[STUB EMAIL] Password reset link for {player['email']}: {reset_link}")
+        else:
+            logger.info(f"[STUB EMAIL] Password reset requested for {player['email']} (link not logged)")
 
     def reset_password(self, req: ResetPasswordRequest) -> None:
         """

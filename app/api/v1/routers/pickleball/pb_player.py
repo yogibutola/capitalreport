@@ -1,7 +1,7 @@
 from typing import List, Optional
 from fastapi import status, APIRouter, Depends, HTTPException, Query
 
-from app.api.v1.deps import get_current_player
+from app.api.v1.deps import get_current_player, require_self
 from app.store.mongo.pb_player_store import PBPlayerStore
 from app.vo.pb.player import PlayerSignup, PlayerResponse, PlayerLogin, PlayerSearchResponse
 from app.services.pb_player_service import PBPlayerService
@@ -16,15 +16,19 @@ def get_pb_player_service() -> PBPlayerService:
 
 
 @router.get("/players", response_model=List[PlayerResponse])
-def get_players(pb_player_service: PBPlayerService = Depends(get_pb_player_service)):
+def get_players(pb_player_service: PBPlayerService = Depends(get_pb_player_service),
+                _: dict = Depends(get_current_player)):
     """
-    Get a list of all players.
-    
+    Get a list of all players. (Signed-in users)
+
+    Each player's league list is left out: which leagues someone else plays in
+    is theirs to share, and no caller of this list needs it.
+
     Returns:
         List[PlayerResponse]: List of players
     """
     try:
-            return pb_player_service.get_all_players()
+        return [p.model_copy(update={"leagues": []}) for p in pb_player_service.get_all_players()]
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -84,7 +88,9 @@ def get_player_by_league_id(league_id: str, pb_player_service: PBPlayerService =
         )   
 
 @router.get("/player/league/{email_id}", status_code=status.HTTP_200_OK)
-def get_league_by_player_email(email_id: str, pb_player_service: PBPlayerService = Depends(get_pb_player_service)):
-    """ Get a player by email."""
-    return pb_player_service.get_league_by_player_email(email_id)   
+def get_league_by_player_email(email_id: str, pb_player_service: PBPlayerService = Depends(get_pb_player_service),
+                               payload: dict = Depends(get_current_player)):
+    """ Get the leagues a player is registered in. (Own leagues only)"""
+    require_self(email_id, payload)
+    return pb_player_service.get_league_by_player_email(email_id)
     

@@ -2,6 +2,8 @@ import logging
 import uuid
 from datetime import datetime
 
+from bson.errors import InvalidId
+
 from app.services.tournament_bracket import (
     advance_knockout,
     build_knockout,
@@ -82,6 +84,38 @@ class PBTournamentService:
                 [e for e in emails if e]
             )
         return doc
+
+    #: What an anonymous visitor (the flyer share link) may see: the event itself,
+    #: never the roster, teams or bracket, which carry other players' emails.
+    PUBLIC_FIELDS = (
+        "tournament_id", "tournament_name", "tournament_description", "tournament_status",
+        "tournament_start_date", "tournament_end_date", "match_format",
+        "dupr_min", "dupr_max", "age_group", "age_min", "age_max",
+        "club_name", "location",
+    )
+
+    def get_public_tournament(self, tournament_id: str) -> dict | None:
+        """Event details only (see ``PUBLIC_FIELDS``), or None if no such tournament."""
+        try:
+            doc = self.pb_tournament_store.get_tournament_details(tournament_id)
+        except InvalidId:
+            return None
+        if not doc:
+            return None
+        return {key: doc.get(key) for key in self.PUBLIC_FIELDS}
+
+    def get_tournament_owner(self, tournament_id: str) -> dict | None:
+        """``{"club_id": ...}`` for the tournament, or None when it doesn't exist.
+
+        Used by the router's ownership checks; a malformed id reads as "not found".
+        """
+        try:
+            doc = self.pb_tournament_store.get_tournament_details(tournament_id)
+        except InvalidId:
+            return None
+        if not doc:
+            return None
+        return {"club_id": doc.get("club_id")}
 
     def get_matches_by_player_email(self, email: str) -> list[dict]:
         """Flatten pool + knockout matches from every tournament the player is

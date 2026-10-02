@@ -12,6 +12,9 @@ export GOOGLE_CLOUD_LOCATION="us-central1"
 # (/x9k2-console) on sign-in. Leave unset to disable superadmin locally.
 # export SUPERADMIN_EMAILS="you@example.com"
 # export AUDIT_LOG_ENABLED="true"   # set to "false" to turn off the activity log
+# Reset emails aren't sent yet; this logs the reset link so you can test the flow
+# locally. Never set it in a deployed environment.
+export LOG_PASSWORD_RESET_LINKS="true"
 
 # Check if credentials.json exists
 if [ ! -f "$GOOGLE_APPLICATION_CREDENTIALS" ]; then

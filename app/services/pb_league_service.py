@@ -1,4 +1,5 @@
 from bson import ObjectId
+from bson.errors import InvalidId
 from app.store.mongo.pb_league_store import PBLeagueStore
 from app.store.mongo.pb_player_store import PBPlayerStore
 from app.store.mongo.pb_tournament_store import PBTournamentStore
@@ -51,6 +52,36 @@ class PBLeagueService:
                 league_details.club_name = league_details.club_name or club.get("clubName") or club.get("firstName")
                 league_details.location = league_details.location or club.get("address")
         self.pb_league_store.store_new_league_details(league_details)
+
+    def get_league_owner(self, league_id: str) -> dict | None:
+        """``{"club_id": ...}`` for the league, or None when no such league exists.
+
+        Used by the router's ownership checks; a malformed id reads as "not found".
+        """
+        try:
+            league_doc = self.pb_league_store.get_league_details(league_id)
+        except InvalidId:
+            return None
+        if not league_doc:
+            return None
+        return {"club_id": league_doc.get("club_id")}
+
+    def get_match_participant_emails(self, league_id: str, match_id: str) -> set[str] | None:
+        """Lowercased emails of the four players in a league match, or None if no such match.
+
+        The sitting-out player in a 5-player group is not a participant.
+        """
+        match = self.pb_match_store.get_match(league_id, match_id)
+        if not match:
+            return None
+        emails = set()
+        for team_key in ("team_one", "team_two"):
+            team = match.get(team_key) or {}
+            for player_key in ("player_one", "player_two"):
+                email = (team.get(player_key) or {}).get("email")
+                if email:
+                    emails.add(email.lower())
+        return emails
 
     def get_all_leagues(self) -> list[dict]:
         return self.pb_league_store.get_all_leagues()
