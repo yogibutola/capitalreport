@@ -1,5 +1,3 @@
-from pymongo import MongoClient
-from pymongo.server_api import ServerApi
 from pymongo.synchronous.collection import Collection
 from bson import ObjectId
 
@@ -9,6 +7,7 @@ import os
 from app.store.mongo.pb_player_store import PBPlayerStore
 from app.vo.pb.league import League
 from app.vo.pb.slotting_details_payload import SlottingDetailsPayload
+from app.store.mongo.client import get_client
 
 logging.basicConfig(
     level=logging.INFO,  # Only output messages at INFO level and above
@@ -18,10 +17,7 @@ logging.basicConfig(
 
 class PBLeagueStore:
     def __init__(self, mongo_uri=None, db_name="pickleball"):
-        uri = mongo_uri or os.getenv("MONGO_URI")
-        if not uri:
-            raise RuntimeError("MONGO_URI environment variable must be set")
-        self.client = MongoClient(uri, server_api=ServerApi('1'))
+        self.client = get_client(mongo_uri)
         self.db = self.client[db_name]
         self.logger = logging.getLogger(__name__)
 

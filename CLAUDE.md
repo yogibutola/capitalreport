@@ -76,6 +76,10 @@ Call out in the change summary which tests were added or updated.
 
 Everything is wired manually in [app/main.py](app/main.py) and in each router's `get_orchestrator()` / `get_*_service()` function — there is no DI container. Routers are mounted under `/api/v1`.
 
+Pickleball stores get their `MongoClient` from `get_client()` in [app/store/mongo/client.py](app/store/mongo/client.py) (one shared, thread-safe client per URI) — don't construct `MongoClient` in a store.
+
+**Schema redesign in progress** — see [docs/schema/proposed-schema.md](docs/schema/proposed-schema.md). The `players` v2 validator/indexes live in [app/store/mongo/schema/players.py](app/store/mongo/schema/players.py), and [scripts/migrate_players_v2.py](scripts/migrate_players_v2.py) migrates profiles (`python -m scripts.migrate_players_v2` is a read-only dry run; `--apply --i-have-a-dump` writes). **Don't `--apply` until the code that reads v2 ships** (`password_hash`, no `role`, `clubs` collection) — current code can't sign anyone in against migrated docs.
+
 MongoDB uses **two databases on one server**: `document_embeddings` (RAG, [app/store/mongo_db_store.py](app/store/mongo_db_store.py)) and `pickleball` (leagues, [app/store/mongo/pb_mongo_db_store.py](app/store/mongo/pb_mongo_db_store.py)). Both read `MONGO_URI` from the environment.
 
 ### RAG pipeline

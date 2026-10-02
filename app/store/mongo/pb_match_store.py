@@ -1,11 +1,10 @@
-from pymongo import MongoClient
-from pymongo.server_api import ServerApi
 from pymongo.synchronous.collection import Collection
 import logging
 import os
 from typing import List
 from app.vo.pb.match import Match
 from app.vo.pb.match_details_payload import MatchDetailsPayload
+from app.store.mongo.client import get_client
 
 logging.basicConfig(
     level=logging.INFO,
@@ -14,10 +13,7 @@ logging.basicConfig(
 
 class PBMatchStore:
     def __init__(self, mongo_uri=None, db_name="pickleball"):
-        uri = mongo_uri or os.getenv("MONGO_URI")
-        if not uri:
-            raise RuntimeError("MONGO_URI environment variable must be set")
-        self.client = MongoClient(uri, server_api=ServerApi('1'))
+        self.client = get_client(mongo_uri)
         self.db = self.client[db_name]
         self.logger = logging.getLogger(__name__)
 

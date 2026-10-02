@@ -2,9 +2,9 @@ import logging
 import os
 from datetime import datetime, timedelta, timezone
 
-from pymongo import MongoClient, DESCENDING
-from pymongo.server_api import ServerApi
+from pymongo import DESCENDING
 from pymongo.synchronous.collection import Collection
+from app.store.mongo.client import get_client
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,10 +19,7 @@ class PBAuditStore:
     _indexes_ready = False
 
     def __init__(self, mongo_uri=None, db_name="pickleball"):
-        uri = mongo_uri or os.getenv("MONGO_URI")
-        if not uri:
-            raise RuntimeError("MONGO_URI environment variable must be set")
-        self.client = MongoClient(uri, server_api=ServerApi('1'))
+        self.client = get_client(mongo_uri)
         self.db = self.client[db_name]
         self.logger = logging.getLogger(__name__)
 
