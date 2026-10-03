@@ -214,6 +214,36 @@
     display: none;
 }
 
+/* The signed-in club's name, pinned to the right end of the admin tab row */
+.header-club-name {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex-shrink: 0;
+    max-width: 300px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--ball);
+    color: var(--ball-ink);
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    box-shadow: 0 0 0 1px rgba(var(--tint-rgb), 0.08),
+        0 4px 14px rgba(var(--shadow-rgb), calc(0.35 * var(--shadow-k)));
+}
+
+.header-club-icon {
+    flex-shrink: 0;
+}
+
+.header-club-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .nav-tab-link {
     color: var(--muted);
     text-decoration: none;
@@ -283,6 +313,11 @@
     .header-nav-row {
         padding: 0 8px;
         position: relative;
+    }
+
+    /* No room beside the scrolling tab strip on phones */
+    .header-club-name {
+        display: none;
     }
 
     /* The tab strip scrolls but hides its scrollbar. Fade the trailing edge so

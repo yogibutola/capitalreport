@@ -35,6 +35,26 @@ test.describe('Leagues / Tournaments tabs (club)', () => {
         await expect(leagues).toHaveAttribute('href', '/admin/leagues');
         await expect(tournaments).toHaveAttribute('href', '/admin/tournaments');
 
+        // The club's name sits at the far right of the tab row, after the last tab
+        const clubName = page.getByTestId('header-club-name');
+        await expect(clubName).toBeVisible();
+        await expect(clubName).not.toBeEmpty();
+        // Rendered as a brand-lime badge so it stands out from the muted tabs
+        const [badgeBg, ballColour] = await clubName.evaluate((el) => {
+            const probe = document.createElement('span');
+            probe.style.backgroundColor = 'var(--ball)';
+            document.body.appendChild(probe);
+            const ball = getComputedStyle(probe).backgroundColor;
+            probe.remove();
+            return [getComputedStyle(el).backgroundColor, ball];
+        });
+        expect(badgeBg).toBe(ballColour);
+        const lastTabBox = (await tabs.nth(3).boundingBox())!;
+        const clubBox = (await clubName.boundingBox())!;
+        const rowBox = (await page.locator('.header-nav-row').boundingBox())!;
+        expect(clubBox.x).toBeGreaterThan(lastTabBox.x + lastTabBox.width);
+        expect(rowBox.x + rowBox.width - (clubBox.x + clubBox.width)).toBeLessThanOrEqual(30);
+
         // Login lands on the Leagues page with only its tab active
         await expect(page).toHaveURL(/\/admin\/leagues$/);
         await expect(page.getByTestId('admin-leagues-page')).toBeVisible();
@@ -97,6 +117,7 @@ test.describe('Leagues / Tournaments tabs (club)', () => {
         await playerLogin(page, ALL_PLAYERS[0], PLAYER_PASSWORD);
         const tabs = page.locator('.header-nav-tabs .nav-tab-link');
         await expect(tabs.filter({ hasText: 'Manage' })).toHaveCount(0);
+        await expect(page.getByTestId('header-club-name')).toHaveCount(0);
         // Players have their own Leagues/Tournaments tabs pointing at /player/...
         await expect(tabs.filter({ hasText: 'Leagues' })).toHaveAttribute('href', '/player/leagues');
         await expect(tabs.filter({ hasText: 'Tournaments' })).toHaveAttribute('href', '/player/tournaments');
