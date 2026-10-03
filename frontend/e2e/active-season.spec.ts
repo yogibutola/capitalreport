@@ -85,6 +85,25 @@ test.describe('Active Season tab (club)', () => {
         await expect(page.locator('body')).toContainText(leagueName);
     });
 
+    test('empty state shows a pickleball paddle, not the ping-pong emoji', async ({ page }) => {
+        await adminLogin(page, ADMIN_EMAIL, ADMIN_PASSWORD);
+        // Stub the club's lists empty so the page has nothing in play
+        for (const path of ['**/api/v1/my_leagues', '**/api/v1/my_tournaments']) {
+            await page.route(path, route => route.fulfill({ json: [] }));
+        }
+        await page.goto('/admin/season');
+
+        const empty = page.getByTestId('season-empty');
+        await expect(empty).toBeVisible();
+        await expect(empty).toContainText('Nothing is in play yet');
+        await expect(empty).not.toContainText('🏓');
+
+        const icon = empty.getByTestId('season-empty-icon');
+        await expect(icon).toBeVisible();
+        await expect(icon).toHaveAttribute('aria-label', 'Pickleball paddle');
+        expect(await icon.evaluate(el => el.tagName.toLowerCase())).toBe('svg');
+    });
+
     test('players never see the Active Season tab and cannot open the route', async ({ page }) => {
         await playerLogin(page, ALL_PLAYERS[0], PLAYER_PASSWORD);
         const tabs = page.locator('.header-nav-tabs .nav-tab-link');

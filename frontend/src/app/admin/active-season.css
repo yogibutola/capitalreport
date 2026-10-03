@@ -82,8 +82,31 @@
 }
 
 .season-empty-icon {
-    font-size: 2.4rem;
-    line-height: 1;
+    width: 3rem;
+    height: 3rem;
+}
+
+.season-empty-icon .paddle-face {
+    fill: rgba(var(--tint-rgb), 0.08);
+    stroke: HSL(var(--color-text-muted));
+    stroke-width: 2;
+}
+
+.season-empty-icon .paddle-handle {
+    fill: HSL(var(--color-text-muted));
+}
+
+.season-empty-icon .paddle-grip {
+    stroke: rgba(var(--tint-rgb), 0.35);
+    stroke-width: 1;
+}
+
+.season-empty-icon .paddle-ball {
+    fill: var(--ball);
+}
+
+.season-empty-icon .paddle-ball-hole {
+    fill: var(--ball-ink);
 }
 
 .season-empty h3 {
