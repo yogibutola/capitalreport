@@ -23,12 +23,12 @@ test.describe('Club signup', () => {
         await page.fill('#field-phone', '555-0100');
         await page.fill('#field-password', PASSWORD);
         await page.click('button[type="submit"]');
-        await page.waitForURL('**/admin/leagues', { timeout: 20_000 });
+        await page.waitForURL('**/admin/season', { timeout: 20_000 });
 
         // Signing back in derives the admin role from owning the club.
         await page.evaluate(() => localStorage.removeItem('pickleball_user'));
         await adminLogin(page, email, PASSWORD);
-        await expect(page).toHaveURL(/\/admin\/leagues/);
+        await expect(page).toHaveURL(/\/admin\/season/);
     });
 
     test('the organiser name is required', async ({ page }) => {
@@ -70,7 +70,7 @@ test.describe('Club signup', () => {
         await page.fill('#field-address', '9 Kitchen Ln');
         await page.fill('#field-phone', '555-0199');
         await page.click('button:has-text("Create Club")');
-        await page.waitForURL('**/admin/leagues', { timeout: 20_000 });
+        await page.waitForURL('**/admin/season', { timeout: 20_000 });
 
         const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('pickleball_user') || '{}'));
         expect(stored.role).toBe('admin');

@@ -43,7 +43,7 @@ export class AdminLoginComponent {
             next: (success) => {
                 if (!success) return;
                 if (this.authService.isAdmin()) {
-                    this.router.navigate(['/admin/leagues']);
+                    this.router.navigate(['/admin/season']);
                 } else {
                     this.authService.logout();
                     this.formError.set(

@@ -210,7 +210,7 @@ export class HomeComponent {
     // "Book a demo" CTAs are routerLinks to /book-demo (BookDemoComponent);
     // the in-section "See it in a demo" links launch the instant read-only club demo.
     startAdminDemo() {
-        this.startDemo('admin', '/admin/leagues');
+        this.startDemo('admin', '/admin/season');
     }
 
     startPlayerDemo() {

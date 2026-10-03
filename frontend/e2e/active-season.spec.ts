@@ -30,14 +30,15 @@ test.describe('Active Season tab (club)', () => {
         await expect(tabs.nth(3)).toHaveText('Club Profile');
         await expect(season).toHaveAttribute('href', '/admin/season');
 
-        // After login (on /admin/leagues) only Leagues is active
-        await expect(leagues).toHaveClass(/\bactive\b/);
-        await expect(season).not.toHaveClass(/\bactive\b/);
-
-        await season.click();
-        await page.waitForURL('**/admin/season', { timeout: 15_000 });
+        // Login lands on /admin/season with only the season tab active
+        await expect(page).toHaveURL(/\/admin\/season$/);
         await expect(season).toHaveClass(/\bactive\b/);
         await expect(leagues).not.toHaveClass(/\bactive\b/);
+
+        await leagues.click();
+        await page.waitForURL('**/admin/leagues', { timeout: 15_000 });
+        await expect(leagues).toHaveClass(/\bactive\b/);
+        await expect(season).not.toHaveClass(/\bactive\b/);
 
         // League detail pages highlight the Leagues tab, never the season tab
         await page.goto('/admin/leagues');

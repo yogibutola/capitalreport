@@ -71,7 +71,7 @@ test.describe('mobile layout at 390px — demo session', () => {
         await page.goto('/');
         await page.waitForLoadState('networkidle');
         await page.getByTestId(persona === 'player' ? 'cta-tour-club' : 'cta-admin-demo').click();
-        await page.waitForURL(persona === 'player' ? '**/player' : '**/admin/leagues', {
+        await page.waitForURL(persona === 'player' ? '**/player' : '**/admin/season', {
             timeout: 20_000,
         });
         await page.waitForLoadState('networkidle');

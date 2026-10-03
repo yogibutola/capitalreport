@@ -7,8 +7,8 @@ const PLAYER_PASSWORD = 'Password@123';
 
 /**
  * Club nav: "Active Season" is the first tab, then "Leagues" / "Tournaments". The
- * post-login landing page is still /admin/leagues. There is no "Manage" hub tab any
- * more — /admin redirects to /admin/leagues.
+ * post-login landing page is /admin/season. There is no "Manage" hub tab any
+ * more — /admin redirects to /admin/season.
  * Requires the backend + Mongo; seeds a league via test_data_seeder.py.
  */
 test.describe('Leagues / Tournaments tabs (club)', () => {
@@ -18,7 +18,7 @@ test.describe('Leagues / Tournaments tabs (club)', () => {
         leagueName = runSeeder();
     });
 
-    test('Active Season leads the tabs, Leagues is the landing page, Tournaments routes to its own page', async ({ page }) => {
+    test('Active Season leads the tabs and is the landing page, Leagues and Tournaments route to their own pages', async ({ page }) => {
         await adminLogin(page, ADMIN_EMAIL, ADMIN_PASSWORD);
 
         const tabs = page.locator('.header-nav-tabs .nav-tab-link');
@@ -55,8 +55,15 @@ test.describe('Leagues / Tournaments tabs (club)', () => {
         expect(clubBox.x).toBeGreaterThan(lastTabBox.x + lastTabBox.width);
         expect(rowBox.x + rowBox.width - (clubBox.x + clubBox.width)).toBeLessThanOrEqual(30);
 
-        // Login lands on the Leagues page with only its tab active
-        await expect(page).toHaveURL(/\/admin\/leagues$/);
+        // Login lands on the Active Season page with only its tab active
+        await expect(page).toHaveURL(/\/admin\/season$/);
+        await expect(page.getByRole('heading', { level: 1 })).toHaveText('Active Season');
+        await expect(tabs.nth(0)).toHaveClass(/\bactive\b/);
+        await expect(leagues).not.toHaveClass(/\bactive\b/);
+
+        // Leagues page has its own header, create button, and active tab
+        await leagues.click();
+        await page.waitForURL('**/admin/leagues', { timeout: 15_000 });
         await expect(page.getByTestId('admin-leagues-page')).toBeVisible();
         await expect(page.getByRole('heading', { level: 1 })).toHaveText('Leagues');
         await expect(page.locator('.admin-league-item').filter({ hasText: leagueName })).toBeVisible();
@@ -79,12 +86,13 @@ test.describe('Leagues / Tournaments tabs (club)', () => {
         await expect(leagues).not.toHaveClass(/\bactive\b/);
     });
 
-    test('bare /admin redirects to the Leagues tab', async ({ page }) => {
+    test('bare /admin redirects to the Active Season tab', async ({ page }) => {
         await adminLogin(page, ADMIN_EMAIL, ADMIN_PASSWORD);
+        await page.goto('/admin/leagues');
         await page.goto('/admin');
-        await page.waitForURL('**/admin/leagues', { timeout: 15_000 });
-        await expect(page.getByTestId('admin-leagues-page')).toBeVisible();
-        await expect(page.locator('.header-nav-tabs .nav-tab-link').filter({ hasText: 'Leagues' }))
+        await page.waitForURL('**/admin/season', { timeout: 15_000 });
+        await expect(page.getByRole('heading', { level: 1 })).toHaveText('Active Season');
+        await expect(page.locator('.header-nav-tabs .nav-tab-link').filter({ hasText: 'Active Season' }))
             .toHaveClass(/\bactive\b/);
     });
 
@@ -122,10 +130,10 @@ test.describe('Leagues / Tournaments tabs (club)', () => {
         await expect(tabs.filter({ hasText: 'Leagues' })).toHaveAttribute('href', '/player/leagues');
         await expect(tabs.filter({ hasText: 'Tournaments' })).toHaveAttribute('href', '/player/tournaments');
 
-        for (const url of ['/admin', '/admin/leagues', '/admin/tournaments']) {
+        for (const url of ['/admin', '/admin/season', '/admin/leagues', '/admin/tournaments']) {
             await page.goto(url);
             await page.waitForLoadState('networkidle');
-            expect(page.url()).not.toMatch(/\/admin(\/leagues|\/tournaments)?$/);
+            expect(page.url()).not.toMatch(/\/admin(\/season|\/leagues|\/tournaments)?$/);
         }
         await logout(page);
     });

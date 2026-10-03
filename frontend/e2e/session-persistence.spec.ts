@@ -14,25 +14,26 @@ const ADMIN_EMAIL = 'test_pro@gmail.com';
 const ADMIN_PASSWORD = 'Password@123';
 const PLAYER_PASSWORD = 'Password@123';
 
-test('Refreshing /admin/leagues keeps an admin session instead of bouncing to login', async ({ page }) => {
+test('Refreshing /admin/season keeps an admin session instead of bouncing to login', async ({ page }) => {
     runSeeder();
 
     await adminLogin(page, ADMIN_EMAIL, ADMIN_PASSWORD);
-    expect(page.url()).toContain('/admin/leagues');
+    expect(page.url()).toContain('/admin/season');
 
     await page.reload();
     await page.waitForLoadState('networkidle');
 
-    expect(page.url()).toContain('/admin/leagues');
+    expect(page.url()).toContain('/admin/season');
     expect(page.url()).not.toContain('/admin/login');
 });
 
-test('Visiting bare /admin redirects a signed-in club to the Leagues tab', async ({ page }) => {
+test('Visiting bare /admin redirects a signed-in club to the Active Season tab', async ({ page }) => {
     runSeeder();
 
     await adminLogin(page, ADMIN_EMAIL, ADMIN_PASSWORD);
+    await page.goto('/admin/leagues');
     await page.goto('/admin');
-    await page.waitForURL('**/admin/leagues', { timeout: 15_000 });
+    await page.waitForURL('**/admin/season', { timeout: 15_000 });
     expect(page.url()).not.toContain('/admin/login');
 });
 

@@ -33,7 +33,7 @@ import { MyGroupsComponent } from './groups/my-groups';
 
 export const routes: Routes = [
     // The club hub ("Manage" tab) was removed; Leagues is the club landing page.
-    { path: 'admin', redirectTo: 'admin/leagues', pathMatch: 'full' },
+    { path: 'admin', redirectTo: 'admin/season', pathMatch: 'full' },
     { path: 'admin/leagues', component: AdminLeaguesComponent, canActivate: [adminGuard] },
     { path: 'admin/tournaments', component: AdminTournamentsComponent, canActivate: [adminGuard] },
     { path: 'admin/season', component: ActiveSeasonComponent, canActivate: [adminGuard] },
