@@ -32,3 +32,5 @@ frontend/dist/
 frontend/.angular/
 frontend/playwright-report/
 frontend/test-results/
+# Database dumps (contain player PII and password hashes) - never commit
+backup/
