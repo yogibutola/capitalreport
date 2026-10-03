@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { LeagueService, Player } from '../league/league';
 import { AuthService } from '../auth/auth';
 
@@ -175,41 +175,14 @@ export class TournamentService {
       });
   }
 
+  /** Register the current player; emits the server's response message, errors propagate. */
   registerForTournament(
     tournamentId: string,
     opts: TournamentRegistrationOptions = {}
-  ): Observable<boolean> {
-    const user = this.authService.currentUser();
-    if (!user) return of(false);
-    return this.http
-      .post('/api/v1/tournament/register', {
-        tournament_id: tournamentId,
-        email: user.email,
-        partner_email: opts.partnerEmail || undefined,
-        partner_invite_name: opts.inviteName || undefined,
-        partner_invite_email: opts.inviteEmail || undefined,
-        needs_partner: opts.needsPartner || false,
-      })
-      .pipe(
-        map(() => {
-          this.fetchPlayerTournaments();
-          return true;
-        }),
-        catchError((err) => {
-          console.error('Tournament registration error:', err);
-          return of(false);
-        })
-      );
-  }
-
-  /** Register and surface the backend error message on failure (doubles form). */
-  registerForTournamentStrict(
-    tournamentId: string,
-    opts: TournamentRegistrationOptions = {}
-  ): Observable<void> {
+  ): Observable<string> {
     const user = this.authService.currentUser();
     return this.http
-      .post<void>('/api/v1/tournament/register', {
+      .post<{ message?: string }>('/api/v1/tournament/register', {
         tournament_id: tournamentId,
         email: user?.email,
         partner_email: opts.partnerEmail || undefined,
@@ -217,7 +190,12 @@ export class TournamentService {
         partner_invite_email: opts.inviteEmail || undefined,
         needs_partner: opts.needsPartner || false,
       })
-      .pipe(map(() => { this.fetchPlayerTournaments(); }));
+      .pipe(
+        map((res) => {
+          this.fetchPlayerTournaments();
+          return res?.message ?? 'Player registered successfully';
+        })
+      );
   }
 
   generateDraw(tournamentId: string): Observable<any> {

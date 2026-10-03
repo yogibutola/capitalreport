@@ -88,7 +88,7 @@
                         <td>{{ formatDate(league.endDate) }}</td>
                         <td>
                             @if (!auth.isDemo()) {
-                            <button class="btn btn-primary" (click)="register(league.id)">Register</button>
+                            <button class="btn btn-primary" (click)="register(league.id, league.name)">Register</button>
                             }
                         </td>
                     </tr>

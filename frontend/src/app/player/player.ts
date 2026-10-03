@@ -3,7 +3,7 @@ import { LeagueRoundPayload, RoundItem, GroupItem, MatchItem, TeamItem, TeamMemb
 import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../auth/auth';
-import { parseHttpError } from '../shared/http-error';
+import { parseHttpError, ParsedHttpError } from '../shared/http-error';
 import { catchError, map } from 'rxjs/operators';
 import { Observable, of, throwError } from 'rxjs';
 
@@ -534,20 +534,27 @@ export class PlayerService {
         });
     }
 
-    registerForLeague(leagueId: string): Observable<boolean> {
+    /** Registers the current player; emits the server's response message. */
+    registerForLeague(leagueId: string): Observable<string> {
         const user = this.authService.currentUser();
-        if (!user) return of(false);
+        if (!user) {
+            return throwError(() => ({
+                message: 'Please sign in to register.',
+                fieldErrors: {},
+                kind: 'auth',
+                status: 401,
+            } satisfies ParsedHttpError));
+        }
 
         const payload = {
             league_id: leagueId,
             email: user.email
         };
 
-        return this.http.post('api/v1/league/register', payload).pipe(
+        return this.http.post<{ message?: string }>('api/v1/league/register', payload).pipe(
             map(res => {
-                console.log('Registration successful:', res);
                 this.fetchLeaguesForPlayer(user.email);
-                return true;
+                return res?.message ?? 'Player registered successfully';
             }),
             // Rethrow so the caller can show why — e.g. a DUPR rating outside the league's band.
             catchError(err => throwError(() => parseHttpError(err)))

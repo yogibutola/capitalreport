@@ -90,14 +90,22 @@ export class PlayerTournamentsComponent implements OnInit {
     });
     if (!confirmed) return;
 
-    this.tournamentService.registerForTournament(t.tournament_id).subscribe((success) => {
-      if (success) {
-        this.toast.success("You're registered for this tournament.");
-      } else {
-        this.toast.error(
-          "We couldn't complete your registration. Registration may be closed for this tournament."
-        );
-      }
+    this.tournamentService.registerForTournament(t.tournament_id).subscribe({
+      next: (message) => this.notifyRegistered(t.tournament_name, message),
+      error: (err) => this.notifyRegistrationFailed(t.tournament_name, err),
+    });
+  }
+
+  /** Registration outcomes are shown in a dialog the player has to acknowledge. */
+  private notifyRegistered(tournamentName: string, message: string) {
+    this.confirm.notify({ title: `You're registered for ${tournamentName}!`, message });
+  }
+
+  private notifyRegistrationFailed(tournamentName: string, err: unknown) {
+    this.confirm.notify({
+      title: `Couldn't register for ${tournamentName}`,
+      message: parseHttpError(err).message,
+      tone: 'danger',
     });
   }
 
@@ -134,16 +142,19 @@ export class PlayerTournamentsComponent implements OnInit {
     }
 
     this.submitting.set(true);
-    this.tournamentService.registerForTournamentStrict(tournamentId, opts).subscribe({
-      next: () => {
+    const name =
+      this.availableTournaments().find((t) => t.tournament_id === tournamentId)?.tournament_name ??
+      'this tournament';
+    this.tournamentService.registerForTournament(tournamentId, opts).subscribe({
+      next: (message) => {
         this.submitting.set(false);
         this.registeringId.set(null);
         this.tournamentService.fetchAllTournaments();
-        this.toast.success("You're registered for this tournament.");
+        this.notifyRegistered(name, message);
       },
       error: (err) => {
         this.submitting.set(false);
-        this.toast.error(parseHttpError(err).message);
+        this.notifyRegistrationFailed(name, err);
       },
     });
   }

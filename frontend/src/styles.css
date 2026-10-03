@@ -723,6 +723,11 @@ textarea[aria-invalid="true"]:focus {
   color: var(--ball);
 }
 
+.confirm-dialog__icon--success {
+  background-color: rgba(var(--good-rgb), 0.14);
+  color: var(--good);
+}
+
 .confirm-dialog__icon svg {
   width: 26px;
   height: 26px;
@@ -808,6 +813,15 @@ textarea[aria-invalid="true"]:focus {
 
 .confirm-dialog__btn--primary:hover {
   background-color: var(--ball-hover);
+}
+
+.confirm-dialog__btn--success {
+  background-color: var(--good);
+  color: var(--good-ink);
+}
+
+.confirm-dialog__btn--success:hover {
+  background-color: rgba(var(--good-rgb), 0.85);
 }
 
 @keyframes confirmFade {

@@ -39,7 +39,7 @@ export class PlayerLeaguesComponent implements OnInit {
         this.router.navigate(['/player'], { queryParams: { section: 'league-details' } });
     }
 
-    async register(leagueId: string) {
+    async register(leagueId: string, leagueName: string) {
         const confirmed = await this.confirm.ask({
             title: 'Register for this league?',
             message:
@@ -51,8 +51,14 @@ export class PlayerLeaguesComponent implements OnInit {
         if (!confirmed) return;
 
         this.playerService.registerForLeague(leagueId).subscribe({
-            next: () => this.toast.success("You're registered for this league."),
-            error: (err) => this.toast.error(parseHttpError(err).message)
+            next: (message) =>
+                this.confirm.notify({ title: `You're registered for ${leagueName}!`, message }),
+            error: (err) =>
+                this.confirm.notify({
+                    title: `Couldn't register for ${leagueName}`,
+                    message: parseHttpError(err).message,
+                    tone: 'danger',
+                })
         });
     }
 
